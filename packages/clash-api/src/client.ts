@@ -3,6 +3,7 @@ import type {
   ClashApiClan,
   ClashApiCwlGroup,
   ClashApiPlayer,
+  ClashApiVerifyTokenResult,
   ClashApiWar,
 } from "./types";
 
@@ -70,11 +71,27 @@ export class ClashApiClient {
     return this.getOrNull<ClashApiPlayer>(`/players/${encodeTag(tag)}`, tag);
   }
 
-  private async get<T>(path: string, tag: string): Promise<T> {
+  /**
+   * Verifies the one-time API token a player copies from in-game Settings
+   * (not the developer key this client itself authenticates with).
+   * Confirmed against clashofclans.js's source, not just its docs — see
+   * types.ts. Returns null only on 403/404 (bad tag); an "invalid" status
+   * for a wrong token is a normal 200 response, not an error.
+   */
+  async verifyPlayerToken(tag: string, token: string): Promise<ClashApiVerifyTokenResult | null> {
+    return this.getOrNull<ClashApiVerifyTokenResult>(`/players/${encodeTag(tag)}/verifytoken`, tag, {
+      method: "POST",
+      body: JSON.stringify({ token }),
+    });
+  }
+
+  private async get<T>(path: string, tag: string, init?: RequestInit): Promise<T> {
     const response = await this.fetchImpl(`${this.baseUrl}${path}`, {
+      ...init,
       headers: {
         Authorization: `Bearer ${this.token}`,
         Accept: "application/json",
+        "Content-Type": "application/json",
       },
     });
 
@@ -92,9 +109,9 @@ export class ClashApiClient {
    * both into null instead of throwing. Any other status is still a real
    * error and still throws.
    */
-  private async getOrNull<T>(path: string, tag: string): Promise<T | null> {
+  private async getOrNull<T>(path: string, tag: string, init?: RequestInit): Promise<T | null> {
     try {
-      return await this.get<T>(path, tag);
+      return await this.get<T>(path, tag, init);
     } catch (error) {
       if (error instanceof ClashApiError && (error.status === 403 || error.status === 404)) {
         return null;

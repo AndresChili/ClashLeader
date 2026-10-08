@@ -1,4 +1,4 @@
-import { ClashApiClient, ClashApiError } from "./clash-api/client";
+import { ClashApiClient, ClashApiError } from "@clashleader/clash-api";
 import { loadConfig } from "./config";
 import { createServiceRoleClient } from "./db/client";
 import { getRegisteredClans, markClanCollected } from "./db/registered-clans";

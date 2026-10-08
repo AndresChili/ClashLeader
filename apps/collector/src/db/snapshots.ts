@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { ClanMemberRole } from "../clash-api/types";
+import type { ClanMemberRole } from "@clashleader/clash-api";
 
 export interface LatestSnapshot {
   clanMemberId: string;

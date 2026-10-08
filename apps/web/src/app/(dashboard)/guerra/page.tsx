@@ -1,4 +1,4 @@
-import { Card } from "@/components/ui/Card";
+import { NoClanCard } from "@/components/NoClanCard";
 import { getClanMembers } from "@/lib/data/members";
 import { getViewerClan } from "@/lib/data/viewer-clan";
 import { getCurrentWar, getCwlGroup, getWarHistory } from "@/lib/data/wars";
@@ -14,9 +14,7 @@ export default async function GuerraPage() {
 
   if (!viewerClan) {
     return (
-      <Card>
-        <p className="text-sm text-text-secondary">Todavía no tienes un clan. La alta de clanes llega en la fase 6.</p>
-      </Card>
+      <NoClanCard />
     );
   }
 

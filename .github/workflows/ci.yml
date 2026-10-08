@@ -13,6 +13,7 @@ env:
   NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54321
   NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder-anon-key
   NEXT_PUBLIC_SITE_URL: http://localhost:3000
+  CLASH_API_TOKEN: ci-placeholder-token
 
 jobs:
   lint-typecheck-test:

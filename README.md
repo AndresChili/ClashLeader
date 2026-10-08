@@ -10,7 +10,7 @@ avisa y propone — expulsar y ascender se hace siempre dentro del juego.
 > La app no cobra por nada.
 
 Proyecto de portfolio, construido por fases y documentado a medida que
-avanza. Estado actual: **fase 5 de 7** (ver [Fases](#fases)).
+avanza. Estado actual: **fase 6 de 7, en progreso** (ver [Fases](#fases)).
 
 ## Capturas
 
@@ -212,8 +212,36 @@ bien, el recolector real también lo hará.
 3. **Miembros y ficha con datos reales.** ✅
 4. **Guerras, liga, capital y juegos del clan, con histórico.** ✅
 5. **Reglas: expulsión, ascensos, decisiones manuales e índice.** ✅
-6. Equipo: alta de clanes con verificación del líder, invitaciones y permisos.
+6. **Equipo: alta de clanes con verificación del líder, invitaciones y permisos.** 🚧 en progreso — ver "Estado de la fase 6" abajo.
 7. Cierre: panel, instalación en móvil, README y documentación de seguridad.
+
+### Estado de la fase 6
+
+Hecho y verificado con pgTAP contra Postgres real: el esquema y las
+políticas de RLS para `register_clan()` (RPC que da de alta un clan y
+hace admin a quien lo registra) y para `promotion_decisions`.
+
+Hecho pero **sin verificar con un smoke test real** (a diferencia de todas
+las fases anteriores) por límite de uso de la sesión que construyó esto:
+
+- `/alta-clan`: formulario que verifica el token del jugador
+  (`POST /players/{tag}/verifytoken`, confirmado contra el código fuente de
+  clashofclans.js, no solo su documentación) y que su rol en el clan es
+  `leader`, antes de llamar a `register_clan()`.
+- `/unirse`: canje de código de invitación (reutiliza `redeem_clan_invite()`
+  de la fase 1).
+- `/equipo`: lista de quién tiene acceso, invitaciones pendientes y tarjeta
+  para generar un código (hash SHA-256, nunca se guarda en claro).
+- `packages/clash-api`: el cliente de la API se extrajo de
+  `apps/collector` a un paquete compartido (`@clashleader/clash-api`)
+  porque ahora `apps/web` también lo necesita, con su propio
+  `verifyPlayerToken` añadido y probado.
+
+Antes de dar la fase 6 por cerrada falta: una pasada de smoke test con
+Playwright o con el mismo método de sesión-vía-cookie usado en las fases
+1-5, foto de perfil (Google o iniciales), y revisar que los mensajes
+"Todavía no tienes un clan" en todas las pantallas apunten bien a
+`/alta-clan`.
 
 ## Limitaciones conocidas
 

@@ -1,4 +1,4 @@
-import type { ClashApiWar, ClashApiWarClan } from "../clash-api/types";
+import type { ClashApiWar, ClashApiWarClan } from "@clashleader/clash-api";
 
 export interface ResolvedWarSides {
   ours: ClashApiWarClan;

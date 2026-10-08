@@ -52,9 +52,12 @@ fase 2, con el script de datos de ejemplo del recolector).
 2. Crea una clave nueva ("Create New Key") y, en **Allowed IP addresses**,
    pon exactamente: `45.79.218.79` (la IP fija del proxy de RoyaleAPI, no
    la tuya).
-3. Copia la clave a `CLASH_API_TOKEN` en `apps/collector/.env.local` (para
-   pruebas locales) y como secreto de GitHub Actions (paso 4, para el
-   workflow programado).
+3. Copia la clave a `CLASH_API_TOKEN` en `apps/collector/.env.local` y en
+   `apps/web/.env.local` (la web la necesita en el servidor para verificar
+   el token del líder al dar de alta un clan — nunca llega al navegador),
+   además de como secreto de GitHub Actions (paso 4, para el workflow
+   programado) y como variable de entorno en Vercel (paso 5, servidor
+   únicamente).
 4. No cambies `CLASH_API_BASE_URL`: ya apunta a
    `https://cocproxy.royaleapi.dev/v1`, que reenvía a la API oficial desde
    esa IP.

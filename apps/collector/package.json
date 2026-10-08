@@ -12,6 +12,7 @@
     "test:integration": "vitest run --config vitest.integration.config.ts"
   },
   "dependencies": {
+    "@clashleader/clash-api": "*",
     "@supabase/supabase-js": "^2.47.10",
     "zod": "^3.24.1"
   },

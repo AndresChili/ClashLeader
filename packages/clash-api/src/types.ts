@@ -1,9 +1,12 @@
 /**
- * Subset of the official Clash of Clans API response shapes that this
- * phase actually reads, cross-checked against the community-maintained
- * typed wrapper clashofclans.js (clashofclans.js.org/docs/api) since the
- * official developer.clashofclans.com portal has no downloadable schema.
- * Extend as later phases need more fields (war, capital, achievements).
+ * Subset of the official Clash of Clans API response shapes this app
+ * reads, cross-checked against the community-maintained typed wrapper
+ * clashofclans.js (clashofclans.js.org/docs/api — source at
+ * github.com/clashperk/clashofclans.js) since the official
+ * developer.clashofclans.com portal has no downloadable schema.
+ * ClashApiVerifyTokenResult is confirmed directly against that wrapper's
+ * source (src/rest/RestManager.ts, src/types/api.ts), not just its docs
+ * site, since clan registration depends on getting this one right.
  */
 
 export type ClanMemberRole = "member" | "admin" | "coLeader" | "leader";
@@ -128,3 +131,12 @@ export interface ClashApiPlayer {
 }
 
 export const CLAN_GAMES_ACHIEVEMENT_NAME = "Games Champion";
+
+// ---------------------------------------------------------------------------
+// Player token verification (clan registration, phase 6)
+// ---------------------------------------------------------------------------
+export interface ClashApiVerifyTokenResult {
+  tag: string;
+  token: string;
+  status: "ok" | "invalid";
+}

@@ -82,3 +82,40 @@ describe("ClashApiClient getOrNull-backed endpoints", () => {
     await expect(client.getCapitalRaidSeasons("#2PP")).resolves.toEqual([{ state: "ended" }]);
   });
 });
+
+describe("ClashApiClient.verifyPlayerToken", () => {
+  it("POSTs the token as a JSON body to the verifytoken endpoint", async () => {
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValue({ ok: true, json: async () => ({ tag: "#P1", token: "abc", status: "ok" }) });
+    const client = new ClashApiClient({ baseUrl: "https://x", token: "dev-key", fetchImpl: fetchImpl as unknown as typeof fetch });
+
+    const result = await client.verifyPlayerToken("#P1", "abc");
+
+    expect(result).toEqual({ tag: "#P1", token: "abc", status: "ok" });
+    expect(fetchImpl).toHaveBeenCalledWith(
+      "https://x/players/%23P1/verifytoken",
+      expect.objectContaining({ method: "POST", body: JSON.stringify({ token: "abc" }) }),
+    );
+  });
+
+  it("returns an 'invalid' status as a normal result, not an error", async () => {
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValue({ ok: true, json: async () => ({ tag: "#P1", token: "wrong", status: "invalid" }) });
+    const client = new ClashApiClient({ baseUrl: "https://x", token: "dev-key", fetchImpl: fetchImpl as unknown as typeof fetch });
+
+    await expect(client.verifyPlayerToken("#P1", "wrong")).resolves.toEqual({
+      tag: "#P1",
+      token: "wrong",
+      status: "invalid",
+    });
+  });
+
+  it("returns null for an unknown player tag (404)", async () => {
+    const fetchImpl = vi.fn().mockResolvedValue({ ok: false, status: 404 });
+    const client = new ClashApiClient({ baseUrl: "https://x", token: "dev-key", fetchImpl: fetchImpl as unknown as typeof fetch });
+
+    await expect(client.verifyPlayerToken("#NOPE", "abc")).resolves.toBeNull();
+  });
+});

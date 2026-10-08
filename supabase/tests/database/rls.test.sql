@@ -6,7 +6,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(18);
+select plan(20);
 
 -- ---------------------------------------------------------------------------
 -- Fixtures: two clans, each with an admin (leader) and a reader (co-leader),
@@ -193,6 +193,20 @@ select is(
 select is(
   (select count(*) from public.latest_member_snapshots_for_viewer('10000000-0000-0000-0000-000000000001'))::int, 0,
   'outsider gets no rows from the viewer RPC for a clan they cannot access'
+);
+
+-- ---------------------------------------------------------------------------
+-- 6. register_clan() grants the caller admin access to a brand-new clan.
+-- ---------------------------------------------------------------------------
+select lives_ok(
+  $$ select public.register_clan('#QVCLJ2PYG', 'Clan Nuevo') $$,
+  'an authenticated user can register a new clan'
+);
+
+select is(
+  (select role from public.clan_access where clan_id = (select id from public.clans where tag = '#QVCLJ2PYG')),
+  'admin',
+  'the registering user becomes that clan''s admin'
 );
 
 select * from finish();

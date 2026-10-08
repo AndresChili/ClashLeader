@@ -10,7 +10,7 @@
  * account created there.
  */
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import type { ClanMemberRole, ClashApiCapitalRaidSeason, ClashApiWar, ClashApiWarClan } from "../clash-api/types";
+import type { ClanMemberRole, ClashApiCapitalRaidSeason, ClashApiWar, ClashApiWarClan } from "@clashleader/clash-api";
 import { upsertCapitalContributions, upsertCapitalSeason } from "../db/capital";
 import { insertNewMember } from "../db/clan-members";
 import { openClanGamesSeason, upsertClanGamesPoints } from "../db/clan-games";

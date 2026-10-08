@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { resolveWarSides } from "./war-sides";
-import type { ClashApiWar, ClashApiWarClan } from "../clash-api/types";
+import type { ClashApiWar, ClashApiWarClan } from "@clashleader/clash-api";
 
 function clan(tag: string): ClashApiWarClan {
   return { tag, name: tag, clanLevel: 10, attacks: 0, stars: 0, destructionPercentage: 0, members: [] };

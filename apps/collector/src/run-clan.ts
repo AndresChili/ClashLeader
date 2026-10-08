@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { ClashApiClient } from "./clash-api/client";
+import type { ClashApiClient } from "@clashleader/clash-api";
 import { donationActivitySignals, hasDetectableActivity } from "./collect/activity";
 import { diffMembership } from "./collect/diff-membership";
 import { didSeasonReset, seasonIdForDate } from "./collect/donation-season";

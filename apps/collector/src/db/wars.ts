@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { ClashApiWar, ClashApiWarClan, WarState } from "../clash-api/types";
+import type { ClashApiWar, ClashApiWarClan, WarState } from "@clashleader/clash-api";
 
 export type DbWarState = "preparation" | "inWar" | "warEnded";
 

@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { ClashApiCapitalRaidSeason } from "../clash-api/types";
+import type { ClashApiCapitalRaidSeason } from "@clashleader/clash-api";
 
 /** No stable id in the API response; startTime is unique per raid weekend. */
 export function capitalSeasonId(season: ClashApiCapitalRaidSeason): string {

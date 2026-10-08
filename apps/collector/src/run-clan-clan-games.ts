@@ -1,6 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { ClashApiClient } from "./clash-api/client";
-import { CLAN_GAMES_ACHIEVEMENT_NAME } from "./clash-api/types";
+import { CLAN_GAMES_ACHIEVEMENT_NAME, type ClashApiClient } from "@clashleader/clash-api";
 import { computeClanGamesPoints, shouldOpenNewSeason } from "./collect/clan-games";
 import { seasonIdForDate } from "./collect/donation-season";
 import {

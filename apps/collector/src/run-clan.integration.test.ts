@@ -1,7 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { ClashApiClient } from "./clash-api/client";
-import type { ClashApiClan } from "./clash-api/types";
+import { ClashApiClient, type ClashApiClan } from "@clashleader/clash-api";
 import { runClanCollection } from "./run-clan";
 
 // Runs against `npx supabase start`. These are the Supabase CLI's public

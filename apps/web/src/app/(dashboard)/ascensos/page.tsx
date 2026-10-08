@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Card } from "@/components/ui/Card";
+import { NoClanCard } from "@/components/NoClanCard";
 import { getPromotionDecisions } from "@/lib/data/promotions";
 import { getViewerClan } from "@/lib/data/viewer-clan";
 import { daysInClan } from "@/lib/format-member";
@@ -15,9 +16,7 @@ export default async function AscensosPage() {
 
   if (!viewerClan) {
     return (
-      <Card>
-        <p className="text-sm text-text-secondary">Todavía no tienes un clan. La alta de clanes llega en la fase 6.</p>
-      </Card>
+      <NoClanCard />
     );
   }
 

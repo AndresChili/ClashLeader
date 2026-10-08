@@ -1,6 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { ClashApiClient } from "./clash-api/client";
-import type { ClashApiWar } from "./clash-api/types";
+import type { ClashApiClient, ClashApiWar } from "@clashleader/clash-api";
 import { hasNewAttacks } from "./collect/activity";
 import { resolveWarSides } from "./collect/war-sides";
 import { updateLastActivity } from "./db/clan-members";

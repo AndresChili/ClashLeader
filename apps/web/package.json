@@ -11,6 +11,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@clashleader/clash-api": "*",
     "@clashleader/rules": "*",
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.47.10",
@@ -18,6 +19,7 @@
     "next": "16.4.0",
     "react": "19.3.0",
     "react-dom": "19.3.0",
+    "server-only": "^0.0.1",
     "zod": "^3.24.1"
   },
   "devDependencies": {

@@ -1,7 +1,13 @@
 import { createClient } from "@supabase/supabase-js";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { ClashApiClient } from "./clash-api/client";
-import type { ClashApiCapitalRaidSeason, ClashApiClan, ClashApiCwlGroup, ClashApiPlayer, ClashApiWar } from "./clash-api/types";
+import {
+  ClashApiClient,
+  type ClashApiCapitalRaidSeason,
+  type ClashApiClan,
+  type ClashApiCwlGroup,
+  type ClashApiPlayer,
+  type ClashApiWar,
+} from "@clashleader/clash-api";
 import { runClanCollection } from "./run-clan";
 
 // Same local-dev-only defaults as run-clan.integration.test.ts.

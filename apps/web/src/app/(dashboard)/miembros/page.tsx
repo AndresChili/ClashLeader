@@ -1,4 +1,4 @@
-import { Card } from "@/components/ui/Card";
+import { NoClanCard } from "@/components/NoClanCard";
 import { getViewerClan } from "@/lib/data/viewer-clan";
 import { getClanEvaluations } from "@/lib/get-clan-evaluations";
 import { createClient } from "@/lib/supabase/server";
@@ -12,11 +12,7 @@ export default async function MiembrosPage() {
 
   if (!viewerClan) {
     return (
-      <Card>
-        <p className="text-sm text-text-secondary">
-          Todavía no tienes un clan. La alta de clanes llega en la fase 6.
-        </p>
-      </Card>
+      <NoClanCard />
     );
   }
 
