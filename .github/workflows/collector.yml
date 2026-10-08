@@ -1,0 +1,46 @@
+name: Collector
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  collect:
+    name: Fetch and store clan snapshots
+    runs-on: ubuntu-latest
+    # Secrets are unset in forks, so this becomes a harmless no-op there
+    # instead of failing the workflow with a confusing config error.
+    if: github.repository == 'AndresChili/ClashLeader'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      - name: Check required secrets are configured
+        id: secrets-check
+        run: |
+          if [ -z "${{ secrets.CLASH_API_TOKEN }}" ] || [ -z "${{ secrets.SUPABASE_URL }}" ] || [ -z "${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" ]; then
+            echo "Secrets not configured yet (see SETUP.md); skipping this run instead of failing it repeatedly."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run the collector
+        if: steps.secrets-check.outputs.ready == 'true'
+        run: npm run collector
+        env:
+          CLASH_API_TOKEN: ${{ secrets.CLASH_API_TOKEN }}
+          CLASH_API_BASE_URL: ${{ vars.CLASH_API_BASE_URL || 'https://cocproxy.royaleapi.dev/v1' }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          MAX_CLANS_PER_RUN: ${{ vars.MAX_CLANS_PER_RUN || '20' }}

@@ -70,9 +70,11 @@ En **Settings → Secrets and variables → Actions** del repositorio
 | `SUPABASE_URL` | El `Project URL` del paso 1. |
 | `SUPABASE_SERVICE_ROLE_KEY` | La `service_role` key del paso 1. |
 
-El workflow programado (`.github/workflows/collector.yml`, añadido en la
-fase 2) correrá cada 15 minutos usando estos tres secretos; no necesita
-nada más.
+El workflow programado (`.github/workflows/collector.yml`) correrá cada 15
+minutos usando estos tres secretos; no necesita nada más. Hasta que los
+configures, las ejecuciones programadas fallarán al validar la
+configuración (ver `apps/collector/src/config.ts`) — no pasa nada, no
+tocan tu base de datos hasta que las credenciales sean válidas.
 
 ## 5. Conexión con Vercel
 

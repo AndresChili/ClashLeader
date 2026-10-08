@@ -10,7 +10,7 @@ avisa y propone — expulsar y ascender se hace siempre dentro del juego.
 > La app no cobra por nada.
 
 Proyecto de portfolio, construido por fases y documentado a medida que
-avanza. Estado actual: **fase 1 de 7** (ver [Fases](#fases)).
+avanza. Estado actual: **fase 2 de 7** (ver [Fases](#fases)).
 
 ## Capturas
 
@@ -87,6 +87,26 @@ repositorio.
   mezclan entre dos periodos distintos de membresía del mismo jugador.
 - **Proxy en vez de Middleware**: Next.js 16 renombró `middleware.ts` a
   `proxy.ts`; se usa la convención actual del framework, no la heredada.
+- **Los tipos de la API de Clash of Clans están verificados contra dos
+  fuentes, no solo contra memoria del modelo**: el portal
+  developer.clashofclans.com no publica un archivo OpenAPI descargable, así
+  que `apps/collector/src/clash-api/types.ts` se contrastó contra el
+  wrapper tipado comunitario [clashofclans.js](https://clashofclans.js.org/docs/api)
+  (activamente mantenido contra la API real) y, por separado, contra el
+  campo `achievements` de un jugador real para confirmar que "Games
+  Champion" es un contador acumulado de por vida (de ahí que fase 5 pueda
+  calcular puntos de Juegos del Clan como una resta de antes/después).
+- **"Días en el clan" vive en `clan_members`, no se recalcula al vuelo**:
+  cada episodio de membresía guarda su propio `first_seen_at`; si alguien
+  sale y vuelve, el recolector crea una fila nueva en vez de revivir la
+  antigua, así que el contador de días siempre refleja la membresía
+  actual, no la histórica acumulada.
+- **El recolector se prueba contra un Postgres real, no solo con mocks**:
+  `run-clan.integration.test.ts` corre dos capturas seguidas contra
+  `supabase start` y comprueba entradas, salidas, reinicio de temporada de
+  donaciones y detección de actividad de punta a punta. Se ejecuta aparte
+  del resto de tests (`npm run test:integration --workspace=collector`,
+  también en el job `db` de CI) para que `npm test` nunca necesite Docker.
 
 ## Puesta en marcha en local
 
@@ -108,10 +128,17 @@ npm run dev --workspace=web
 Inicia sesión con la cuenta de ejemplo creada por `supabase/seed.sql`:
 `lider@demo.test` / `demo12345`.
 
-Hasta que configures tus propias credenciales (ver `SETUP.md`), el
-recolector no tiene datos reales que traer: la fase 2 añade un script de
-datos ficticios para poder probar el resto de la app sin la clave de la
-API de Clash of Clans.
+Hasta que configures tus propias credenciales (ver `SETUP.md`), prueba la
+app con un clan ficticio en vez de la API real:
+
+```bash
+npm run seed:fixtures --workspace=collector
+```
+
+Esto crea "Clan Ficticio" (8 miembros, donaciones y roles variados) y se
+lo asigna a la cuenta de ejemplo, usando exactamente las mismas funciones
+de escritura que usa el recolector real — así que si el fixture se ve
+bien, el recolector real también lo hará.
 
 ### Comandos útiles
 
@@ -120,12 +147,14 @@ API de Clash of Clans.
 | `npm run lint` / `npm run typecheck` / `npm run test` | En los tres workspaces a la vez. |
 | `npx supabase test db` | Tests pgTAP de RLS contra el Postgres local. |
 | `npx supabase db reset` | Reaplica migraciones + `seed.sql` desde cero. |
-| `npm run collector` | Ejecuta `apps/collector` una vez (requiere sus variables de entorno). |
+| `npm run collector` | Ejecuta `apps/collector` una vez contra la API real (requiere sus variables de entorno). |
+| `npm run seed:fixtures --workspace=collector` | Crea/reemplaza el clan ficticio para desarrollo local, sin clave de la API. |
+| `npm run test:integration --workspace=collector` | Tests del recolector contra un Postgres local real (no solo mocks). |
 
 ## Fases
 
 1. **Base** — repositorio, CI, esquema con RLS y cuentas. ✅
-2. Recolector: miembros, capturas periódicas, entradas, salidas y última actividad.
+2. **Recolector** — miembros, capturas periódicas, entradas, salidas y última actividad. ✅
 3. Miembros y ficha con datos reales.
 4. Guerras, liga, capital y juegos del clan, con histórico.
 5. Reglas: expulsión, ascensos, decisiones manuales e índice.

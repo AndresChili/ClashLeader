@@ -5,9 +5,11 @@
   "type": "module",
   "scripts": {
     "start": "tsx src/index.ts",
+    "seed:fixtures": "tsx src/fixtures/seed-fixture-clan.ts",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:integration": "vitest run --config vitest.integration.config.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.47.10",

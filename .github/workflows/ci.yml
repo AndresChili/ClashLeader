@@ -40,10 +40,17 @@ jobs:
         run: npm audit --audit-level=critical
 
   db:
-    name: Supabase migrations and RLS tests
+    name: Supabase migrations, RLS tests, collector integration
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
 
       - uses: supabase/setup-cli@v1
         with:
@@ -54,3 +61,6 @@ jobs:
 
       - name: Run pgTAP tests (RLS deny-by-default checks)
         run: supabase test db
+
+      - name: Run collector integration tests against the local stack
+        run: npm run test:integration --workspace=collector
