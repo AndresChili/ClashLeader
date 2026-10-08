@@ -1,0 +1,68 @@
+@import "tailwindcss";
+
+:root {
+  --color-bg: #0e1318;
+  --color-card: #18202a;
+  --color-border: #263140;
+  --color-text: #e9eef3;
+  --color-text-secondary: #9ba8b5;
+  --color-accent: #6cb4ff;
+  --color-accent-foreground: #0e1318;
+
+  --color-status-good-bg: #173a36;
+  --color-status-good-text: #7fe3cc;
+  --color-status-warn-bg: #3d3216;
+  --color-status-warn-text: #f6c866;
+  --color-status-bad-bg: #47231e;
+  --color-status-bad-text: #ffa796;
+  --color-status-info-bg: #16293d;
+  --color-status-info-text: #9ccbff;
+
+  --font-heading: var(--font-space-grotesk);
+  --font-body: var(--font-ibm-plex-sans);
+}
+
+@theme inline {
+  --color-bg: var(--color-bg);
+  --color-card: var(--color-card);
+  --color-border: var(--color-border);
+  --color-text: var(--color-text);
+  --color-text-secondary: var(--color-text-secondary);
+  --color-accent: var(--color-accent);
+  --color-accent-foreground: var(--color-accent-foreground);
+
+  --color-status-good-bg: var(--color-status-good-bg);
+  --color-status-good-text: var(--color-status-good-text);
+  --color-status-warn-bg: var(--color-status-warn-bg);
+  --color-status-warn-text: var(--color-status-warn-text);
+  --color-status-bad-bg: var(--color-status-bad-bg);
+  --color-status-bad-text: var(--color-status-bad-text);
+  --color-status-info-bg: var(--color-status-info-bg);
+  --color-status-info-text: var(--color-status-info-text);
+
+  --font-heading: var(--font-heading);
+  --font-body: var(--font-body);
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+}
+
+h1,
+h2,
+h3,
+h4,
+.font-heading {
+  font-family: var(--font-heading);
+  font-weight: 600;
+}
+
+/* Minimum 44px touch targets everywhere, per design spec. */
+button,
+a[role="button"],
+input,
+select {
+  min-height: 44px;
+}

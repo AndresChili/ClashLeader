@@ -1,0 +1,93 @@
+Vas a construir desde cero una aplicación web llamada ClashLeader: un panel para líderes de clanes de Clash of Clans que recoge automáticamente las estadísticas de sus miembros con la API oficial y ayuda a decidir a quién expulsar, a quién ascender y a quién meter en guerra. Es un proyecto de portfolio en un repositorio público de GitHub, desplegado en Vercel.
+
+Trabaja por fases, en el orden indicado al final. Al acabar cada fase, comprueba que lint, tipos y tests pasan, haz commit y sigue con la siguiente sin esperar confirmación. Párate solo si algo te bloquea de verdad.
+
+## Stack
+- Next.js (App Router) con TypeScript estricto y Tailwind CSS. Interfaz en español, código en inglés.
+- Supabase: PostgreSQL, Auth (Google y correo con contraseña, con verificación de correo) y RLS.
+- Recolector: script de TypeScript independiente en apps/collector, lanzado por un workflow programado de GitHub Actions cada 15 minutos.
+- La clave de la API de Clash of Clans va atada a una IP, así que el recolector llama a través del proxy de RoyaleAPI (https://cocproxy.royaleapi.dev, IP 45.79.218.79). La URL base debe ser una variable de entorno.
+- Vitest para lógica y Playwright para flujos.
+- Estructura: apps/web, apps/collector, packages/rules, supabase/ (migraciones y políticas).
+
+## Datos
+Confirma cada endpoint y campo en la documentación oficial (developer.clashofclans.com) antes de modelar. La API solo da el estado actual y es de solo lectura: todo el histórico depende de guardar cada consulta.
+- Miembros, rol, donadas y recibidas: lista de miembros del clan. Las donaciones se reinician cada temporada; guarda el valor antes del reinicio. El veterano llega como "admin".
+- Guerra: ataques, estrellas y destrucción por miembro, de la guerra actual. Guárdala al terminar.
+- Liga de clanes: grupo de liga y sus guerras.
+- Capital: temporadas de asalto, con ataques hechos, límite de ataques y oro saqueado por miembro.
+- Juegos del clan: no hay endpoint. Calcula los puntos como la diferencia del logro "Games Champion" del jugador entre antes y después de los juegos; verifica que funciona.
+- Entradas y salidas: compara la lista de miembros entre consultas. No se distingue salida voluntaria de expulsión.
+- Días en el clan: desde la primera vez que la app ve al miembro, con fecha manual opcional.
+- Última actividad: la API no la da. Estímala por cambios en donaciones, ataques de guerra y capital, y muéstrala siempre como "sin actividad detectada".
+- El chat del clan no existe en la API; queda fuera.
+
+## Usuarios y clanes
+- Cualquier líder puede registrarse y dar de alta su clan. Para hacerlo, la app verifica con el endpoint de verificación de token del jugador que la cuenta es suya y comprueba que su rol en ese clan es líder.
+- Roles: administrador (líder) y lector (colíder). Los colíderes entran con un código de invitación de un solo uso, con caducidad y guardado como hash.
+- Los datos de cada clan están aislados. El recolector recorre todos los clanes registrados, con un tope configurable de clanes.
+- Foto de perfil: la de Google o iniciales. Sin subida de archivos. Sin amigos ni funciones sociales.
+
+## Reglas (funciones puras en packages/rules, con tests)
+Todos los umbrales son editables por el líder; estos son los valores por defecto.
+- Expulsar: más de 3 días sin actividad detectada, o una guerra terminada sin ningún ataque estando en la alineación.
+- En riesgo: aún no ha atacado en la guerra en curso.
+- Candidato a veterano: al menos 1 mes en el clan, atacó en todas sus guerras y donó 500 o más por temporada.
+- Candidato a colíder: al menos 3 meses, usa el 90% o más de sus ataques, dona 1000 o más por temporada y tiene actividad casi diaria.
+- Cada candidato se aprueba o se descarta a mano y se puede deshacer; guarda quién decidió y cuándo.
+- Índice de 0 a 100: media ponderada de guerra 40, donaciones 30, capital 15 y juegos 15. Cumple desde 70; por debajo, Flojo.
+- La app solo avisa y propone. Expulsar y ascender se hace en el juego.
+
+## Diseño (respétalo con exactitud)
+Móvil primero, a 390 px de ancho; en escritorio el mismo contenido en más columnas. Tema oscuro único.
+- Colores: fondo #0E1318, tarjetas #18202A, borde 1px #263140, texto #E9EEF3, texto secundario #9BA8B5, acento #6CB4FF (botón primario con texto #0E1318).
+- Pastillas de estado, fondo y texto: bien #173A36 y #7FE3CC; aviso #3D3216 y #F6C866; mal #47231E y #FFA796; info #16293D y #9CCBFF.
+- Tipografía: Space Grotesk 600 para títulos y cifras; IBM Plex Sans 400 y 500 para el resto.
+- Tarjetas con radio de 12 a 16 px, pastillas totalmente redondeadas, objetivos táctiles de 44 px como mínimo.
+- Barra inferior fija con cuatro pestañas con icono de trazo: Panel, Miembros, Guerra y Equipo; la activa en acento.
+- Sin emojis, sin degradados, sin sombras. No uses imágenes, logos ni tipografías de Supercell.
+
+Pantallas:
+1. Panel: cabecera con el nombre del clan y "Actualizado hace X min". Tarjeta de guerra en curso con tamaño, pastilla de tiempo restante, marcador grande ("31 a 27 estrellas") y barra de ataques usados. Tres mosaicos: miembros, con ataques pendientes y capital. Sección "Para expulsar" con nombre, motivo y pastilla Expulsar o En riesgo. Tarjeta-enlace "Candidatos a ascender". Sección "Movimientos" con entradas y salidas.
+2. Miembros: título y recuento, buscador, chips Todos, A expulsar y Para guerra. Cada fila lleva un cuadro de 44 px con el índice coloreado por estado, nombre y rol, una línea con donadas, media por ataque y porcentaje de ataques usados, y el estado a la derecha.
+3. Ficha del miembro: nombre, rol, días en el clan, última actividad y pastilla de estado. Tarjeta con el índice en grande y cuatro barras (guerra, donaciones, capital, juegos). "Últimas 10 guerras" como diez cuadros con las estrellas, coloreados: 0 mal, 1 a 3 aviso, 4 o más bien, hueco si no participó. Cuatro mosaicos: media por ataque, ataques usados, donadas y recibidas, liga. Nota del líder con fecha. Botones "Añadir nota" y "Poner en observación".
+4. Guerra: control segmentado En curso, Historial y Liga. Lista "Ataques pendientes" ("Le quedan 2 de 2"). "Alineación recomendada" ordenada por fiabilidad y media de estrellas, con posición, nombre, "Usa el 95% · 2,3 por ataque" y pastilla Dentro o Fuera.
+5. Equipo: quién tiene acceso con pastilla Administra, Solo lectura o Invitación enviada. Tarjeta "Invitar a un colíder" con código y botón Copiar. Enlaces a Reglas del clan y a Ascensos. Aviso legal al pie.
+6. Ascensos: subtítulo "La app propone y tú decides". Secciones "A colíder" y "A veterano", con una tarjeta por candidato (nombre, méritos, botones Descartar y Aprobar). El aprobado muestra "Aprobado por ti · asciéndelo en el juego". Lista "Descartados por ti" con Deshacer.
+7. Reglas del clan: tres bloques (Expulsión, Ascenso a veterano, Ascenso a colíder) con filas de etiqueta y valor, y botón Editar.
+Añade con el mismo estilo las pantallas de registro, inicio de sesión y alta de clan.
+
+## Seguridad
+Cubre el OWASP Top 10 y documéntalo.
+- RLS en todas las tablas, denegado por defecto, con tests que lo comprueben.
+- La clave de la API y la clave de servicio de Supabase solo en el recolector y en variables de entorno; nunca en el navegador ni en el repositorio. Incluye .env.example.
+- Validación con esquemas en el servidor para todo lo que escribe el usuario.
+- Límite de intentos en inicio de sesión, registro, invitaciones y verificación de token.
+- Cabeceras: CSP estricta, HSTS, frame-ancestors 'none'; cookies HttpOnly, Secure y SameSite.
+- Dependabot, auditoría de dependencias y análisis estático en CI.
+- Tabla de auditoría con las acciones del administrador.
+- SECURITY.md y docs/threat-model.md.
+
+## Repositorio
+- README con capturas, diagrama de arquitectura, decisiones técnicas con su motivo, puesta en marcha en local y limitaciones conocidas.
+- Commits pequeños, un tema por commit, con mensajes que expliquen el porqué. Comentarios solo donde aclaren una decisión. Sin código muerto ni dependencias sin usar.
+- CI con lint, tipos, tests y auditoría.
+- Script de datos ficticios para probar la app sin clave de la API.
+- Web instalable en el móvil (manifiesto e iconos propios).
+- En el pie de la app y en el README: "Este material no es oficial y no está respaldado por Supercell. Más información en la Política de contenido de fans de Supercell: www.supercell.com/fan-content-policy". La app no cobra por nada.
+
+## Fases
+1. Base: repositorio, CI, esquema con RLS y cuentas.
+2. Recolector: miembros, capturas periódicas, entradas, salidas y última actividad.
+3. Miembros y ficha con datos reales.
+4. Guerras, liga, capital y juegos del clan, con histórico.
+5. Reglas: expulsión, ascensos, decisiones manuales e índice.
+6. Equipo: alta de clanes con verificación del líder, invitaciones y permisos.
+7. Cierre: panel, instalación en móvil, README y documentación de seguridad.
+
+## Lo que no puedes hacer tú
+No tienes acceso a mis cuentas. Usa variables de entorno y escribe un SETUP.md con los pasos exactos que debo hacer yo: crear el proyecto de Supabase, las credenciales de Google, la clave de la API de Clash of Clans con la IP del proxy, los secretos de GitHub Actions y la conexión con Vercel. Hasta entonces, la app debe funcionar en local con los datos ficticios.
+
+
+
+https://github.com/AndresChili/ClashLeader.git Este es el repositorio y la cuenta es andrescabreroamieva@gmail.com

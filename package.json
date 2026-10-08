@@ -1,0 +1,25 @@
+{
+  "name": "clashleader",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Panel para lideres de clanes de Clash of Clans. Proyecto de portfolio, no afiliado a Supercell.",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=web",
+    "build": "npm run build --workspace=web",
+    "lint": "npm run lint --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "collector": "npm run start --workspace=collector"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.18.0",
+    "typescript-eslint": "^8.20.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
