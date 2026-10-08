@@ -13,7 +13,7 @@
   "dependencies": {
     "@clashleader/clash-api": "*",
     "@clashleader/rules": "*",
-    "@supabase/ssr": "^0.6.1",
+    "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.47.10",
     "lucide-react": "^0.469.0",
     "next": "16.4.0",
