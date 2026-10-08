@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { isInactiveBeyondThreshold } from "@clashleader/rules";
+import { getMemberReliability } from "./wars";
 
 export type MemberRole = "member" | "admin" | "coLeader" | "leader";
 
@@ -28,9 +29,15 @@ export interface MemberSummary {
   leagueName: string | null;
   trophies: number | null;
   townHallLevel: number | null;
+  /** All-time across every war on record (see member_war_reliability()); null until the member's first finished war. */
+  avgStarsPerAttack: number | null;
+  attackUsagePct: number | null;
+  attacksUsed: number | null;
+  attacksAvailable: number | null;
   /**
-   * Only the inactivity half of "Expulsar" — war attendance (the other
-   * half) needs phase 4 data. See packages/rules/src/inactivity.ts.
+   * Only the inactivity half of "Expulsar" — "no attacks in a finished
+   * war" (the other half) needs packages/rules' war-based kick rule,
+   * which lands in phase 5 alongside the índice.
    */
   isInactive: boolean;
 }
@@ -41,17 +48,19 @@ export async function getClanMembers(
   kickInactivityDays: number,
   now: Date = new Date(),
 ): Promise<MemberSummary[]> {
-  const [{ data: members, error: membersError }, { data: snapshots, error: snapshotsError }] = await Promise.all([
-    supabase
-      .from("clan_members")
-      .select("id, player_tag, name, in_game_role, first_seen_at, manual_join_date, last_activity_detected_at, on_watch")
-      .eq("clan_id", clanId)
-      .eq("is_current", true),
-    supabase.rpc("latest_member_snapshots_for_viewer", { p_clan_id: clanId }) as unknown as Promise<{
-      data: SnapshotRpcRow[] | null;
-      error: { message: string } | null;
-    }>,
-  ]);
+  const [{ data: members, error: membersError }, { data: snapshots, error: snapshotsError }, reliabilityByMemberId] =
+    await Promise.all([
+      supabase
+        .from("clan_members")
+        .select("id, player_tag, name, in_game_role, first_seen_at, manual_join_date, last_activity_detected_at, on_watch")
+        .eq("clan_id", clanId)
+        .eq("is_current", true),
+      supabase.rpc("latest_member_snapshots_for_viewer", { p_clan_id: clanId }) as unknown as Promise<{
+        data: SnapshotRpcRow[] | null;
+        error: { message: string } | null;
+      }>,
+      getMemberReliability(supabase, clanId),
+    ]);
 
   if (membersError) throw new Error(`Failed to load clan members: ${membersError.message}`);
   if (snapshotsError) throw new Error(`Failed to load member snapshots: ${snapshotsError.message}`);
@@ -60,6 +69,7 @@ export async function getClanMembers(
 
   return members.map((member) => {
     const snapshot = snapshotByMemberId.get(member.id as string);
+    const reliability = reliabilityByMemberId.get(member.id as string);
     const firstSeenAt = (member.manual_join_date as string | null) ?? (member.first_seen_at as string);
 
     return {
@@ -76,6 +86,10 @@ export async function getClanMembers(
       leagueName: snapshot?.league_name ?? null,
       trophies: snapshot?.trophies ?? null,
       townHallLevel: snapshot?.town_hall_level ?? null,
+      avgStarsPerAttack: reliability?.avgStars ?? null,
+      attackUsagePct: reliability?.usagePct ?? null,
+      attacksUsed: reliability?.attacksUsed ?? null,
+      attacksAvailable: reliability?.attacksAvailable ?? null,
       isInactive: isInactiveBeyondThreshold({
         lastActivityDetectedAt: member.last_activity_detected_at ? new Date(member.last_activity_detected_at as string) : null,
         firstSeenAt: new Date(firstSeenAt),

@@ -1,4 +1,10 @@
-import type { ClashApiClan } from "./types";
+import type {
+  ClashApiCapitalRaidSeason,
+  ClashApiClan,
+  ClashApiCwlGroup,
+  ClashApiPlayer,
+  ClashApiWar,
+} from "./types";
 
 export class ClashApiError extends Error {
   constructor(
@@ -38,6 +44,32 @@ export class ClashApiClient {
     return this.get<ClashApiClan>(`/clans/${encodeTag(tag)}`, tag);
   }
 
+  /** null when the clan has no war log, its log is private, or no war tag exists yet. */
+  async getCurrentWar(tag: string): Promise<ClashApiWar | null> {
+    return this.getOrNull<ClashApiWar>(`/clans/${encodeTag(tag)}/currentwar`, tag);
+  }
+
+  /** null when the clan isn't currently signed up for Clan War League. */
+  async getWarLeagueGroup(tag: string): Promise<ClashApiCwlGroup | null> {
+    return this.getOrNull<ClashApiCwlGroup>(`/clans/${encodeTag(tag)}/currentwar/leaguegroup`, tag);
+  }
+
+  async getCwlWar(warTag: string): Promise<ClashApiWar | null> {
+    return this.getOrNull<ClashApiWar>(`/clanwarleagues/wars/${encodeTag(warTag)}`, warTag);
+  }
+
+  async getCapitalRaidSeasons(tag: string, limit = 1): Promise<ClashApiCapitalRaidSeason[]> {
+    const result = await this.getOrNull<{ items: ClashApiCapitalRaidSeason[] }>(
+      `/clans/${encodeTag(tag)}/capitalraidseasons?limit=${limit}`,
+      tag,
+    );
+    return result?.items ?? [];
+  }
+
+  async getPlayer(tag: string): Promise<ClashApiPlayer | null> {
+    return this.getOrNull<ClashApiPlayer>(`/players/${encodeTag(tag)}`, tag);
+  }
+
   private async get<T>(path: string, tag: string): Promise<T> {
     const response = await this.fetchImpl(`${this.baseUrl}${path}`, {
       headers: {
@@ -51,5 +83,23 @@ export class ClashApiClient {
     }
 
     return (await response.json()) as T;
+  }
+
+  /**
+   * 403/404 are expected, non-error states for several of these endpoints
+   * (private war log, no war in progress, not in CWL) — callers treat
+   * "no data" and "not applicable right now" the same way, so this turns
+   * both into null instead of throwing. Any other status is still a real
+   * error and still throws.
+   */
+  private async getOrNull<T>(path: string, tag: string): Promise<T | null> {
+    try {
+      return await this.get<T>(path, tag);
+    } catch (error) {
+      if (error instanceof ClashApiError && (error.status === 403 || error.status === 404)) {
+        return null;
+      }
+      throw error;
+    }
   }
 }

@@ -9,6 +9,7 @@ import { getKickInactivityDays } from "@/lib/data/clan-rules";
 import { getClanMemberByTag } from "@/lib/data/members";
 import { getLeaderNotes } from "@/lib/data/notes";
 import { getViewerClan } from "@/lib/data/viewer-clan";
+import { getMemberRecentWars } from "@/lib/data/wars";
 import { daysInClan, formatLastActivity } from "@/lib/format-member";
 import { getMemberStatus } from "@/lib/member-status";
 import { ROLE_LABELS } from "@/lib/role-labels";
@@ -27,8 +28,14 @@ export default async function FichaPage({ params }: { params: Promise<{ tag: str
   const member = await getClanMemberByTag(supabase, viewerClan.clanId, playerTag, kickInactivityDays);
   if (!member) notFound();
 
-  const notes = await getLeaderNotes(supabase, member.id);
+  const [notes, recentWars] = await Promise.all([
+    getLeaderNotes(supabase, member.id),
+    getMemberRecentWars(supabase, member.id),
+  ]);
   const status = getMemberStatus(member);
+  // Oldest first, most recent last — matches the "de la más antigua a la
+  // más reciente" caption; recentWars comes back most-recent-first.
+  const warStars = [...recentWars].reverse().map((w) => w.stars);
 
   return (
     <div className="flex flex-col gap-4">
@@ -60,18 +67,20 @@ export default async function FichaPage({ params }: { params: Promise<{ tag: str
 
       <div>
         <p className="mb-2 text-sm text-text-secondary">Últimas 10 guerras</p>
-        <LastWarsRow />
+        <LastWarsRow stars={warStars} />
         <p className="mt-1 text-xs text-text-secondary">Estrellas por guerra, de la más antigua a la más reciente.</p>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
         <Card>
           <p className="text-xs text-text-secondary">Media por ataque</p>
-          <p className="font-heading text-lg">—</p>
+          <p className="font-heading text-lg">{member.avgStarsPerAttack ?? "—"}</p>
         </Card>
         <Card>
           <p className="text-xs text-text-secondary">Ataques usados</p>
-          <p className="font-heading text-lg">—</p>
+          <p className="font-heading text-lg">
+            {member.attacksUsed ?? "—"} de {member.attacksAvailable ?? "—"}
+          </p>
         </Card>
         <Card>
           <p className="text-xs text-text-secondary">Donadas y recibidas</p>

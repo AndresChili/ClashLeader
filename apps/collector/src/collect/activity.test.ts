@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { donationActivitySignals, hasDetectableActivity } from "./activity";
+import { donationActivitySignals, hasDetectableActivity, hasNewAttacks } from "./activity";
 
 describe("donationActivitySignals", () => {
   it("reports no change for a brand-new member with no prior snapshot", () => {
@@ -23,5 +23,23 @@ describe("donationActivitySignals", () => {
       { donations: 100, donationsReceived: 20 },
     );
     expect(hasDetectableActivity(signals)).toBe(false);
+  });
+});
+
+describe("hasNewAttacks", () => {
+  it("is true the first time a member shows any attacks", () => {
+    expect(hasNewAttacks(undefined, 1)).toBe(true);
+  });
+
+  it("is false the first time a member shows zero attacks", () => {
+    expect(hasNewAttacks(undefined, 0)).toBe(false);
+  });
+
+  it("is true when the count goes up", () => {
+    expect(hasNewAttacks(1, 2)).toBe(true);
+  });
+
+  it("is false when the count is unchanged", () => {
+    expect(hasNewAttacks(2, 2)).toBe(false);
   });
 });

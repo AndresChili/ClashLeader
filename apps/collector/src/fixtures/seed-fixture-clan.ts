@@ -9,10 +9,13 @@
  * seed.sql applied, since it attaches the fixture clan to the demo leader
  * account created there.
  */
-import { createClient } from "@supabase/supabase-js";
-import type { ClanMemberRole } from "../clash-api/types";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import type { ClanMemberRole, ClashApiCapitalRaidSeason, ClashApiWar, ClashApiWarClan } from "../clash-api/types";
+import { upsertCapitalContributions, upsertCapitalSeason } from "../db/capital";
 import { insertNewMember } from "../db/clan-members";
+import { openClanGamesSeason, upsertClanGamesPoints } from "../db/clan-games";
 import { insertMemberSnapshots, type MemberSnapshotInput } from "../db/snapshots";
+import { upsertWar, upsertWarAttacks, upsertWarRoster } from "../db/wars";
 
 const SUPABASE_URL = process.env.SUPABASE_URL ?? "http://127.0.0.1:54321";
 const SUPABASE_SERVICE_ROLE_KEY =
@@ -67,9 +70,11 @@ async function main() {
 
   const snapshots: MemberSnapshotInput[] = [];
   const now = Date.now();
+  const clanMemberIdByTag = new Map<string, string>();
 
   for (const member of FIXTURE_MEMBERS) {
     const clanMemberId = await insertNewMember(supabase, clan.id, member);
+    clanMemberIdByTag.set(member.tag, clanMemberId);
 
     const firstSeenAt = new Date(now - member.daysInClan * 24 * 60 * 60 * 1000).toISOString();
     const { error: updateError } = await supabase
@@ -92,7 +97,144 @@ async function main() {
 
   await insertMemberSnapshots(supabase, snapshots);
 
+  await seedWars(supabase, clan.id, clanMemberIdByTag);
+  await seedCapital(supabase, clan.id);
+  await seedClanGames(supabase, clan.id);
+
   console.log(`Seeded "Clan Ficticio" (${FIXTURE_CLAN_TAG}) with ${FIXTURE_MEMBERS.length} members for ${DEMO_LEADER_ID}.`);
+}
+
+function fixtureWarClan(
+  tag: string,
+  name: string,
+  members: { tag: string; name: string; townHallLevel: number; attacks: { stars: number; destructionPercentage: number }[] }[],
+): ClashApiWarClan {
+  const allAttacks = members.flatMap((m) => m.attacks);
+  return {
+    tag,
+    name,
+    clanLevel: 12,
+    attacks: allAttacks.length,
+    stars: allAttacks.reduce((sum, a) => sum + a.stars, 0),
+    destructionPercentage: allAttacks.length
+      ? allAttacks.reduce((sum, a) => sum + a.destructionPercentage, 0) / allAttacks.length
+      : 0,
+    members: members.map((m, i) => ({
+      tag: m.tag,
+      name: m.name,
+      mapPosition: i + 1,
+      townhallLevel: m.townHallLevel,
+      opponentAttacks: 0,
+      attacks: m.attacks.map((a, order) => ({
+        order: order + 1,
+        attackerTag: m.tag,
+        defenderTag: `#RIVAL${i + 1}`,
+        stars: a.stars,
+        duration: 90,
+        destructionPercentage: a.destructionPercentage,
+      })),
+    })),
+  };
+}
+
+/** One in-progress war (for the "En curso" tab) and one finished one (for "Historial"). */
+async function seedWars(supabase: SupabaseClient, clanId: string, clanMemberIdByTag: Map<string, string>) {
+  const ongoing: ClashApiWar = {
+    state: "inWar",
+    teamSize: FIXTURE_MEMBERS.length,
+    preparationStartTime: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+    startTime: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
+    endTime: new Date(Date.now() + 5 * 60 * 60 * 1000 + 12 * 60 * 1000).toISOString(),
+    clan: fixtureWarClan(FIXTURE_CLAN_TAG, "Clan Ficticio", [
+      { tag: "#P001", name: "Dragon77", townHallLevel: 15, attacks: [{ stars: 3, destructionPercentage: 100 }] },
+      { tag: "#P002", name: "Lucia_TH15", townHallLevel: 15, attacks: [{ stars: 2, destructionPercentage: 85 }] },
+      { tag: "#P003", name: "Nerea", townHallLevel: 14, attacks: [{ stars: 3, destructionPercentage: 95 }] },
+      { tag: "#P004", name: "Marcos", townHallLevel: 13, attacks: [] },
+      { tag: "#P005", name: "Rober_92", townHallLevel: 13, attacks: [] },
+      { tag: "#P006", name: "xKiller", townHallLevel: 12, attacks: [] },
+      { tag: "#P007", name: "ElPekas", townHallLevel: 11, attacks: [] },
+      { tag: "#P008", name: "Zarko", townHallLevel: 14, attacks: [{ stars: 2, destructionPercentage: 70 }] },
+    ]),
+    opponent: { tag: "#RIVAL", name: "Clan Rival", clanLevel: 11, attacks: 0, stars: 0, destructionPercentage: 0, members: [] },
+  };
+
+  const ongoingId = await upsertWar(supabase, {
+    clanId,
+    war: ongoing,
+    ours: ongoing.clan,
+    theirs: ongoing.opponent,
+    warType: "random",
+    warTag: null,
+    cwlGroupId: null,
+  });
+  await upsertWarRoster(supabase, ongoingId, ongoing.clan, clanMemberIdByTag);
+  await upsertWarAttacks(supabase, ongoingId, ongoing.clan);
+
+  const finished: ClashApiWar = {
+    state: "warEnded",
+    teamSize: FIXTURE_MEMBERS.length,
+    preparationStartTime: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+    startTime: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000 + 60 * 60 * 1000).toISOString(),
+    endTime: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+    clan: fixtureWarClan(FIXTURE_CLAN_TAG, "Clan Ficticio", [
+      { tag: "#P001", name: "Dragon77", townHallLevel: 15, attacks: [{ stars: 3, destructionPercentage: 100 }, { stars: 3, destructionPercentage: 100 }] },
+      { tag: "#P002", name: "Lucia_TH15", townHallLevel: 15, attacks: [{ stars: 3, destructionPercentage: 97 }, { stars: 2, destructionPercentage: 80 }] },
+      { tag: "#P003", name: "Nerea", townHallLevel: 14, attacks: [{ stars: 2, destructionPercentage: 88 }, { stars: 2, destructionPercentage: 90 }] },
+      { tag: "#P004", name: "Marcos", townHallLevel: 13, attacks: [{ stars: 1, destructionPercentage: 45 }] },
+      { tag: "#P008", name: "Zarko", townHallLevel: 14, attacks: [{ stars: 2, destructionPercentage: 75 }, { stars: 1, destructionPercentage: 50 }] },
+    ]),
+    opponent: { tag: "#RIVAL2", name: "Otro Rival", clanLevel: 11, attacks: 7, stars: 20, destructionPercentage: 72, members: [] },
+  };
+
+  const finishedId = await upsertWar(supabase, {
+    clanId,
+    war: finished,
+    ours: finished.clan,
+    theirs: finished.opponent,
+    warType: "random",
+    warTag: null,
+    cwlGroupId: null,
+  });
+  await upsertWarRoster(supabase, finishedId, finished.clan, clanMemberIdByTag);
+  await upsertWarAttacks(supabase, finishedId, finished.clan);
+}
+
+async function seedCapital(supabase: SupabaseClient, clanId: string) {
+  const season: ClashApiCapitalRaidSeason = {
+    state: "ended",
+    startTime: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(),
+    endTime: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+    capitalTotalLoot: 215000,
+    totalAttacks: 30,
+    members: FIXTURE_MEMBERS.slice(0, 6).map((m, i) => ({
+      tag: m.tag,
+      name: m.name,
+      attacks: 6 - i,
+      attackLimit: 5,
+      bonusAttackLimit: 1,
+      capitalResourcesLooted: 8000 - i * 900,
+    })),
+  };
+
+  const seasonRowId = await upsertCapitalSeason(supabase, clanId, season);
+  await upsertCapitalContributions(supabase, seasonRowId, season);
+}
+
+async function seedClanGames(supabase: SupabaseClient, clanId: string) {
+  const seasonId = new Date().toISOString().slice(0, 7); // same scheme as seasonIdForDate()
+  const seasonRowId = await openClanGamesSeason(supabase, clanId, seasonId, new Date());
+
+  await upsertClanGamesPoints(
+    supabase,
+    seasonRowId,
+    FIXTURE_MEMBERS.slice(0, 5).map((m, i) => ({
+      playerTag: m.tag,
+      playerName: m.name,
+      achievementValueBefore: 42000,
+      achievementValueAfter: 42000 + (3500 - i * 500),
+      points: 3500 - i * 500,
+    })),
+  );
 }
 
 main().catch((error: unknown) => {

@@ -18,8 +18,13 @@ async function main() {
       const result = await runClanCollection(clashApi, supabase, clan);
       await markClanCollected(supabase, clan.id);
       console.log(
-        `  ${result.clanTag}: ${result.memberCount} members, +${result.joined}/-${result.left}, ${result.activityDetected} active.`,
+        `  ${result.clanTag}: ${result.memberCount} members, +${result.joined}/-${result.left}, ${result.activityDetected} active, ` +
+          `war=${result.currentWarState ?? "none"}, cwl wars updated=${result.cwlWarsUpdated}, capital=${result.capitalCollected}, ` +
+          `clan games tracked=${result.clanGamesMembersTracked}.`,
       );
+      for (const warning of result.warnings) {
+        console.warn(`    ${result.clanTag}: ${warning}`);
+      }
     } catch (error) {
       failures += 1;
       if (error instanceof ClashApiError) {

@@ -10,7 +10,7 @@ avisa y propone — expulsar y ascender se hace siempre dentro del juego.
 > La app no cobra por nada.
 
 Proyecto de portfolio, construido por fases y documentado a medida que
-avanza. Estado actual: **fase 3 de 7** (ver [Fases](#fases)).
+avanza. Estado actual: **fase 4 de 7** (ver [Fases](#fases)).
 
 ## Capturas
 
@@ -115,6 +115,24 @@ repositorio.
   así que no hay contenido estático que valga la pena pre-renderizar;
   activarlo solo obligaba a envolver cada página en `<Suspense>` sin
   ningún beneficio real.
+- **Juegos del clan: la ventana de seguimiento es "un mes UTC", no el
+  calendario real del evento**: no hay forma de saber por API cuándo
+  empiezan o terminan los Juegos del Clan. El logro "Games Champion" es un
+  contador acumulado de por vida que solo sube mientras el evento está
+  activo, así que comparar su valor al abrir una ventana mensual contra su
+  valor más reciente aísla correctamente los puntos del evento sin
+  necesitar conocer sus fechas exactas — mismo principio que la detección
+  de reinicio de donaciones.
+- **"Última actividad" ahora también mira ataques de guerra y de
+  capital**, no solo donaciones: un ataque nuevo desde la última consulta
+  cuenta como actividad igual que una donación nueva (`hasNewAttacks` en
+  `collect/activity.ts`).
+- **Cada guerra necesita una clave estable para el upsert, pero la API solo
+  da `warTag` en ligas de clanes**: para guerras normales/amistosas se
+  sintetiza una (`reg:<preparationStartTime>`), así una sola restricción
+  `unique (clan_id, war_tag)` sirve para los dos casos en vez de dos
+  índices parciales (que `ON CONFLICT` no puede usar desde un `upsert()`
+  simple).
 - **El recolector se prueba contra un Postgres real, no solo con mocks**:
   `run-clan.integration.test.ts` corre dos capturas seguidas contra
   `supabase start` y comprueba entradas, salidas, reinicio de temporada de
@@ -170,7 +188,7 @@ bien, el recolector real también lo hará.
 1. **Base** — repositorio, CI, esquema con RLS y cuentas. ✅
 2. **Recolector** — miembros, capturas periódicas, entradas, salidas y última actividad. ✅
 3. **Miembros y ficha con datos reales.** ✅
-4. Guerras, liga, capital y juegos del clan, con histórico.
+4. **Guerras, liga, capital y juegos del clan, con histórico.** ✅
 5. Reglas: expulsión, ascensos, decisiones manuales e índice.
 6. Equipo: alta de clanes con verificación del líder, invitaciones y permisos.
 7. Cierre: panel, instalación en móvil, README y documentación de seguridad.

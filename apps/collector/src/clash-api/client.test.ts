@@ -45,3 +45,40 @@ describe("ClashApiClient.getClan", () => {
     await expect(client.getClan("#2PP")).rejects.toBeInstanceOf(ClashApiError);
   });
 });
+
+describe("ClashApiClient getOrNull-backed endpoints", () => {
+  it("getCurrentWar returns null on 403 (private war log) instead of throwing", async () => {
+    const fetchImpl = vi.fn().mockResolvedValue({ ok: false, status: 403 });
+    const client = new ClashApiClient({ baseUrl: "https://x", token: "t", fetchImpl: fetchImpl as unknown as typeof fetch });
+
+    await expect(client.getCurrentWar("#2PP")).resolves.toBeNull();
+  });
+
+  it("getCurrentWar returns null on 404 (no war tag yet) instead of throwing", async () => {
+    const fetchImpl = vi.fn().mockResolvedValue({ ok: false, status: 404 });
+    const client = new ClashApiClient({ baseUrl: "https://x", token: "t", fetchImpl: fetchImpl as unknown as typeof fetch });
+
+    await expect(client.getCurrentWar("#2PP")).resolves.toBeNull();
+  });
+
+  it("still throws on an unexpected status like 500", async () => {
+    const fetchImpl = vi.fn().mockResolvedValue({ ok: false, status: 500 });
+    const client = new ClashApiClient({ baseUrl: "https://x", token: "t", fetchImpl: fetchImpl as unknown as typeof fetch });
+
+    await expect(client.getCurrentWar("#2PP")).rejects.toBeInstanceOf(ClashApiError);
+  });
+
+  it("getCapitalRaidSeasons returns an empty array instead of null", async () => {
+    const fetchImpl = vi.fn().mockResolvedValue({ ok: false, status: 404 });
+    const client = new ClashApiClient({ baseUrl: "https://x", token: "t", fetchImpl: fetchImpl as unknown as typeof fetch });
+
+    await expect(client.getCapitalRaidSeasons("#2PP")).resolves.toEqual([]);
+  });
+
+  it("getCapitalRaidSeasons unwraps the items array when present", async () => {
+    const fetchImpl = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ items: [{ state: "ended" }] }) });
+    const client = new ClashApiClient({ baseUrl: "https://x", token: "t", fetchImpl: fetchImpl as unknown as typeof fetch });
+
+    await expect(client.getCapitalRaidSeasons("#2PP")).resolves.toEqual([{ state: "ended" }]);
+  });
+});

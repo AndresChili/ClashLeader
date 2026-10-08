@@ -14,6 +14,9 @@ import { upsertDonationSeasonTotal } from "./db/donation-totals";
 import { insertMembershipEvents, type MembershipEventInput } from "./db/membership-events";
 import { getLatestSnapshots, insertMemberSnapshots, type MemberSnapshotInput } from "./db/snapshots";
 import type { RegisteredClan } from "./db/registered-clans";
+import { collectClanWarLeague, collectCurrentWar } from "./run-clan-war";
+import { collectCapital } from "./run-clan-capital";
+import { collectClanGames } from "./run-clan-clan-games";
 
 export interface RunClanResult {
   clanTag: string;
@@ -21,6 +24,11 @@ export interface RunClanResult {
   joined: number;
   left: number;
   activityDetected: number;
+  currentWarState: string | null;
+  cwlWarsUpdated: number;
+  capitalCollected: boolean;
+  clanGamesMembersTracked: number;
+  warnings: string[];
 }
 
 export async function runClanCollection(
@@ -129,11 +137,56 @@ export async function runClanCollection(
 
   await insertMemberSnapshots(supabase, snapshotsToInsert);
 
+  // War, capital and clan games each hit different endpoints and can fail
+  // independently (private war log, no CWL this season, proxy hiccup);
+  // none of those should throw away the member/donation data already
+  // saved above, so each gets its own try/catch.
+  const warnings: string[] = [];
+
+  let currentWarState: string | null = null;
+  try {
+    currentWarState = await collectCurrentWar(clashApi, supabase, clan.id, clan.tag, clanMemberIdByTag, now);
+  } catch (error) {
+    warnings.push(`current war: ${error instanceof Error ? error.message : String(error)}`);
+  }
+
+  let cwlWarsUpdated = 0;
+  try {
+    cwlWarsUpdated = await collectClanWarLeague(clashApi, supabase, clan.id, clan.tag, clanMemberIdByTag, now);
+  } catch (error) {
+    warnings.push(`CWL: ${error instanceof Error ? error.message : String(error)}`);
+  }
+
+  let capitalCollected = false;
+  try {
+    capitalCollected = await collectCapital(clashApi, supabase, clan.id, clan.tag, clanMemberIdByTag, now);
+  } catch (error) {
+    warnings.push(`capital: ${error instanceof Error ? error.message : String(error)}`);
+  }
+
+  let clanGamesMembersTracked = 0;
+  try {
+    clanGamesMembersTracked = await collectClanGames(
+      clashApi,
+      supabase,
+      clan.id,
+      apiClan.memberList.map((m) => ({ tag: m.tag, name: m.name })),
+      now,
+    );
+  } catch (error) {
+    warnings.push(`clan games: ${error instanceof Error ? error.message : String(error)}`);
+  }
+
   return {
     clanTag: clan.tag,
     memberCount: apiClan.memberList.length,
     joined: joinedTags.size,
     left: leftTags.size,
     activityDetected,
+    currentWarState,
+    cwlWarsUpdated,
+    capitalCollected,
+    clanGamesMembersTracked,
+    warnings,
   };
 }

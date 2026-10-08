@@ -16,7 +16,14 @@ const CHIPS: { id: Chip; label: string }[] = [
   { id: "guerra", label: "Para guerra" },
 ];
 
-export function MembersList({ members }: { members: MemberSummary[] }) {
+export function MembersList({
+  members,
+  currentWarTags,
+}: {
+  members: MemberSummary[];
+  /** Player tags rostered in the in-progress war, or null when there isn't one right now. */
+  currentWarTags: Set<string> | null;
+}) {
   const [query, setQuery] = useState("");
   const [chip, setChip] = useState<Chip>("todos");
 
@@ -24,11 +31,9 @@ export function MembersList({ members }: { members: MemberSummary[] }) {
     const byQuery = members.filter((member) => member.name.toLowerCase().includes(query.trim().toLowerCase()));
 
     if (chip === "expulsar") return byQuery.filter((member) => member.isInactive);
-    // "Para guerra" needs the current war roster, which doesn't exist
-    // until phase 4 — honestly empty rather than guessing who's in it.
-    if (chip === "guerra") return [];
+    if (chip === "guerra") return currentWarTags ? byQuery.filter((member) => currentWarTags.has(member.playerTag)) : [];
     return byQuery;
-  }, [members, query, chip]);
+  }, [members, query, chip, currentWarTags]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -55,7 +60,7 @@ export function MembersList({ members }: { members: MemberSummary[] }) {
         ))}
       </div>
 
-      {chip === "guerra" ? (
+      {chip === "guerra" && !currentWarTags ? (
         <p className="rounded-xl border border-border bg-card p-4 text-sm text-text-secondary">
           No hay guerra en curso registrada todavía.
         </p>
@@ -79,7 +84,8 @@ export function MembersList({ members }: { members: MemberSummary[] }) {
                       {member.name} · {ROLE_LABELS[member.inGameRole]}
                     </p>
                     <p className="truncate text-xs text-text-secondary">
-                      {member.donations ?? "—"} donadas · — por ataque · —% usados
+                      {member.donations ?? "—"} donadas · {member.avgStarsPerAttack ?? "—"} por ataque ·{" "}
+                      {member.attackUsagePct ?? "—"}% usados
                     </p>
                   </div>
                   <Pill tone={status.tone}>{status.label}</Pill>
