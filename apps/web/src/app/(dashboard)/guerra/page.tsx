@@ -1,8 +1,7 @@
 import { Card } from "@/components/ui/Card";
-import { getKickInactivityDays } from "@/lib/data/clan-rules";
 import { getClanMembers } from "@/lib/data/members";
 import { getViewerClan } from "@/lib/data/viewer-clan";
-import { getCurrentWar, getCwlGroup, getMemberReliability, getWarHistory } from "@/lib/data/wars";
+import { getCurrentWar, getCwlGroup, getWarHistory } from "@/lib/data/wars";
 import { attacksAllowedFor } from "@/lib/format-war";
 import { createClient } from "@/lib/supabase/server";
 import { GuerraTabs, type LineupEntry, type PendingAttack } from "./GuerraTabs";
@@ -21,13 +20,11 @@ export default async function GuerraPage() {
     );
   }
 
-  const kickInactivityDays = await getKickInactivityDays(supabase, viewerClan.clanId);
-  const [currentWar, history, cwlGroup, members, reliability] = await Promise.all([
+  const [currentWar, history, cwlGroup, members] = await Promise.all([
     getCurrentWar(supabase, viewerClan.clanId),
     getWarHistory(supabase, viewerClan.clanId),
     getCwlGroup(supabase, viewerClan.clanId),
-    getClanMembers(supabase, viewerClan.clanId, kickInactivityDays),
-    getMemberReliability(supabase, viewerClan.clanId),
+    getClanMembers(supabase, viewerClan.clanId),
   ]);
 
   const pendingAttacks: PendingAttack[] = currentWar
@@ -44,16 +41,13 @@ export default async function GuerraPage() {
   const currentWarTags = currentWar ? new Set(currentWar.members.map((m) => m.playerTag)) : new Set<string>();
 
   const lineup: LineupEntry[] = members
-    .map((member) => {
-      const r = reliability.get(member.id);
-      return {
-        playerTag: member.playerTag,
-        playerName: member.name,
-        usagePct: r?.usagePct ?? null,
-        avgStars: r?.avgStars ?? null,
-        inCurrentWar: currentWarTags.has(member.playerTag),
-      };
-    })
+    .map((member) => ({
+      playerTag: member.playerTag,
+      playerName: member.name,
+      usagePct: member.attackUsagePct,
+      avgStars: member.avgStarsPerAttack,
+      inCurrentWar: currentWarTags.has(member.playerTag),
+    }))
     .sort((a, b) => (b.usagePct ?? -1) - (a.usagePct ?? -1) || (b.avgStars ?? -1) - (a.avgStars ?? -1));
 
   return (

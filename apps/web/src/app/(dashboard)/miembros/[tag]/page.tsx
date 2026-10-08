@@ -5,12 +5,11 @@ import { LastWarsRow } from "@/components/LastWarsRow";
 import { ProgressBar } from "@/components/ProgressBar";
 import { Card } from "@/components/ui/Card";
 import { Pill } from "@/components/ui/Pill";
-import { getKickInactivityDays } from "@/lib/data/clan-rules";
-import { getClanMemberByTag } from "@/lib/data/members";
 import { getLeaderNotes } from "@/lib/data/notes";
 import { getViewerClan } from "@/lib/data/viewer-clan";
 import { getMemberRecentWars } from "@/lib/data/wars";
 import { daysInClan, formatLastActivity } from "@/lib/format-member";
+import { getClanEvaluations } from "@/lib/get-clan-evaluations";
 import { getMemberStatus } from "@/lib/member-status";
 import { ROLE_LABELS } from "@/lib/role-labels";
 import { createClient } from "@/lib/supabase/server";
@@ -24,15 +23,16 @@ export default async function FichaPage({ params }: { params: Promise<{ tag: str
   const viewerClan = await getViewerClan(supabase);
   if (!viewerClan) notFound();
 
-  const kickInactivityDays = await getKickInactivityDays(supabase, viewerClan.clanId);
-  const member = await getClanMemberByTag(supabase, viewerClan.clanId, playerTag, kickInactivityDays);
+  const { members, evaluations } = await getClanEvaluations(supabase, viewerClan.clanId);
+  const member = members.find((m) => m.playerTag === playerTag);
   if (!member) notFound();
+  const evaluation = evaluations.get(member.id)!;
 
   const [notes, recentWars] = await Promise.all([
     getLeaderNotes(supabase, member.id),
     getMemberRecentWars(supabase, member.id),
   ]);
-  const status = getMemberStatus(member);
+  const status = getMemberStatus(evaluation);
   // Oldest first, most recent last — matches the "de la más antigua a la
   // más reciente" caption; recentWars comes back most-recent-first.
   const warStars = [...recentWars].reverse().map((w) => w.stars);
@@ -55,12 +55,12 @@ export default async function FichaPage({ params }: { params: Promise<{ tag: str
 
       <Card className="flex flex-col gap-4">
         <div className="flex items-center gap-4">
-          <IndexBadge tone="info" />
+          <IndexBadge tone={status.tone} value={evaluation.index.score} />
           <div className="flex-1 flex-col gap-2">
-            <ProgressBar label="Guerra" />
-            <ProgressBar label="Donaciones" />
-            <ProgressBar label="Capital" />
-            <ProgressBar label="Juegos" />
+            <ProgressBar label="Guerra" value={evaluation.index.breakdown.war} />
+            <ProgressBar label="Donaciones" value={evaluation.index.breakdown.donations} />
+            <ProgressBar label="Capital" value={evaluation.index.breakdown.capital} />
+            <ProgressBar label="Juegos" value={evaluation.index.breakdown.games} />
           </div>
         </div>
       </Card>

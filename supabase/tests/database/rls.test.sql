@@ -6,7 +6,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(16);
+select plan(18);
 
 -- ---------------------------------------------------------------------------
 -- Fixtures: two clans, each with an admin (leader) and a reader (co-leader),
@@ -123,6 +123,12 @@ select is(
   'clan 1 admin sees clan 1 latest snapshots via the viewer RPC'
 );
 
+select lives_ok(
+  $$ insert into public.promotion_decisions (clan_member_id, candidate_type, status, decided_by, decided_at)
+     values ('20000000-0000-0000-0000-000000000001', 'veteran', 'approved', '00000000-0000-0000-0000-000000000001', now()) $$,
+  'clan 1 admin can approve a promotion candidate'
+);
+
 -- ---------------------------------------------------------------------------
 -- 3. Reader of clan 1 can read but not write.
 -- ---------------------------------------------------------------------------
@@ -145,6 +151,13 @@ select throws_ok(
      values ('20000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000002', 'nota') $$,
   'new row violates row-level security policy for table "leader_notes"',
   'clan 1 reader cannot add a leader note'
+);
+
+select throws_ok(
+  $$ insert into public.promotion_decisions (clan_member_id, candidate_type, status, decided_by, decided_at)
+     values ('20000000-0000-0000-0000-000000000001', 'coleader', 'approved', '00000000-0000-0000-0000-000000000002', now()) $$,
+  'new row violates row-level security policy for table "promotion_decisions"',
+  'clan 1 reader cannot approve a promotion candidate'
 );
 
 -- ---------------------------------------------------------------------------

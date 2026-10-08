@@ -1,3 +1,10 @@
 export { DEFAULT_CLAN_RULES } from "./types";
 export type { ClanRules } from "./types";
 export { daysSinceLastActivity, isInactiveBeyondThreshold } from "./inactivity";
+export { evaluateKick } from "./kick";
+export type { KickEvaluation, KickReason, LastFinishedWarRoster } from "./kick";
+export { isAtRisk } from "./at-risk";
+export { isColeaderCandidate, isVeteranCandidate } from "./candidates";
+export type { ColeaderCandidateInput, VeteranCandidateInput } from "./candidates";
+export { computeIndex } from "./index-score";
+export type { IndexBreakdown, IndexInputs, IndexResult } from "./index-score";

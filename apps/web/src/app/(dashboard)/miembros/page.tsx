@@ -1,8 +1,6 @@
 import { Card } from "@/components/ui/Card";
-import { getKickInactivityDays } from "@/lib/data/clan-rules";
-import { getClanMembers } from "@/lib/data/members";
 import { getViewerClan } from "@/lib/data/viewer-clan";
-import { getCurrentWar } from "@/lib/data/wars";
+import { getClanEvaluations } from "@/lib/get-clan-evaluations";
 import { createClient } from "@/lib/supabase/server";
 import { MembersList } from "./MembersList";
 
@@ -22,12 +20,7 @@ export default async function MiembrosPage() {
     );
   }
 
-  const kickInactivityDays = await getKickInactivityDays(supabase, viewerClan.clanId);
-  const [members, currentWar] = await Promise.all([
-    getClanMembers(supabase, viewerClan.clanId, kickInactivityDays),
-    getCurrentWar(supabase, viewerClan.clanId),
-  ]);
-
+  const { members, evaluations, currentWar } = await getClanEvaluations(supabase, viewerClan.clanId);
   const currentWarTags = currentWar ? new Set(currentWar.members.map((m) => m.playerTag)) : null;
 
   return (
@@ -37,7 +30,7 @@ export default async function MiembrosPage() {
         <span className="text-sm text-text-secondary">{members.length} de 50</span>
       </div>
 
-      <MembersList members={members} currentWarTags={currentWarTags} />
+      <MembersList members={members} evaluations={evaluations} currentWarTags={currentWarTags} />
     </div>
   );
 }

@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { IndexBadge } from "@/components/IndexBadge";
 import { Pill } from "@/components/ui/Pill";
 import type { MemberSummary } from "@/lib/data/members";
+import type { MemberEvaluation } from "@/lib/member-evaluation";
 import { getMemberStatus } from "@/lib/member-status";
 import { ROLE_LABELS } from "@/lib/role-labels";
 
@@ -18,9 +19,11 @@ const CHIPS: { id: Chip; label: string }[] = [
 
 export function MembersList({
   members,
+  evaluations,
   currentWarTags,
 }: {
   members: MemberSummary[];
+  evaluations: Map<string, MemberEvaluation>;
   /** Player tags rostered in the in-progress war, or null when there isn't one right now. */
   currentWarTags: Set<string> | null;
 }) {
@@ -30,10 +33,10 @@ export function MembersList({
   const filtered = useMemo(() => {
     const byQuery = members.filter((member) => member.name.toLowerCase().includes(query.trim().toLowerCase()));
 
-    if (chip === "expulsar") return byQuery.filter((member) => member.isInactive);
+    if (chip === "expulsar") return byQuery.filter((member) => evaluations.get(member.id)?.kick.shouldKick);
     if (chip === "guerra") return currentWarTags ? byQuery.filter((member) => currentWarTags.has(member.playerTag)) : [];
     return byQuery;
-  }, [members, query, chip, currentWarTags]);
+  }, [members, query, chip, currentWarTags, evaluations]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -71,14 +74,15 @@ export function MembersList({
       ) : (
         <ul className="flex flex-col gap-2">
           {filtered.map((member) => {
-            const status = getMemberStatus(member);
+            const evaluation = evaluations.get(member.id);
+            const status = evaluation ? getMemberStatus(evaluation) : { label: "Sin datos", tone: "info" as const };
             return (
               <li key={member.id}>
                 <Link
                   href={`/miembros/${encodeURIComponent(member.playerTag.replace("#", ""))}`}
                   className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3"
                 >
-                  <IndexBadge tone={status.tone} />
+                  <IndexBadge tone={status.tone} value={evaluation?.index.score} />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium text-text">
                       {member.name} · {ROLE_LABELS[member.inGameRole]}

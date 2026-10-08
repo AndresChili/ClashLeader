@@ -111,6 +111,7 @@ export async function getCwlGroup(supabase: SupabaseClient, clanId: string): Pro
 
 export interface MemberReliability {
   warsCounted: number;
+  warsAttacked: number;
   attacksUsed: number;
   attacksAvailable: number;
   usagePct: number | null;
@@ -125,6 +126,7 @@ export async function getMemberReliability(supabase: SupabaseClient, clanId: str
   for (const row of data ?? []) {
     byMemberId.set(row.clan_member_id as string, {
       warsCounted: row.wars_counted as number,
+      warsAttacked: row.wars_attacked as number,
       attacksUsed: row.attacks_used as number,
       attacksAvailable: row.attacks_available as number,
       usagePct: row.usage_pct as number | null,

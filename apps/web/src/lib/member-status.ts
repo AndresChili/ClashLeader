@@ -1,5 +1,5 @@
 import type { PillTone } from "@/components/ui/Pill";
-import type { MemberSummary } from "@/lib/data/members";
+import type { MemberEvaluation } from "@/lib/member-evaluation";
 
 export interface MemberStatus {
   label: string;
@@ -7,15 +7,18 @@ export interface MemberStatus {
 }
 
 /**
- * The design's full status vocabulary (Cumple / Flojo / En riesgo /
- * Expulsar) comes from the weighted índice and the war-attendance rule,
- * neither of which exist until phases 4–5. Until then this only ever
- * returns "Expulsar" (the one rule phase 3 can actually compute) or an
- * honest "Sin datos" — never a guessed Cumple/Flojo.
+ * Expulsar beats En riesgo beats the índice verdict: a member already
+ * flagged for removal, or silent in the live war, is a more urgent signal
+ * than their general standing.
  */
-export function getMemberStatus(member: Pick<MemberSummary, "isInactive">): MemberStatus {
-  if (member.isInactive) {
+export function getMemberStatus(evaluation: Pick<MemberEvaluation, "kick" | "atRisk" | "index">): MemberStatus {
+  if (evaluation.kick.shouldKick) {
     return { label: "Expulsar", tone: "bad" };
   }
-  return { label: "Sin datos", tone: "info" };
+  if (evaluation.atRisk) {
+    return { label: "En riesgo", tone: "warn" };
+  }
+  return evaluation.index.verdict === "Cumple"
+    ? { label: "Cumple", tone: "good" }
+    : { label: "Flojo", tone: "warn" };
 }

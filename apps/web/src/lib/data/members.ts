@@ -1,5 +1,4 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { isInactiveBeyondThreshold } from "@clashleader/rules";
 import { getMemberReliability } from "./wars";
 
 export type MemberRole = "member" | "admin" | "coLeader" | "leader";
@@ -29,25 +28,22 @@ export interface MemberSummary {
   leagueName: string | null;
   trophies: number | null;
   townHallLevel: number | null;
-  /** All-time across every war on record (see member_war_reliability()); null until the member's first finished war. */
+  /** All-time across every finished war on record (see member_war_reliability()); null until the member's first finished war. */
   avgStarsPerAttack: number | null;
   attackUsagePct: number | null;
   attacksUsed: number | null;
   attacksAvailable: number | null;
-  /**
-   * Only the inactivity half of "Expulsar" — "no attacks in a finished
-   * war" (the other half) needs packages/rules' war-based kick rule,
-   * which lands in phase 5 alongside the índice.
-   */
-  isInactive: boolean;
+  warsRostered: number;
+  warsAttacked: number;
 }
 
-export async function getClanMembers(
-  supabase: SupabaseClient,
-  clanId: string,
-  kickInactivityDays: number,
-  now: Date = new Date(),
-): Promise<MemberSummary[]> {
+/**
+ * Raw facts only — no rule evaluation here. Kick/at-risk/candidate/índice
+ * verdicts are computed from this by lib/member-evaluation.ts, which also
+ * needs war/capital/clan-games data this function doesn't fetch, so
+ * mixing the two here would just mean fetching it twice.
+ */
+export async function getClanMembers(supabase: SupabaseClient, clanId: string): Promise<MemberSummary[]> {
   const [{ data: members, error: membersError }, { data: snapshots, error: snapshotsError }, reliabilityByMemberId] =
     await Promise.all([
       supabase
@@ -70,7 +66,6 @@ export async function getClanMembers(
   return members.map((member) => {
     const snapshot = snapshotByMemberId.get(member.id as string);
     const reliability = reliabilityByMemberId.get(member.id as string);
-    const firstSeenAt = (member.manual_join_date as string | null) ?? (member.first_seen_at as string);
 
     return {
       id: member.id as string,
@@ -90,26 +85,15 @@ export async function getClanMembers(
       attackUsagePct: reliability?.usagePct ?? null,
       attacksUsed: reliability?.attacksUsed ?? null,
       attacksAvailable: reliability?.attacksAvailable ?? null,
-      isInactive: isInactiveBeyondThreshold({
-        lastActivityDetectedAt: member.last_activity_detected_at ? new Date(member.last_activity_detected_at as string) : null,
-        firstSeenAt: new Date(firstSeenAt),
-        now,
-        kickInactivityDays,
-      }),
+      warsRostered: reliability?.warsCounted ?? 0,
+      warsAttacked: reliability?.warsAttacked ?? 0,
     };
   });
 }
 
-export async function getClanMemberByTag(
-  supabase: SupabaseClient,
-  clanId: string,
-  playerTag: string,
-  kickInactivityDays: number,
-  now: Date = new Date(),
-): Promise<MemberSummary | null> {
-  // A single clan has at most 50 members, so reusing the list query (which
-  // already does one members fetch + one snapshot RPC) is simpler and no
-  // slower in practice than two bespoke single-row queries would be.
-  const members = await getClanMembers(supabase, clanId, kickInactivityDays, now);
+export async function getClanMemberByTag(supabase: SupabaseClient, clanId: string, playerTag: string): Promise<MemberSummary | null> {
+  // A single clan has at most 50 members, so reusing the list query is
+  // simpler and no slower in practice than a bespoke single-row query.
+  const members = await getClanMembers(supabase, clanId);
   return members.find((member) => member.playerTag === playerTag) ?? null;
 }

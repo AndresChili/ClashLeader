@@ -10,7 +10,7 @@ avisa y propone — expulsar y ascender se hace siempre dentro del juego.
 > La app no cobra por nada.
 
 Proyecto de portfolio, construido por fases y documentado a medida que
-avanza. Estado actual: **fase 4 de 7** (ver [Fases](#fases)).
+avanza. Estado actual: **fase 5 de 7** (ver [Fases](#fases)).
 
 ## Capturas
 
@@ -133,6 +133,28 @@ repositorio.
   `unique (clan_id, war_tag)` sirve para los dos casos en vez de dos
   índices parciales (que `ON CONFLICT` no puede usar desde un `upsert()`
   simple).
+- **El índice reparte cada categoría a 0–100 con puntos de referencia
+  reutilizados, no inventados**: el prompt fija los *pesos* (guerra 40,
+  donaciones 30, capital 15, juegos 15, todos editables) pero no cómo
+  convertir cada estadística cruda en un 0–100. Donaciones usa el propio
+  umbral editable de colíder como "nota máxima" en vez de un número mágico
+  nuevo; capital y guerra usan el % de ataques utilizados; juegos usa el
+  tope clásico de 4000 puntos por evento. Documentado en
+  `packages/rules/src/index-score.ts`, no escondido en el código.
+- **"Actividad casi diaria" (requisito de colíder) es una aproximación
+  documentada, no un cálculo exacto**: el recolector solo guarda la última
+  marca de actividad detectada, no un registro día a día, así que no hay
+  forma de contar "cuántos días distintos estuvo activo" con el esquema
+  actual. La app trata "detectada en las últimas 48 horas" como el proxy,
+  explicado en `packages/rules/src/candidates.ts` y
+  `lib/member-evaluation.ts`.
+- **El clan ficticio reveló su propio bug**: al añadir guerra/capital/
+  juegos al fixture, nadie tenía `last_activity_detected_at`, así que la
+  regla de expulsión por inactividad usaba `first_seen_at` como respaldo y
+  marcaba a todo el clan como "Expulsar" (días de pertenencia, no de
+  inactividad real). Arreglado dándole a cada miembro ficticio una marca
+  de actividad realista — dos de ellos deliberadamente antigua, para que
+  el fixture siga enseñando el caso "Expulsar" que muestra el diseño.
 - **El recolector se prueba contra un Postgres real, no solo con mocks**:
   `run-clan.integration.test.ts` corre dos capturas seguidas contra
   `supabase start` y comprueba entradas, salidas, reinicio de temporada de
@@ -189,7 +211,7 @@ bien, el recolector real también lo hará.
 2. **Recolector** — miembros, capturas periódicas, entradas, salidas y última actividad. ✅
 3. **Miembros y ficha con datos reales.** ✅
 4. **Guerras, liga, capital y juegos del clan, con histórico.** ✅
-5. Reglas: expulsión, ascensos, decisiones manuales e índice.
+5. **Reglas: expulsión, ascensos, decisiones manuales e índice.** ✅
 6. Equipo: alta de clanes con verificación del líder, invitaciones y permisos.
 7. Cierre: panel, instalación en móvil, README y documentación de seguridad.
 

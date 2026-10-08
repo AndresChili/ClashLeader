@@ -34,17 +34,19 @@ interface FixtureMember {
   trophies: number;
   townHallLevel: number;
   daysInClan: number;
+  /** Hours since last detected activity — kept recent for most, stale (>kick_inactivity_days) for the two meant to demo "Expulsar". */
+  activityHoursAgo: number;
 }
 
 const FIXTURE_MEMBERS: FixtureMember[] = [
-  { tag: "#P001", name: "Dragon77", role: "coLeader", donations: 1840, donationsReceived: 620, expLevel: 180, trophies: 5200, townHallLevel: 15, daysInClan: 210 },
-  { tag: "#P002", name: "Lucia_TH15", role: "admin", donations: 1210, donationsReceived: 540, expLevel: 165, trophies: 4800, townHallLevel: 15, daysInClan: 205 },
-  { tag: "#P003", name: "Nerea", role: "coLeader", donations: 960, donationsReceived: 410, expLevel: 150, trophies: 4600, townHallLevel: 14, daysInClan: 150 },
-  { tag: "#P004", name: "Marcos", role: "member", donations: 320, donationsReceived: 180, expLevel: 120, trophies: 4100, townHallLevel: 13, daysInClan: 95 },
-  { tag: "#P005", name: "Rober_92", role: "member", donations: 0, donationsReceived: 90, expLevel: 110, trophies: 3900, townHallLevel: 13, daysInClan: 60 },
-  { tag: "#P006", name: "xKiller", role: "member", donations: 0, donationsReceived: 40, expLevel: 95, trophies: 3600, townHallLevel: 12, daysInClan: 40 },
-  { tag: "#P007", name: "ElPekas", role: "member", donations: 120, donationsReceived: 60, expLevel: 80, trophies: 3200, townHallLevel: 11, daysInClan: 2 },
-  { tag: "#P008", name: "Zarko", role: "member", donations: 450, donationsReceived: 300, expLevel: 140, trophies: 4300, townHallLevel: 14, daysInClan: 130 },
+  { tag: "#P001", name: "Dragon77", role: "coLeader", donations: 1840, donationsReceived: 620, expLevel: 180, trophies: 5200, townHallLevel: 15, daysInClan: 210, activityHoursAgo: 2 },
+  { tag: "#P002", name: "Lucia_TH15", role: "admin", donations: 1210, donationsReceived: 540, expLevel: 165, trophies: 4800, townHallLevel: 15, daysInClan: 205, activityHoursAgo: 1 },
+  { tag: "#P003", name: "Nerea", role: "coLeader", donations: 960, donationsReceived: 410, expLevel: 150, trophies: 4600, townHallLevel: 14, daysInClan: 150, activityHoursAgo: 3 },
+  { tag: "#P004", name: "Marcos", role: "member", donations: 320, donationsReceived: 180, expLevel: 120, trophies: 4100, townHallLevel: 13, daysInClan: 95, activityHoursAgo: 5 },
+  { tag: "#P005", name: "Rober_92", role: "member", donations: 0, donationsReceived: 90, expLevel: 110, trophies: 3900, townHallLevel: 13, daysInClan: 60, activityHoursAgo: 4 * 24 },
+  { tag: "#P006", name: "xKiller", role: "member", donations: 0, donationsReceived: 40, expLevel: 95, trophies: 3600, townHallLevel: 12, daysInClan: 40, activityHoursAgo: 4 * 24 },
+  { tag: "#P007", name: "ElPekas", role: "member", donations: 120, donationsReceived: 60, expLevel: 80, trophies: 3200, townHallLevel: 11, daysInClan: 2, activityHoursAgo: 1 },
+  { tag: "#P008", name: "Zarko", role: "member", donations: 450, donationsReceived: 300, expLevel: 140, trophies: 4300, townHallLevel: 14, daysInClan: 130, activityHoursAgo: 6 },
 ];
 
 async function main() {
@@ -77,9 +79,10 @@ async function main() {
     clanMemberIdByTag.set(member.tag, clanMemberId);
 
     const firstSeenAt = new Date(now - member.daysInClan * 24 * 60 * 60 * 1000).toISOString();
+    const lastActivityDetectedAt = new Date(now - member.activityHoursAgo * 60 * 60 * 1000).toISOString();
     const { error: updateError } = await supabase
       .from("clan_members")
-      .update({ first_seen_at: firstSeenAt })
+      .update({ first_seen_at: firstSeenAt, last_activity_detected_at: lastActivityDetectedAt })
       .eq("id", clanMemberId);
     if (updateError) throw new Error(`Could not backdate ${member.name}: ${updateError.message}`);
 
