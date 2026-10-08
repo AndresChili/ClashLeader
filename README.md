@@ -10,12 +10,13 @@ avisa y propone — expulsar y ascender se hace siempre dentro del juego.
 > La app no cobra por nada.
 
 Proyecto de portfolio, construido por fases y documentado a medida que
-avanza. Estado actual: **fase 2 de 7** (ver [Fases](#fases)).
+avanza. Estado actual: **fase 3 de 7** (ver [Fases](#fases)).
 
 ## Capturas
 
-_Pendiente: se añaden a partir de la fase 3, cuando hay pantallas con datos
-reales que enseñar._ El diseño completo de las 7 pantallas (más
+_Pendiente: se añaden en la fase 7 (cierre), cuando todas las pantallas
+tengan datos reales y no solo los placeholders "—" de las fases
+intermedias._ El diseño completo de las 7 pantallas (más
 registro/login/alta de clan) sigue `diseno-app-clan.png` en la raíz del
 repositorio.
 
@@ -101,6 +102,19 @@ repositorio.
   sale y vuelve, el recolector crea una fila nueva en vez de revivir la
   antigua, así que el contador de días siempre refleja la membresía
   actual, no la histórica acumulada.
+- **Miembros/Ficha muestran "—" en vez de inventar números**: el índice
+  0–100, las 4 barras (guerra/donaciones/capital/juegos), la media por
+  ataque, el % de ataques usados y "Últimas 10 guerras" dependen de datos
+  de guerra/capital/juegos (fase 4) y del paquete de reglas (fase 5), que
+  todavía no existen. Donaciones, días en el clan, última actividad y el
+  estado "Expulsar" por inactividad sí son reales porque sólo dependen de
+  lo que el recolector ya guarda. Decisión confirmada con el usuario antes
+  de construir las pantallas, para no tener que rehacerlas en fase 4/5.
+- **`cacheComponents` (PPR) va desactivado en `next.config.ts`**: toda la
+  app está detrás de autenticación y lee datos por clan en cada petición,
+  así que no hay contenido estático que valga la pena pre-renderizar;
+  activarlo solo obligaba a envolver cada página en `<Suspense>` sin
+  ningún beneficio real.
 - **El recolector se prueba contra un Postgres real, no solo con mocks**:
   `run-clan.integration.test.ts` corre dos capturas seguidas contra
   `supabase start` y comprueba entradas, salidas, reinicio de temporada de
@@ -155,7 +169,7 @@ bien, el recolector real también lo hará.
 
 1. **Base** — repositorio, CI, esquema con RLS y cuentas. ✅
 2. **Recolector** — miembros, capturas periódicas, entradas, salidas y última actividad. ✅
-3. Miembros y ficha con datos reales.
+3. **Miembros y ficha con datos reales.** ✅
 4. Guerras, liga, capital y juegos del clan, con histórico.
 5. Reglas: expulsión, ascensos, decisiones manuales e índice.
 6. Equipo: alta de clanes con verificación del líder, invitaciones y permisos.

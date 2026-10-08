@@ -30,8 +30,10 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
-  cacheComponents: true,
-  partialPrefetching: true,
+  // Cache Components (PPR-style static shells) buys nothing here: every
+  // route is behind auth and reads per-clan data, so there's no static
+  // content worth prerendering — only Suspense boilerplate for no benefit.
+  // See README "Decisiones técnicas".
   turbopack: {
     rules: {
       "*.css": {

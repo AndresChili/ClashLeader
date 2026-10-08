@@ -6,7 +6,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(14);
+select plan(16);
 
 -- ---------------------------------------------------------------------------
 -- Fixtures: two clans, each with an admin (leader) and a reader (co-leader),
@@ -34,6 +34,9 @@ values
 
 insert into public.clan_members (id, clan_id, player_tag, name, in_game_role)
 values ('20000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000001', '#P1', 'Marcos', 'member');
+
+insert into public.member_snapshots (clan_member_id, donations, donations_received, in_game_role)
+values ('20000000-0000-0000-0000-000000000001', 320, 180, 'member');
 
 -- ---------------------------------------------------------------------------
 -- Helpers to impersonate a Postgres role the way PostgREST does.
@@ -115,6 +118,11 @@ select lives_ok(
   'clan 1 admin can update clan 1 rules'
 );
 
+select is(
+  (select count(*) from public.latest_member_snapshots_for_viewer('10000000-0000-0000-0000-000000000001'))::int, 1,
+  'clan 1 admin sees clan 1 latest snapshots via the viewer RPC'
+);
+
 -- ---------------------------------------------------------------------------
 -- 3. Reader of clan 1 can read but not write.
 -- ---------------------------------------------------------------------------
@@ -167,6 +175,11 @@ select is(
 select is(
   (select count(*) from public.audit_log)::int, 0,
   'outsider sees no audit log rows'
+);
+
+select is(
+  (select count(*) from public.latest_member_snapshots_for_viewer('10000000-0000-0000-0000-000000000001'))::int, 0,
+  'outsider gets no rows from the viewer RPC for a clan they cannot access'
 );
 
 select * from finish();
