@@ -12,6 +12,8 @@ export interface CreateInviteState {
   error: string | null;
 }
 
+const RATE_LIMIT = { maxAttempts: 10, windowSeconds: 15 * 60 };
+
 export async function createInvite(_prev: CreateInviteState, formData: FormData): Promise<CreateInviteState> {
   const parsed = schema.safeParse({ clanId: formData.get("clanId") });
   if (!parsed.success) return { code: null, error: "Clan no válido." };
@@ -21,6 +23,16 @@ export async function createInvite(_prev: CreateInviteState, formData: FormData)
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { code: null, error: "Tienes que iniciar sesión." };
+
+  const { data: allowed, error: rateLimitError } = await supabase.rpc("check_rate_limit", {
+    p_identifier: user.id,
+    p_action: "create_invite",
+    p_max_attempts: RATE_LIMIT.maxAttempts,
+    p_window_seconds: RATE_LIMIT.windowSeconds,
+  });
+  if (rateLimitError || allowed !== true) {
+    return { code: null, error: "Demasiados intentos. Prueba de nuevo en unos minutos." };
+  }
 
   const code = generateInviteCode();
   const expiresAt = new Date(Date.now() + INVITE_EXPIRY_DAYS * 24 * 60 * 60 * 1000);

@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { Suspense, useActionState } from "react";
 import { signInWithGoogle, signInWithPassword, type AuthActionState } from "../actions";
+import { AuthErrorBanner } from "./AuthErrorBanner";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { TextField } from "@/components/ui/TextField";
@@ -20,6 +21,9 @@ export default function IniciarSesionPage() {
       </div>
 
       <Card className="flex flex-col gap-4">
+        <Suspense fallback={null}>
+          <AuthErrorBanner />
+        </Suspense>
         <form action={formAction} className="flex flex-col gap-4">
           <TextField label="Correo" name="email" type="email" autoComplete="email" required />
           <TextField label="Contraseña" name="password" type="password" autoComplete="current-password" required />

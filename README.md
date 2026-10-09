@@ -212,17 +212,14 @@ bien, el recolector real también lo hará.
 3. **Miembros y ficha con datos reales.** ✅
 4. **Guerras, liga, capital y juegos del clan, con histórico.** ✅
 5. **Reglas: expulsión, ascensos, decisiones manuales e índice.** ✅
-6. **Equipo: alta de clanes con verificación del líder, invitaciones y permisos.** 🚧 en progreso — ver "Estado de la fase 6" abajo.
+6. **Equipo: alta de clanes con verificación del líder, invitaciones y permisos.** ✅
 7. Cierre: panel, instalación en móvil, README y documentación de seguridad.
 
 ### Estado de la fase 6
 
-Hecho y verificado con pgTAP contra Postgres real: el esquema y las
-políticas de RLS para `register_clan()` (RPC que da de alta un clan y
-hace admin a quien lo registra) y para `promotion_decisions`.
-
-Hecho pero **sin verificar con un smoke test real** (a diferencia de todas
-las fases anteriores) por límite de uso de la sesión que construyó esto:
+Verificado con pgTAP contra Postgres real: el esquema y las políticas de
+RLS para `register_clan()` (RPC que da de alta un clan y hace admin a quien
+lo registra) y para `promotion_decisions`.
 
 - `/alta-clan`: formulario que verifica el token del jugador
   (`POST /players/{tag}/verifytoken`, confirmado contra el código fuente de
@@ -230,18 +227,39 @@ las fases anteriores) por límite de uso de la sesión que construyó esto:
   `leader`, antes de llamar a `register_clan()`.
 - `/unirse`: canje de código de invitación (reutiliza `redeem_clan_invite()`
   de la fase 1).
-- `/equipo`: lista de quién tiene acceso, invitaciones pendientes y tarjeta
-  para generar un código (hash SHA-256, nunca se guarda en claro).
+- `/equipo`: lista de quién tiene acceso (con foto de perfil de Google o
+  iniciales), invitaciones pendientes y tarjeta para generar un código
+  (hash SHA-256, nunca se guarda en claro).
 - `packages/clash-api`: el cliente de la API se extrajo de
   `apps/collector` a un paquete compartido (`@clashleader/clash-api`)
   porque ahora `apps/web` también lo necesita, con su propio
   `verifyPlayerToken` añadido y probado.
 
-Antes de dar la fase 6 por cerrada falta: una pasada de smoke test con
-Playwright o con el mismo método de sesión-vía-cookie usado en las fases
-1-5, foto de perfil (Google o iniciales), y revisar que los mensajes
-"Todavía no tienes un clan" en todas las pantallas apunten bien a
-`/alta-clan`.
+Cerrada tras una revisión estática de los tres server actions y las tres
+RPC implicadas, más un `next build` de producción completo (no un smoke
+test en navegador: el entorno que la hizo no tiene Docker para levantar
+Supabase local ni un token real de líder de CoC). Esa revisión encontró y
+corrigió dos bugs reales:
+
+- `createInvite` no tenía límite de intentos, a diferencia de
+  `registerClan` y `redeemInvite` (incumplía el requisito "límite de
+  intentos en inicio de sesión, registro, invitaciones y verificación de
+  token").
+- El login con Google redirigía a `/iniciar-sesion?error=google` (y el
+  callback a `?error=callback`) pero la página nunca leía ese parámetro:
+  el error se perdía en silencio. `AuthErrorBanner` lo muestra ahora,
+  envuelto en `<Suspense>` porque `useSearchParams` fuerza ese límite en
+  un árbol de cliente sin bloquear el prerenderizado estático de
+  `/iniciar-sesion` (confirmado con `next build`: sigue marcada `○`).
+
+Los mensajes "Todavía no tienes un clan" de las cinco pantallas que los
+usan ya apuntaban bien a `/alta-clan`; se dejaron todos sobre el mismo
+componente `NoClanCard` en vez de uno duplicado a mano en `/equipo`.
+
+Sigue pendiente, y es la única brecha real entre "revisado" y "probado":
+una pasada con Playwright o sesión-vía-cookie contra Supabase local real
+(cookies de sesión, RLS en Postgres real, rate limit disparando de
+verdad), igual que se hizo en las fases 1-5.
 
 ## Limitaciones conocidas
 

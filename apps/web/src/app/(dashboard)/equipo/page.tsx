@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { NoClanCard } from "@/components/NoClanCard";
+import { Avatar } from "@/components/ui/Avatar";
 import { Card } from "@/components/ui/Card";
 import { Pill } from "@/components/ui/Pill";
 import { getPendingInvites, getTeamMembers } from "@/lib/data/team";
@@ -13,17 +15,7 @@ export default async function EquipoPage() {
   const viewerClan = await getViewerClan(supabase);
 
   if (!viewerClan) {
-    return (
-      <Card>
-        <p className="text-sm text-text-secondary">
-          Todavía no tienes un clan.{" "}
-          <Link href="/alta-clan" className="text-accent">
-            Dalo de alta
-          </Link>
-          .
-        </p>
-      </Card>
-    );
+    return <NoClanCard />;
   }
 
   const {
@@ -42,7 +34,10 @@ export default async function EquipoPage() {
         <h2 className="text-sm text-text-secondary">Quién tiene acceso</h2>
         {team.map((member) => (
           <Card key={member.userId} className="flex items-center justify-between">
-            <span className="text-sm text-text">{member.userId === user?.id ? "Tú" : member.displayName}</span>
+            <span className="flex items-center gap-3">
+              <Avatar name={member.displayName} avatarUrl={member.avatarUrl} />
+              <span className="text-sm text-text">{member.userId === user?.id ? "Tú" : member.displayName}</span>
+            </span>
             <Pill tone={member.role === "admin" ? "good" : "info"}>
               {member.role === "admin" ? "Administra" : "Solo lectura"}
             </Pill>
