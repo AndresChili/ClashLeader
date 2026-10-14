@@ -47,7 +47,10 @@ export async function signUpWithPassword(_prev: AuthActionState, formData: FormD
   const { error } = await supabase.auth.signUp({
     email: parsed.data.email,
     password: parsed.data.password,
-    options: { data: { full_name: parsed.data.displayName } },
+    options: {
+      data: { full_name: parsed.data.displayName },
+      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
+    },
   });
 
   if (error) {
