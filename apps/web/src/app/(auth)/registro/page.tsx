@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useActionState } from "react";
-import { signInWithGoogle, signUpWithPassword, type AuthActionState } from "../actions";
+import { signUpWithPassword, type AuthActionState } from "../actions";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { TextField } from "@/components/ui/TextField";
@@ -41,18 +41,6 @@ export default function RegistroPage() {
             </Button>
           </form>
         )}
-
-        <div className="flex items-center gap-3 text-xs text-text-secondary">
-          <span className="h-px flex-1 bg-border" />
-          o
-          <span className="h-px flex-1 bg-border" />
-        </div>
-
-        <form action={signInWithGoogle}>
-          <Button type="submit" variant="secondary" className="w-full">
-            Continuar con Google
-          </Button>
-        </form>
       </Card>
 
       <p className="text-center text-sm text-text-secondary">

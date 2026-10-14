@@ -3,7 +3,6 @@
 import { useSearchParams } from "next/navigation";
 
 const MESSAGES: Record<string, string> = {
-  google: "No se pudo iniciar sesión con Google. Inténtalo de nuevo.",
   callback: "El enlace ha caducado o ya se usó. Inicia sesión de nuevo.",
 };
 

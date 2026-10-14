@@ -12,13 +12,13 @@ const supabaseOrigin = new URL(getSupabaseUrl()).origin;
 function buildCsp(nonce: string) {
   return [
     "default-src 'self'",
-    `connect-src 'self' ${supabaseOrigin} https://accounts.google.com`,
+    `connect-src 'self' ${supabaseOrigin}`,
     "img-src 'self' data: https://lh3.googleusercontent.com",
     `script-src 'self' 'nonce-${nonce}'`,
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' https://fonts.gstatic.com",
     "frame-ancestors 'none'",
-    "form-action 'self' https://accounts.google.com",
+    "form-action 'self'",
     "base-uri 'self'",
   ].join("; ");
 }

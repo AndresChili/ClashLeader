@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Suspense, useActionState } from "react";
-import { signInWithGoogle, signInWithPassword, type AuthActionState } from "../actions";
+import { signInWithPassword, type AuthActionState } from "../actions";
 import { AuthErrorBanner } from "./AuthErrorBanner";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -31,18 +31,6 @@ export default function IniciarSesionPage() {
           {state.error ? <p className="text-sm text-status-bad-text">{state.error}</p> : null}
           <Button type="submit" disabled={pending}>
             {pending ? "Entrando…" : "Iniciar sesión"}
-          </Button>
-        </form>
-
-        <div className="flex items-center gap-3 text-xs text-text-secondary">
-          <span className="h-px flex-1 bg-border" />
-          o
-          <span className="h-px flex-1 bg-border" />
-        </div>
-
-        <form action={signInWithGoogle}>
-          <Button type="submit" variant="secondary" className="w-full">
-            Continuar con Google
           </Button>
         </form>
       </Card>

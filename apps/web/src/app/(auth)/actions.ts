@@ -83,20 +83,6 @@ export async function signInWithPassword(_prev: AuthActionState, formData: FormD
   redirect("/panel");
 }
 
-export async function signInWithGoogle() {
-  const supabase = await createClient();
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: "google",
-    options: { redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback` },
-  });
-
-  if (error || !data.url) {
-    redirect("/iniciar-sesion?error=google");
-  }
-
-  redirect(data.url);
-}
-
 export async function signOut() {
   const supabase = await createClient();
   await supabase.auth.signOut();
