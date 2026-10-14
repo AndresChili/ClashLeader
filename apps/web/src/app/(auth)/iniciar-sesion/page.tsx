@@ -21,8 +21,6 @@ export default function IniciarSesionPage() {
         <p className="mt-1 text-sm text-text-secondary">Inicia sesión para ver tu clan.</p>
       </div>
 
-      <InstallPwaButton />
-
       <Card className="flex flex-col gap-4">
         <Suspense fallback={null}>
           <AuthErrorBanner />
@@ -55,6 +53,8 @@ export default function IniciarSesionPage() {
           Regístrate
         </Link>
       </p>
+
+      <InstallPwaButton />
     </main>
   );
 }

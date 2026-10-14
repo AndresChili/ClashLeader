@@ -20,8 +20,6 @@ export default function RegistroPage() {
         <p className="mt-1 text-sm text-text-secondary">Para líderes y colíderes de clanes de Clash of Clans.</p>
       </div>
 
-      <InstallPwaButton />
-
       <Card className="flex flex-col gap-4">
         {state.info ? (
           <p className="rounded-xl bg-status-good-bg px-3 py-2 text-sm text-status-good-text">{state.info}</p>
@@ -63,6 +61,8 @@ export default function RegistroPage() {
           Inicia sesión
         </Link>
       </p>
+
+      <InstallPwaButton />
     </main>
   );
 }
