@@ -7,6 +7,7 @@ import { AuthErrorBanner } from "./AuthErrorBanner";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { TextField } from "@/components/ui/TextField";
+import { InstallPwaButton } from "@/components/InstallPwaButton";
 
 const initialState: AuthActionState = { error: null };
 
@@ -19,6 +20,8 @@ export default function IniciarSesionPage() {
         <h1 className="font-heading text-2xl">ClashLeader</h1>
         <p className="mt-1 text-sm text-text-secondary">Inicia sesión para ver tu clan.</p>
       </div>
+
+      <InstallPwaButton />
 
       <Card className="flex flex-col gap-4">
         <Suspense fallback={null}>

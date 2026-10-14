@@ -6,6 +6,7 @@ import { signInWithGoogle, signUpWithPassword, type AuthActionState } from "../a
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { TextField } from "@/components/ui/TextField";
+import { InstallPwaButton } from "@/components/InstallPwaButton";
 
 const initialState: AuthActionState = { error: null };
 
@@ -18,6 +19,8 @@ export default function RegistroPage() {
         <h1 className="font-heading text-2xl">Crea tu cuenta</h1>
         <p className="mt-1 text-sm text-text-secondary">Para líderes y colíderes de clanes de Clash of Clans.</p>
       </div>
+
+      <InstallPwaButton />
 
       <Card className="flex flex-col gap-4">
         {state.info ? (
