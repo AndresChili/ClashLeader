@@ -1,14 +1,15 @@
--- ClashLeader schema
--- The Clash of Clans API is read-only and only exposes current state, so every
--- table here except "current state" tables is an append-only log fed by the
--- collector. History (donations per season, war results, activity) only
--- exists because we snapshot it ourselves.
+-- Esquema de ClashLeader
+-- La API de Clash of Clans es de solo lectura y solo expone el estado
+-- actual, así que toda tabla aquí salvo las de "estado actual" es un
+-- registro de solo-añadir alimentado por el recolector. El histórico
+-- (donaciones por temporada, resultados de guerra, actividad) existe solo
+-- porque lo capturamos nosotros mismos.
 
 create extension if not exists pgcrypto;
 
 -- ---------------------------------------------------------------------------
--- Profiles (one row per auth.users, created by a trigger below in a later
--- migration section)
+-- Perfiles (una fila por auth.users, creada por un trigger más abajo en
+-- una sección de migración posterior)
 -- ---------------------------------------------------------------------------
 create table public.profiles (
   id uuid primary key references auth.users (id) on delete cascade,
@@ -17,11 +18,11 @@ create table public.profiles (
   created_at timestamptz not null default now()
 );
 
-comment on table public.profiles is 'Public-safe mirror of auth.users, one row per account.';
+comment on table public.profiles is 'Espejo público y seguro de auth.users, una fila por cuenta.';
 
 -- ---------------------------------------------------------------------------
--- Clans registered in the app (not every CoC clan, only the ones a leader
--- has registered here)
+-- Clanes registrados en la app (no todos los clanes de CoC, solo los que
+-- un líder ha dado de alta aquí)
 -- ---------------------------------------------------------------------------
 create table public.clans (
   id uuid primary key default gen_random_uuid(),
@@ -36,9 +37,9 @@ create table public.clans (
 alter table public.clans
   add constraint clans_tag_format check (tag ~ '^#[0289PYLQGRJCUV]{3,10}$');
 
-comment on table public.clans is 'Clans onboarded into ClashLeader by a verified leader.';
+comment on table public.clans is 'Clanes dados de alta en ClashLeader por un líder verificado.';
 
--- Who can access a clan's dashboard, and with which role.
+-- Quién puede acceder al panel de un clan, y con qué rol.
 create table public.clan_access (
   clan_id uuid not null references public.clans (id) on delete cascade,
   user_id uuid not null references public.profiles (id) on delete cascade,
@@ -48,9 +49,9 @@ create table public.clan_access (
   primary key (clan_id, user_id)
 );
 
-comment on table public.clan_access is 'admin = leader (full control), reader = co-leader (read-only).';
+comment on table public.clan_access is 'admin = líder (control total), reader = colíder (solo lectura).';
 
--- Single-use, hashed, expiring invite codes for co-leaders.
+-- Códigos de invitación de un solo uso para colíderes, con hash y caducidad.
 create table public.clan_invites (
   id uuid primary key default gen_random_uuid(),
   clan_id uuid not null references public.clans (id) on delete cascade,
@@ -65,9 +66,9 @@ create table public.clan_invites (
 create unique index clan_invites_code_hash_idx on public.clan_invites (code_hash);
 create index clan_invites_clan_id_idx on public.clan_invites (clan_id) where used_at is null;
 
-comment on table public.clan_invites is 'Only the hash of the invite code is stored, never the plaintext.';
+comment on table public.clan_invites is 'Solo se guarda el hash del código de invitación, nunca el texto plano.';
 
--- Editable rule thresholds per clan. One row per clan, defaults from spec.
+-- Umbrales de reglas editables por clan. Una fila por clan, valores por defecto del encargo.
 create table public.clan_rules (
   clan_id uuid primary key references public.clans (id) on delete cascade,
   kick_inactivity_days integer not null default 3,
@@ -89,11 +90,12 @@ alter table public.clan_rules
   add constraint clan_rules_weights_sum_100
   check (index_weight_war + index_weight_donations + index_weight_capital + index_weight_games = 100);
 
-comment on table public.clan_rules is 'Per-clan editable thresholds; packages/rules reads these, never hardcodes them.';
+comment on table public.clan_rules is 'Umbrales editables por clan; packages/rules los lee de aquí, nunca los hardcodea.';
 
 -- ---------------------------------------------------------------------------
--- Clan members: one row per membership episode (a player can leave and
--- rejoin, each episode is tracked separately so history stays honest).
+-- Miembros del clan: una fila por episodio de membresía (un jugador puede
+-- salir y volver a entrar; cada episodio se sigue por separado para que
+-- el histórico se mantenga honesto).
 -- ---------------------------------------------------------------------------
 create table public.clan_members (
   id uuid primary key default gen_random_uuid(),
@@ -112,14 +114,14 @@ create table public.clan_members (
   created_at timestamptz not null default now()
 );
 
-comment on column public.clan_members.in_game_role is 'Raw CoC role; "admin" is the API name for veteran.';
-comment on column public.clan_members.manual_join_date is 'Optional leader-entered join date, overrides first_seen_at for "days in clan".';
+comment on column public.clan_members.in_game_role is 'Rol crudo de CoC; "admin" es el nombre que da la API para veterano.';
+comment on column public.clan_members.manual_join_date is 'Fecha de entrada opcional introducida por el líder, sustituye a first_seen_at para "días en el clan".';
 
 create index clan_members_clan_id_idx on public.clan_members (clan_id);
 create unique index clan_members_current_unique_idx
   on public.clan_members (clan_id, player_tag) where is_current;
 
--- Periodic raw capture of a member's state, taken every collector run.
+-- Captura cruda periódica del estado de un miembro, tomada en cada ejecución del recolector.
 create table public.member_snapshots (
   id bigint generated always as identity primary key,
   clan_member_id uuid not null references public.clan_members (id) on delete cascade,
@@ -135,9 +137,9 @@ create table public.member_snapshots (
 
 create index member_snapshots_member_id_idx on public.member_snapshots (clan_member_id, collected_at desc);
 
-comment on table public.member_snapshots is 'Append-only. Donations reset each season, so the pre-reset value is copied into donation_season_totals.';
+comment on table public.member_snapshots is 'Solo-añadir. Las donaciones se reinician cada temporada, así que el valor previo al reinicio se copia a donation_season_totals.';
 
--- Donation totals frozen right before each season reset.
+-- Totales de donaciones congelados justo antes de cada reinicio de temporada.
 create table public.donation_season_totals (
   id bigint generated always as identity primary key,
   clan_member_id uuid not null references public.clan_members (id) on delete cascade,
@@ -148,7 +150,7 @@ create table public.donation_season_totals (
   unique (clan_member_id, season_id)
 );
 
--- Entries and exits, detected by diffing the member list between collector runs.
+-- Entradas y salidas, detectadas comparando la lista de miembros entre ejecuciones del recolector.
 create table public.membership_events (
   id bigint generated always as identity primary key,
   clan_id uuid not null references public.clans (id) on delete cascade,
@@ -161,10 +163,10 @@ create table public.membership_events (
 
 create index membership_events_clan_id_idx on public.membership_events (clan_id, detected_at desc);
 
-comment on table public.membership_events is 'The API cannot distinguish a voluntary leave from a kick.';
+comment on table public.membership_events is 'La API no distingue una salida voluntaria de una expulsión.';
 
 -- ---------------------------------------------------------------------------
--- Wars (regular, friendly and CWL)
+-- Guerras (normales, amistosas y de CWL)
 -- ---------------------------------------------------------------------------
 create table public.cwl_groups (
   id uuid primary key default gen_random_uuid(),
@@ -199,7 +201,7 @@ create table public.wars (
 
 create index wars_clan_id_idx on public.wars (clan_id, start_time desc);
 
--- Roster for a war: who was placed in the lineup, at which position.
+-- Alineación de una guerra: quién estaba en la lineup, en qué posición.
 create table public.war_members (
   war_id uuid not null references public.wars (id) on delete cascade,
   clan_member_id uuid references public.clan_members (id) on delete set null,
@@ -212,7 +214,7 @@ create table public.war_members (
   primary key (war_id, player_tag)
 );
 
--- Individual attacks within a war, append-only, saved once the war ends.
+-- Ataques individuales dentro de una guerra, solo-añadir, guardados al terminar la guerra.
 create table public.war_attacks (
   id bigint generated always as identity primary key,
   war_id uuid not null references public.wars (id) on delete cascade,
@@ -228,7 +230,7 @@ create table public.war_attacks (
 create index war_attacks_war_id_idx on public.war_attacks (war_id);
 
 -- ---------------------------------------------------------------------------
--- Clan Capital
+-- Capital del clan
 -- ---------------------------------------------------------------------------
 create table public.capital_seasons (
   id uuid primary key default gen_random_uuid(),
@@ -253,7 +255,7 @@ create table public.capital_contributions (
 );
 
 -- ---------------------------------------------------------------------------
--- Clan Games (no endpoint: points = delta of the "Games Champion" achievement)
+-- Juegos del clan (sin endpoint: los puntos son la diferencia del logro "Games Champion")
 -- ---------------------------------------------------------------------------
 create table public.clan_games_seasons (
   id uuid primary key default gen_random_uuid(),
@@ -277,10 +279,10 @@ create table public.clan_games_points (
   unique (clan_games_season_id, player_tag)
 );
 
-comment on table public.clan_games_points is 'points = achievement_value_after - achievement_value_before, capped by the game at 4000.';
+comment on table public.clan_games_points is 'points = achievement_value_after - achievement_value_before, con el tope de 4000 que impone el propio juego.';
 
 -- ---------------------------------------------------------------------------
--- Leader notes and promotion decisions
+-- Notas del líder y decisiones de ascenso
 -- ---------------------------------------------------------------------------
 create table public.leader_notes (
   id uuid primary key default gen_random_uuid(),
@@ -302,10 +304,11 @@ create table public.promotion_decisions (
   primary key (clan_member_id, candidate_type)
 );
 
-comment on table public.promotion_decisions is 'Current state only; the full history of who decided what, when lives in audit_log.';
+comment on table public.promotion_decisions is 'Solo el estado actual; el histórico completo de quién decidió qué, y cuándo, vive en audit_log.';
 
 -- ---------------------------------------------------------------------------
--- Audit log: every admin-triggered write, for accountability (OWASP A09).
+-- Registro de auditoría: toda escritura hecha por un admin, para
+-- trazabilidad (OWASP A09).
 -- ---------------------------------------------------------------------------
 create table public.audit_log (
   id bigint generated always as identity primary key,
@@ -321,8 +324,8 @@ create table public.audit_log (
 create index audit_log_clan_id_idx on public.audit_log (clan_id, created_at desc);
 
 -- ---------------------------------------------------------------------------
--- Rate limiting for flows Supabase Auth does not cover itself
--- (invite redemption, player token verification).
+-- Límite de intentos para los flujos que Supabase Auth no cubre por sí
+-- solo (canje de invitaciones, verificación del token del jugador).
 -- ---------------------------------------------------------------------------
 create table public.rate_limit_attempts (
   id bigint generated always as identity primary key,
@@ -333,4 +336,4 @@ create table public.rate_limit_attempts (
 
 create index rate_limit_attempts_lookup_idx on public.rate_limit_attempts (identifier, action, attempted_at desc);
 
-comment on table public.rate_limit_attempts is 'Short-lived log; prune rows older than the relevant window in application code.';
+comment on table public.rate_limit_attempts is 'Registro de vida corta; las filas más viejas que la ventana correspondiente se podan desde el código de la aplicación.';

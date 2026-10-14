@@ -32,7 +32,7 @@ async function main() {
       } else {
         console.error(`  ${clan.tag}: ${error instanceof Error ? error.message : String(error)}`);
       }
-      // One clan failing (bad tag, API hiccup) must not stop the rest.
+      // Que un clan falle (tag mala, fallo puntual de la API) no debe parar el resto.
     }
   }
 

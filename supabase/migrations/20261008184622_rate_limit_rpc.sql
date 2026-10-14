@@ -1,8 +1,8 @@
--- Server-side rate limiting callable from the web app's anon/authenticated
--- connection, without ever needing the service role key there. The table
--- itself stays unreadable to clients (see 20261008183314_init_schema.sql);
--- this SECURITY DEFINER function is the only door, and it only ever
--- returns a boolean, never row contents.
+-- Límite de intentos del lado del servidor, llamable desde la conexión
+-- anon/authenticated de la app web, sin necesitar nunca la clave de
+-- servicio ahí. La tabla en sí sigue siendo ilegible para los clientes
+-- (ver 20261008183314_init_schema.sql); esta función SECURITY DEFINER es
+-- la única puerta, y solo devuelve un booleano, nunca el contenido de las filas.
 create or replace function public.check_rate_limit(
   p_identifier text,
   p_action text,
@@ -41,4 +41,4 @@ revoke all on function public.check_rate_limit(text, text, integer, integer) fro
 grant execute on function public.check_rate_limit(text, text, integer, integer) to anon, authenticated;
 
 comment on function public.check_rate_limit is
-  'Returns false and records nothing once the caller is over the limit; true and logs one attempt otherwise.';
+  'Devuelve false y no registra nada cuando quien llama ya superó el límite; true y registra un intento en caso contrario.';

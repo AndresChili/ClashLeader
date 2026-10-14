@@ -1,11 +1,11 @@
--- Triggers and the one write RPC that is safe to run entirely in SQL
--- (invite redemption: no external API call needed, unlike clan
--- registration which must verify a player token against the Clash of
--- Clans API and therefore lives in the Next.js server, using the
--- Supabase service role key).
+-- Triggers y el único RPC de escritura que es seguro correr entero en SQL
+-- (canje de invitación: no necesita llamar a ninguna API externa, a
+-- diferencia del alta de clan, que debe verificar un token de jugador
+-- contra la API de Clash of Clans y por eso vive en el servidor de
+-- Next.js, usando la clave de servicio de Supabase).
 
 -- ---------------------------------------------------------------------------
--- Auto-create a profile row whenever a new auth user signs up.
+-- Crea automáticamente una fila de perfil cuando se registra un usuario nuevo.
 -- ---------------------------------------------------------------------------
 create or replace function public.handle_new_user()
 returns trigger
@@ -30,7 +30,7 @@ create trigger on_auth_user_created
   for each row execute function public.handle_new_user();
 
 -- ---------------------------------------------------------------------------
--- Auto-create the default rule set whenever a clan is registered.
+-- Crea automáticamente las reglas por defecto cuando se da de alta un clan.
 -- ---------------------------------------------------------------------------
 create or replace function public.handle_new_clan()
 returns trigger
@@ -50,7 +50,7 @@ create trigger on_clan_created
   for each row execute function public.handle_new_clan();
 
 -- ---------------------------------------------------------------------------
--- updated_at maintenance
+-- Mantenimiento de updated_at
 -- ---------------------------------------------------------------------------
 create or replace function public.set_updated_at()
 returns trigger
@@ -75,10 +75,11 @@ create trigger promotion_decisions_set_updated_at
   for each row execute function public.set_updated_at();
 
 -- ---------------------------------------------------------------------------
--- Invite redemption: validates a one-time code and grants reader access
--- atomically. SECURITY DEFINER so it can read clan_invites (admin-only by
--- RLS) and insert into clan_access on the caller's behalf, but only after
--- checking the hash, expiry and single-use constraints itself.
+-- Canje de invitación: valida un código de un solo uso y da acceso de
+-- reader de forma atómica. SECURITY DEFINER para poder leer clan_invites
+-- (solo-admin por RLS) e insertar en clan_access en nombre de quien llama,
+-- pero solo tras comprobar él mismo el hash, la caducidad y que sea de un
+-- solo uso.
 -- ---------------------------------------------------------------------------
 create or replace function public.redeem_clan_invite(p_code_hash text)
 returns uuid

@@ -9,7 +9,7 @@ permissions:
   contents: read
 
 env:
-  # Dummy values so `next build` can run without a real Supabase project.
+  # Valores de relleno para que `next build` corra sin un proyecto real de Supabase.
   NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54321
   NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder-anon-key
   NEXT_PUBLIC_SITE_URL: http://localhost:3000
@@ -17,7 +17,7 @@ env:
 
 jobs:
   lint-typecheck-test:
-    name: Lint, typecheck, test, build
+    name: Lint, tipos, tests, build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -37,11 +37,11 @@ jobs:
 
       - run: npm run build --workspace=web
 
-      - name: Dependency audit
+      - name: Auditoría de dependencias
         run: npm audit --audit-level=critical
 
   db:
-    name: Supabase migrations, RLS tests, collector integration
+    name: Migraciones de Supabase, tests de RLS, integración del recolector
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -57,11 +57,54 @@ jobs:
         with:
           version: latest
 
-      - name: Start local Supabase and apply migrations
+      - name: Levantar Supabase local y aplicar migraciones
         run: supabase start
 
-      - name: Run pgTAP tests (RLS deny-by-default checks)
+      - name: Tests pgTAP (comprobaciones de RLS denegado por defecto)
         run: supabase test db
 
-      - name: Run collector integration tests against the local stack
+      - name: Tests de integración del recolector contra el stack local
         run: npm run test:integration --workspace=collector
+
+  e2e:
+    name: Playwright contra un Supabase local real
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      - name: Instalar Chromium para Playwright
+        run: npx playwright install --with-deps chromium --only-shell
+        working-directory: apps/web
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Levantar Supabase local y aplicar migraciones
+        run: supabase start
+
+      - name: Sembrar el clan ficticio (sin necesitar clave de la API de Clash)
+        run: npm run seed:fixtures --workspace=collector
+
+      - name: Ejecutar Playwright contra el servidor de desarrollo
+        run: npm run test:e2e --workspace=web
+        env:
+          CI: "true"
+          NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54321
+          # Clave anónima de demo, pública y bien conocida de Supabase local (la misma que imprime siempre `supabase start`), no es un secreto.
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0
+
+      - name: Subir el reporte de Playwright si falla
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: apps/web/playwright-report/
+          retention-days: 7

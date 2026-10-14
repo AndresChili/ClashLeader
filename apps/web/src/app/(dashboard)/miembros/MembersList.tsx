@@ -24,7 +24,7 @@ export function MembersList({
 }: {
   members: MemberSummary[];
   evaluations: Map<string, MemberEvaluation>;
-  /** Player tags rostered in the in-progress war, or null when there isn't one right now. */
+  /** Tags de jugador en la alineación de la guerra en curso, o null cuando no hay guerra ahora mismo. */
   currentWarTags: Set<string> | null;
 }) {
   const [query, setQuery] = useState("");

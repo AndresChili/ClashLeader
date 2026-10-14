@@ -10,10 +10,11 @@ permissions:
 
 jobs:
   collect:
-    name: Fetch and store clan snapshots
+    name: Recoge y guarda capturas de clanes
     runs-on: ubuntu-latest
-    # Secrets are unset in forks, so this becomes a harmless no-op there
-    # instead of failing the workflow with a confusing config error.
+    # Los secretos no están configurados en forks, así que esto se vuelve
+    # un no-op inofensivo ahí en vez de fallar el workflow con un error de
+    # configuración confuso.
     if: github.repository == 'AndresChili/ClashLeader'
     steps:
       - uses: actions/checkout@v4
@@ -25,17 +26,17 @@ jobs:
 
       - run: npm ci
 
-      - name: Check required secrets are configured
+      - name: Comprobar que los secretos necesarios están configurados
         id: secrets-check
         run: |
           if [ -z "${{ secrets.CLASH_API_TOKEN }}" ] || [ -z "${{ secrets.SUPABASE_URL }}" ] || [ -z "${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" ]; then
-            echo "Secrets not configured yet (see SETUP.md); skipping this run instead of failing it repeatedly."
+            echo "Secretos todavía no configurados; se omite esta ejecución en vez de fallar repetidamente."
             echo "ready=false" >> "$GITHUB_OUTPUT"
           else
             echo "ready=true" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Run the collector
+      - name: Ejecutar el recolector
         if: steps.secrets-check.outputs.ready == 'true'
         run: npm run collector
         env:

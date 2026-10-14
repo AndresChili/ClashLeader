@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { ClashApiCapitalRaidSeason } from "@clashleader/clash-api";
 
-/** No stable id in the API response; startTime is unique per raid weekend. */
+/** La respuesta de la API no trae un id estable; startTime es único por fin de semana de asalto. */
 export function capitalSeasonId(season: ClashApiCapitalRaidSeason): string {
   return season.startTime;
 }
@@ -32,7 +32,7 @@ export async function upsertCapitalSeason(
   return data.id as string;
 }
 
-/** Used to detect "this member made a new capital attack since the last poll" (an activity signal). */
+/** Sirve para detectar "este miembro hizo un ataque de capital nuevo desde la última consulta" (señal de actividad). */
 export async function getCapitalAttacksUsedByTag(supabase: SupabaseClient, capitalSeasonRowId: string): Promise<Map<string, number>> {
   const { data, error } = await supabase
     .from("capital_contributions")

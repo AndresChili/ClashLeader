@@ -37,7 +37,7 @@ export async function createInvite(_prev: CreateInviteState, formData: FormData)
   const code = generateInviteCode();
   const expiresAt = new Date(Date.now() + INVITE_EXPIRY_DAYS * 24 * 60 * 60 * 1000);
 
-  // RLS (clan_invites_insert_admin) is the real gate.
+  // RLS (clan_invites_insert_admin) es la barrera real.
   const { error } = await supabase.from("clan_invites").insert({
     clan_id: parsed.data.clanId,
     code_hash: hashInviteCode(code),

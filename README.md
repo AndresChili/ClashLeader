@@ -10,15 +10,20 @@ avisa y propone — expulsar y ascender se hace siempre dentro del juego.
 > La app no cobra por nada.
 
 Proyecto de portfolio, construido por fases y documentado a medida que
-avanza. Estado actual: **fase 6 de 7, en progreso** (ver [Fases](#fases)).
+avanza. Estado actual: **fase 7 de 7, cerrado** (ver [Fases](#fases)).
 
 ## Capturas
 
-_Pendiente: se añaden en la fase 7 (cierre), cuando todas las pantallas
-tengan datos reales y no solo los placeholders "—" de las fases
-intermedias._ El diseño completo de las 7 pantallas (más
-registro/login/alta de clan) sigue `diseno-app-clan.png` en la raíz del
-repositorio.
+Capturas reales (390 px, clan ficticio de `seed:fixtures`, nada maquetado
+a mano) en `docs/screenshots/`:
+
+| Panel | Miembros | Ficha |
+| --- | --- | --- |
+| ![Panel](docs/screenshots/panel.png) | ![Miembros](docs/screenshots/miembros.png) | ![Ficha](docs/screenshots/ficha.png) |
+
+| Guerra | Equipo | Ascensos | Reglas |
+| --- | --- | --- | --- |
+| ![Guerra](docs/screenshots/guerra.png) | ![Equipo](docs/screenshots/equipo.png) | ![Ascensos](docs/screenshots/ascensos.png) | ![Reglas](docs/screenshots/reglas.png) |
 
 ## Arquitectura
 
@@ -182,8 +187,9 @@ npm run dev --workspace=web
 Inicia sesión con la cuenta de ejemplo creada por `supabase/seed.sql`:
 `lider@demo.test` / `demo12345`.
 
-Hasta que configures tus propias credenciales (ver `SETUP.md`), prueba la
-app con un clan ficticio en vez de la API real:
+Hasta que configures tus propias credenciales de Supabase, Google y la API
+de Clash of Clans, prueba la app con un clan ficticio en vez de la API
+real:
 
 ```bash
 npm run seed:fixtures --workspace=collector
@@ -204,6 +210,7 @@ bien, el recolector real también lo hará.
 | `npm run collector` | Ejecuta `apps/collector` una vez contra la API real (requiere sus variables de entorno). |
 | `npm run seed:fixtures --workspace=collector` | Crea/reemplaza el clan ficticio para desarrollo local, sin clave de la API. |
 | `npm run test:integration --workspace=collector` | Tests del recolector contra un Postgres local real (no solo mocks). |
+| `npm run test:e2e --workspace=web` | Playwright contra la app real + Supabase local (login, RLS, límite de intentos). Requiere `supabase start` y `seed:fixtures` primero. |
 
 ## Fases
 
@@ -213,7 +220,7 @@ bien, el recolector real también lo hará.
 4. **Guerras, liga, capital y juegos del clan, con histórico.** ✅
 5. **Reglas: expulsión, ascensos, decisiones manuales e índice.** ✅
 6. **Equipo: alta de clanes con verificación del líder, invitaciones y permisos.** ✅
-7. Cierre: panel, instalación en móvil, README y documentación de seguridad.
+7. **Cierre: panel, instalación en móvil, README y documentación de seguridad.** ✅
 
 ### Estado de la fase 6
 
@@ -256,10 +263,51 @@ Los mensajes "Todavía no tienes un clan" de las cinco pantallas que los
 usan ya apuntaban bien a `/alta-clan`; se dejaron todos sobre el mismo
 componente `NoClanCard` en vez de uno duplicado a mano en `/equipo`.
 
-Sigue pendiente, y es la única brecha real entre "revisado" y "probado":
-una pasada con Playwright o sesión-vía-cookie contra Supabase local real
-(cookies de sesión, RLS en Postgres real, rate limit disparando de
-verdad), igual que se hizo en las fases 1-5.
+La brecha que quedaba abierta ("revisado" pero no "probado") se cerró en
+fase 7: ver [Estado de la fase 7](#estado-de-la-fase-7).
+
+### Estado de la fase 7
+
+- **Panel real**: construido sobre los mismos `lib/data/*` que ya usaban
+  Miembros/Guerra/Ascensos, sin datos nuevos inventados. Tarjeta de guerra
+  en curso (tamaño, pastilla de tiempo restante, marcador, barra de
+  ataques), tres mosaicos (miembros, ataques pendientes, capital), "Para
+  expulsar" (reutiliza `kick`/`atRisk` de `packages/rules`), tarjeta-enlace
+  a Ascensos con el recuento de candidatos pendientes, y "Movimientos"
+  (altas desde `clan_members.first_seen_at`, bajas desde
+  `is_current = false` — ninguna tabla nueva, el collector ya las
+  guardaba).
+- **Playwright contra Supabase local real** (`apps/web/e2e/`, no mocks):
+  login con la cuenta demo, sesión vía cookie real, y una pasada por las
+  7 pantallas con el clan ficticio. Encontró un bug real al primer intento
+  — ver más abajo — y confirma que el límite de intentos de
+  `/iniciar-sesion` corta al quinto intento de verdad (lo disparé sin
+  querer reejecutando la suite a mano). Corre en CI (job `e2e` en
+  `.github/workflows/ci.yml`) contra un Supabase local real, igual que el
+  job `db`.
+- **Bug real que encontró el propio Playwright, no "revisado a ojo"**:
+  `/equipo` rompía en caliente con `Could not embed because more than one
+  relationship was found for 'clan_access' and 'profiles'`. `clan_access`
+  tiene dos columnas que apuntan a `profiles` (`user_id` e `invited_by`),
+  así que el embed implícito de PostgREST (`profiles(display_name,
+  avatar_url)`) es ambiguo y Postgres no puede elegir sola. Arreglado
+  fijando la relación con el nombre exacto del constraint
+  (`profiles!clan_access_user_id_fkey(...)` en `lib/data/team.ts`) en vez
+  de dejar que PostgREST adivine.
+- **Icono propio, no genérico**: `Icono.png` (subido por el usuario) se
+  redimensiona a los tamaños que pide cada convención — `app/icon.png` y
+  `app/apple-icon.png` (favicon y Apple vía las convenciones de archivo de
+  Next.js), más `public/icons/icon-{192,512}.png` e
+  `icon-maskable-512.png` (con zona segura al 80%, para que los masks
+  circulares/redondeados de Android no corten la corona) para el
+  manifiesto PWA.
+- **Instalable en el móvil**: `app/manifest.ts` (convención de Next.js,
+  sirve `/manifest.webmanifest`), `display: "standalone"`,
+  `start_url: "/panel"`, mismos colores que el tema oscuro
+  (`background_color`/`theme_color: #0e1318`).
+- **Capturas reales, no maquetas**: generadas con el propio Playwright
+  (sesión guardada + `page.screenshot()` a 390 px) contra el clan
+  ficticio, no recortadas a mano de Figma.
 
 ## Limitaciones conocidas
 

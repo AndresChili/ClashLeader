@@ -7,9 +7,10 @@ export interface RegisteredClan {
 }
 
 /**
- * Clans due for a collector pass, oldest-collected first (nulls — never
- * collected — come first) so that under the MAX_CLANS_PER_RUN cap, no
- * single clan gets starved forever.
+ * Clanes a los que les toca pasada del recolector, los recolectados hace
+ * más tiempo primero (los null — nunca recolectados — van primero) para
+ * que bajo el tope MAX_CLANS_PER_RUN ningún clan se quede sin pasada para
+ * siempre.
  */
 export async function getRegisteredClans(supabase: SupabaseClient, maxClans: number): Promise<RegisteredClan[]> {
   const { data, error } = await supabase

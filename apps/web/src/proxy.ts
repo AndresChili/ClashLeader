@@ -4,10 +4,10 @@ import { authCookieOptions } from "@/lib/supabase/cookie-options";
 import { getSupabaseAnonKey, getSupabaseUrl } from "@/lib/supabase/env";
 
 /**
- * Refreshes the Supabase auth cookie on every navigation so server
- * components always see a valid session. This is the one legitimate use of
- * Proxy here; actual authorization is still enforced per-request by RLS,
- * never by this check alone (see docs/threat-model.md).
+ * Refresca la cookie de autenticación de Supabase en cada navegación para
+ * que los server components siempre vean una sesión válida. Es el único
+ * uso legítimo de Proxy aquí; la autorización real la sigue imponiendo
+ * RLS en cada petición, nunca solo esta comprobación.
  */
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });

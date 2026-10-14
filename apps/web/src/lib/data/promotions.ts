@@ -12,7 +12,7 @@ export interface PromotionDecision {
   decidedByName: string | null;
 }
 
-/** Keyed by `${clanMemberId}:${candidateType}`; absent entries are implicitly "pending" (no decision made yet). */
+/** Con clave `${clanMemberId}:${candidateType}`; las entradas ausentes son implícitamente "pending" (todavía sin decisión). */
 export async function getPromotionDecisions(
   supabase: SupabaseClient,
   clanMemberIds: string[],

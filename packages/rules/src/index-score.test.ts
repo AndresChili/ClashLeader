@@ -43,7 +43,7 @@ describe("computeIndex", () => {
   });
 
   it("matches the default weights (40/30/15/15) exactly for a half-and-half member", () => {
-    // war=50, donations=50, capital=50, games=50 -> weighted avg must be 50 regardless of weights, as a sanity check.
+    // guerra=50, donaciones=50, capital=50, juegos=50 -> la media ponderada debe dar 50 sin importar los pesos, como comprobación.
     const result = computeIndex(
       {
         warUsagePct: 50,

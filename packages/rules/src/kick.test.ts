@@ -5,7 +5,7 @@ const DAY = 24 * 60 * 60 * 1000;
 const now = new Date("2026-10-08T12:00:00Z");
 
 const baseParams = {
-  lastActivityDetectedAt: now, // active right now, not the inactivity path
+  lastActivityDetectedAt: now, // activo ahora mismo, no es el caso de inactividad
   firstSeenAt: new Date(0),
   now,
   kickInactivityDays: 3,

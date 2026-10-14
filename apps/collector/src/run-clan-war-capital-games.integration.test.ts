@@ -10,7 +10,7 @@ import {
 } from "@clashleader/clash-api";
 import { runClanCollection } from "./run-clan";
 
-// Same local-dev-only defaults as run-clan.integration.test.ts.
+// Mismos valores por defecto de solo-desarrollo-local que run-clan.integration.test.ts.
 const SUPABASE_URL = process.env.SUPABASE_URL ?? "http://127.0.0.1:54321";
 const SERVICE_ROLE_KEY =
   process.env.SUPABASE_SERVICE_ROLE_KEY ??
@@ -144,8 +144,8 @@ describe("runClanCollection: war, capital and clan games (integration)", () => {
     expect(warAttacks![0]!.stars).toBe(3);
 
     const { data: member } = await supabase.from("clan_members").select("last_activity_detected_at").eq("clan_id", clanId).eq("player_tag", "#P1").single();
-    // Both the war attack and the capital attack happened this poll, so
-    // activity must be detected even though donations didn't move.
+    // Tanto el ataque de guerra como el de capital pasaron en esta
+    // consulta, así que debe detectarse actividad aunque las donaciones no se movieran.
     expect(member!.last_activity_detected_at).not.toBeNull();
 
     const { data: capitalSeasons } = await supabase.from("capital_seasons").select("*").eq("clan_id", clanId);
@@ -168,11 +168,11 @@ describe("runClanCollection: war, capital and clan games (integration)", () => {
       .select("*")
       .eq("clan_games_season_id", gamesSeasons![0]!.id);
     expect(gamesPoints).toHaveLength(1);
-    // First poll this season: before == after == current value, so 0 points yet.
+    // Primera consulta de esta temporada: before == after == valor actual, así que 0 puntos por ahora.
     expect(gamesPoints![0]!.achievement_value_before).toBe(15000);
     expect(gamesPoints![0]!.points).toBe(0);
 
-    // A second poll later the same month, after the member earned points.
+    // Una segunda consulta más tarde el mismo mes, después de que el miembro ganara puntos.
     const playerLater: ClashApiPlayer = { ...player, achievements: [{ name: "Games Champion", value: 18500 }] };
     const fetchImpl = (async (url: string) => {
       const path = new URL(url).pathname;

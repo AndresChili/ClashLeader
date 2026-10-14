@@ -21,8 +21,8 @@ async function recordDecision(input: DecisionInput, status: "approved" | "discar
   } = await supabase.auth.getUser();
   if (!user) return { error: "Tienes que iniciar sesión." };
 
-  // RLS (promotion_decisions_insert_admin / _update_admin) is the real
-  // gate; this just turns a denied write into a clear message.
+  // RLS (promotion_decisions_insert_admin / _update_admin) es la barrera
+  // real; esto solo convierte una escritura denegada en un mensaje claro.
   const { error } = await supabase.from("promotion_decisions").upsert(
     {
       clan_member_id: parsed.clanMemberId,

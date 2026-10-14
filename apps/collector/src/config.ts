@@ -1,10 +1,11 @@
 import { z } from "zod";
 
 /**
- * The Clash of Clans API key is IP-locked, so the collector must call it
- * through the RoyaleAPI proxy (a static-IP relay) instead of the API
- * directly. The base URL is an env var, never hardcoded, so the proxy can
- * be swapped without a code change.
+ * La clave de la API de Clash of Clans va atada a una IP, así que el
+ * recolector tiene que llamarla a través del proxy de RoyaleAPI (un relé
+ * de IP fija) en vez de ir directo a la API. La URL base es una variable
+ * de entorno, nunca hardcodeada, para poder cambiar de proxy sin tocar
+ * código.
  */
 const configSchema = z.object({
   CLASH_API_BASE_URL: z.string().url().default("https://cocproxy.royaleapi.dev/v1"),

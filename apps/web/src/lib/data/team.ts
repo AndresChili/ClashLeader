@@ -8,9 +8,11 @@ export interface TeamMember {
 }
 
 export async function getTeamMembers(supabase: SupabaseClient, clanId: string): Promise<TeamMember[]> {
+  // clan_access tiene dos FKs hacia profiles (user_id, invited_by), así
+  // que el embed necesita una pista explícita de columna o PostgREST lo rechaza por ambiguo.
   const { data, error } = await supabase
     .from("clan_access")
-    .select("user_id, role, profiles(display_name, avatar_url)")
+    .select("user_id, role, profiles!clan_access_user_id_fkey(display_name, avatar_url)")
     .eq("clan_id", clanId)
     .order("created_at", { ascending: true });
 

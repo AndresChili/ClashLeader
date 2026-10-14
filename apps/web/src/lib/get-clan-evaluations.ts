@@ -13,7 +13,7 @@ export interface ClanEvaluations {
   currentWar: WarSummary | null;
 }
 
-/** Everything Miembros, Ficha and Ascensos need: the raw data plus every member run through packages/rules. */
+/** Todo lo que necesitan Miembros, Ficha y Ascensos: los datos crudos más cada miembro pasado por packages/rules. */
 export async function getClanEvaluations(supabase: SupabaseClient, clanId: string, now: Date = new Date()): Promise<ClanEvaluations> {
   const [rules, members, currentWar, lastFinishedWars, capitalSeason, clanGamesPoints] = await Promise.all([
     getClanRules(supabase, clanId),

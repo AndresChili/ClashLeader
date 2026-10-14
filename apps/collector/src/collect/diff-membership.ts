@@ -4,9 +4,9 @@ export interface MembershipDiff {
 }
 
 /**
- * The API only ever gives the current member list, so entries and exits
- * only exist because we compare this poll's list against the last one we
- * recorded as "current" in clan_members.
+ * La API solo da la lista actual de miembros, así que las entradas y
+ * salidas existen únicamente porque comparamos la lista de esta consulta
+ * con la última que registramos como "current" en clan_members.
  */
 export function diffMembership(previousTags: ReadonlySet<string>, currentTags: ReadonlySet<string>): MembershipDiff {
   const joinedTags = new Set<string>();

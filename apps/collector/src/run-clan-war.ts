@@ -22,7 +22,7 @@ async function persistWar(
   now: Date,
 ): Promise<void> {
   const sides = resolveWarSides(war, clanTag);
-  if (!sides) return; // defensive: API returned a war that doesn't involve this clan
+  if (!sides) return; // defensivo: la API devolvió una guerra que no involucra a este clan
 
   const warId = await upsertWar(supabase, { clanId, war, ...sides, ...opts });
 
@@ -70,8 +70,8 @@ export async function collectClanWarLeague(
 
   let updated = 0;
   for (const warTag of warTags) {
-    // Once a war is final, nothing about it changes — skip re-fetching it
-    // every 15 minutes for the rest of the season.
+    // Una vez una guerra termina, nada en ella cambia — se evita
+    // recargarla cada 15 minutos el resto de la temporada.
     const existingState = await findWarStateByTag(supabase, clanId, warTag);
     if (existingState === "warEnded") continue;
 

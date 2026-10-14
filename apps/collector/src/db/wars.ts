@@ -18,25 +18,26 @@ export interface UpsertWarInput {
   ours: ClashApiWarClan;
   theirs: ClashApiWarClan;
   warType: "random" | "cwl";
-  /** The real CWL war tag, or null for a regular/friendly war (see warNaturalKey). */
+  /** La tag real de guerra de CWL, o null para una guerra normal/amistosa (ver warNaturalKey). */
   warTag: string | null;
   cwlGroupId: string | null;
 }
 
 /**
- * CWL wars have a real, stable tag from the API. Regular/friendly wars
- * don't, so one is synthesized from preparation_start_time (stable for
- * that war's whole life) — giving every war row a single, always-present
- * natural key for the unique constraint in
- * 20261008193632_wars_upsert_keys.sql to upsert against.
+ * Las guerras de CWL tienen una tag real y estable de la API. Las
+ * normales/amistosas no, así que se sintetiza una a partir de
+ * preparation_start_time (estable durante toda la vida de esa guerra) —
+ * así cada fila de guerra tiene siempre una clave natural única para el
+ * constraint de 20261008193632_wars_upsert_keys.sql contra la que hacer
+ * upsert.
  */
 export function warNaturalKey(warTag: string | null, preparationStartTime: string | null): string {
   return warTag ?? `reg:${preparationStartTime}`;
 }
 
 /**
- * One war, upserted by its natural key so repeated polls of the same war
- * update one row instead of creating duplicates.
+ * Una guerra, con upsert por su clave natural para que consultas
+ * repetidas de la misma guerra actualicen una fila en vez de duplicarla.
  */
 export async function upsertWar(supabase: SupabaseClient, input: UpsertWarInput): Promise<string> {
   const { war, ours, theirs } = input;
@@ -55,10 +56,10 @@ export async function upsertWar(supabase: SupabaseClient, input: UpsertWarInput)
         opponent_name: theirs.name,
         preparation_start_time: war.preparationStartTime,
         start_time: war.startTime,
-        // The API always gives endTime for preparation/inWar/warEnded: the
-        // scheduled end while the war is live, the actual end once it's
-        // over. Both are useful (a live countdown needs the former), so
-        // it's stored either way, not just once the war has finished.
+        // La API siempre da endTime en preparation/inWar/warEnded: el fin
+        // programado mientras la guerra está viva, el fin real cuando ya
+        // terminó. Los dos sirven (una cuenta atrás en vivo necesita el
+        // primero), así que se guarda siempre, no solo cuando termina.
         end_time: war.endTime,
         clan_stars: ours.stars,
         clan_destruction_pct: ours.destructionPercentage,
@@ -79,7 +80,7 @@ export async function upsertWar(supabase: SupabaseClient, input: UpsertWarInput)
   return data.id as string;
 }
 
-/** Used to detect "this member made a new attack since the last poll" (an activity signal). */
+/** Sirve para detectar "este miembro hizo un ataque nuevo desde la última consulta" (señal de actividad). */
 export async function getAttacksUsedByTag(supabase: SupabaseClient, warId: string): Promise<Map<string, number>> {
   const { data, error } = await supabase.from("war_members").select("player_tag, attacks_used").eq("war_id", warId);
   if (error) {
@@ -102,8 +103,8 @@ export async function upsertWarRoster(
     map_position: member.mapPosition,
     town_hall_level: member.townhallLevel,
     attacks_used: member.attacks?.length ?? 0,
-    // bestOpponentAttack is the opponent's best attack AGAINST this
-    // member (defense), not this member's own best offensive attack.
+    // bestOpponentAttack es el mejor ataque del rival CONTRA este miembro
+    // (defensa), no el mejor ataque ofensivo propio de este miembro.
     best_opponent_stars: member.bestOpponentAttack?.stars ?? 0,
   }));
 

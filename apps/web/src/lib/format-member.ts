@@ -5,7 +5,7 @@ export function daysInClan(member: { manualJoinDate: string | null; firstSeenAt:
   return Math.max(0, Math.floor((now.getTime() - joined.getTime()) / MS_PER_DAY));
 }
 
-/** Always phrased as a detection, never a certainty — the API has no "last seen". */
+/** Siempre se expresa como una detección, nunca como una certeza — la API no tiene "visto por última vez". */
 export function formatLastActivity(lastActivityDetectedAt: string | null, now: Date = new Date()): string {
   if (!lastActivityDetectedAt) return "sin actividad detectada";
 

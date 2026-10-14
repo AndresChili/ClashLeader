@@ -5,13 +5,14 @@ export interface ViewerClan {
   tag: string;
   name: string;
   role: "admin" | "reader";
+  lastCollectedAt: string | null;
 }
 
 /**
- * The clan the signed-in user sees. A user could in principle have access
- * to more than one clan (admin of one, reader of another); until phase 6
- * adds a clan switcher, this just takes the oldest grant, which for a
- * single-clan demo account is the only one anyway.
+ * El clan que ve el usuario autenticado. En principio un usuario podría
+ * tener acceso a más de un clan (admin de uno, reader de otro); hasta que
+ * se añada un selector de clan, esto simplemente toma la concesión más
+ * antigua, que para una cuenta de ejemplo de un solo clan es la única que hay.
  */
 export async function getViewerClan(supabase: SupabaseClient): Promise<ViewerClan | null> {
   const {
@@ -21,7 +22,7 @@ export async function getViewerClan(supabase: SupabaseClient): Promise<ViewerCla
 
   const { data, error } = await supabase
     .from("clan_access")
-    .select("role, clans(id, tag, name)")
+    .select("role, clans(id, tag, name, last_collected_at)")
     .eq("user_id", user.id)
     .order("created_at", { ascending: true })
     .limit(1)
@@ -32,12 +33,13 @@ export async function getViewerClan(supabase: SupabaseClient): Promise<ViewerCla
   }
   if (!data || !data.clans) return null;
 
-  const clan = data.clans as unknown as { id: string; tag: string; name: string };
+  const clan = data.clans as unknown as { id: string; tag: string; name: string; last_collected_at: string | null };
 
   return {
     clanId: clan.id,
     tag: clan.tag,
     name: clan.name,
     role: data.role as "admin" | "reader",
+    lastCollectedAt: clan.last_collected_at,
   };
 }

@@ -64,8 +64,8 @@ export async function runClanCollection(
     }
   }
 
-  // clanMemberId for every player present in this poll, whether brand new
-  // or already tracked, so the snapshot/activity pass below can use it.
+  // clanMemberId de cada jugador presente en esta consulta, sea nuevo o ya
+  // estuviera, para que el paso de snapshot/actividad de abajo pueda usarlo.
   const clanMemberIdByTag = new Map<string, string>();
 
   for (const apiMember of apiClan.memberList) {
@@ -102,7 +102,7 @@ export async function runClanCollection(
 
   for (const apiMember of apiClan.memberList) {
     const clanMemberId = clanMemberIdByTag.get(apiMember.tag);
-    if (!clanMemberId) continue; // unreachable, but keeps this loop type-safe
+    if (!clanMemberId) continue; // inalcanzable, pero mantiene el bucle type-safe
 
     const previous = latestSnapshots.get(clanMemberId);
     const resetHappened = previous ? didSeasonReset(previous, apiMember) : false;
@@ -137,10 +137,11 @@ export async function runClanCollection(
 
   await insertMemberSnapshots(supabase, snapshotsToInsert);
 
-  // War, capital and clan games each hit different endpoints and can fail
-  // independently (private war log, no CWL this season, proxy hiccup);
-  // none of those should throw away the member/donation data already
-  // saved above, so each gets its own try/catch.
+  // Guerra, capital y juegos del clan pegan a endpoints distintos y pueden
+  // fallar cada uno por su cuenta (registro de guerra privado, sin CWL
+  // esta temporada, fallo puntual del proxy); ninguno de esos fallos debe
+  // tirar los datos de miembros/donaciones ya guardados arriba, así que
+  // cada uno lleva su propio try/catch.
   const warnings: string[] = [];
 
   let currentWarState: string | null = null;

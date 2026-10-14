@@ -1,4 +1,4 @@
-/** Mirrors the public.clan_rules table (supabase/migrations/20261008183314_init_schema.sql). */
+/** Refleja la tabla public.clan_rules (supabase/migrations/20261008183314_init_schema.sql). */
 export interface ClanRules {
   clanId: string;
   kickInactivityDays: number;

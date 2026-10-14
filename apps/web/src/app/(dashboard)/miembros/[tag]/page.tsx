@@ -33,8 +33,9 @@ export default async function FichaPage({ params }: { params: Promise<{ tag: str
     getMemberRecentWars(supabase, member.id),
   ]);
   const status = getMemberStatus(evaluation);
-  // Oldest first, most recent last — matches the "de la más antigua a la
-  // más reciente" caption; recentWars comes back most-recent-first.
+  // Más antigua primero, más reciente al final — coincide con el pie "de
+  // la más antigua a la más reciente"; recentWars llega en orden
+  // más-reciente-primero.
   const warStars = [...recentWars].reverse().map((w) => w.stars);
 
   return (

@@ -1,8 +1,9 @@
--- Read helper for the web app (unlike latest_member_snapshots(), this one
--- is SECURITY INVOKER — the default — so it runs as the calling user and
--- stays subject to member_snapshots' and clan_members' RLS policies. It
--- only saves the client from re-deduplicating "last snapshot per member"
--- in JS; it grants no access beyond what those policies already allow.
+-- Helper de lectura para la app web (a diferencia de
+-- latest_member_snapshots(), esta es SECURITY INVOKER — el valor por
+-- defecto — así que corre como el usuario que llama y sigue sujeta a las
+-- políticas de RLS de member_snapshots y clan_members. Solo le ahorra al
+-- cliente tener que deduplicar "último snapshot por miembro" en JS; no da
+-- más acceso del que esas políticas ya permiten.
 create or replace function public.latest_member_snapshots_for_viewer(p_clan_id uuid)
 returns table (
   clan_member_id uuid,

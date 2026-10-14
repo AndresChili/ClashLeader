@@ -1,5 +1,6 @@
-// Shared flat ESLint config for the plain TypeScript workspaces
-// (packages/rules, apps/collector). apps/web keeps its own Next.js config.
+// Config plana de ESLint compartida para los workspaces de TypeScript
+// simple (packages/rules, apps/collector). apps/web mantiene su propia
+// config de Next.js.
 import js from "@eslint/js";
 import tseslint from "typescript-eslint";
 

@@ -27,7 +27,7 @@ export async function getCurrentMembers(supabase: SupabaseClient, clanId: string
   }));
 }
 
-/** Creates a new membership episode for a player who just joined. */
+/** Crea un episodio de membresía nuevo para un jugador que acaba de entrar. */
 export async function insertNewMember(
   supabase: SupabaseClient,
   clanId: string,
@@ -46,7 +46,7 @@ export async function insertNewMember(
   return data.id as string;
 }
 
-/** Keeps name/role in sync for a member who was already current. */
+/** Mantiene nombre/rol al día para un miembro que ya estaba activo. */
 export async function updateMemberProfile(
   supabase: SupabaseClient,
   clanMemberId: string,

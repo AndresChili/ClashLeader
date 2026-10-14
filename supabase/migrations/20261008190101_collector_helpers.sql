@@ -1,7 +1,7 @@
--- Read helper used only by the collector (service role, bypasses RLS).
--- Not exposed to anon/authenticated: there's nothing here they couldn't
--- already see through member_snapshots, but the collector is the only
--- caller so there's no reason to grant it further.
+-- Helper de lectura que solo usa el recolector (clave de servicio, se
+-- salta RLS). No se expone a anon/authenticated: no hay nada aquí que no
+-- pudieran ya ver a través de member_snapshots, pero el recolector es el
+-- único que la llama, así que no hay razón para concederla más.
 create or replace function public.latest_member_snapshots(p_clan_id uuid)
 returns table (
   clan_member_id uuid,

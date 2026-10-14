@@ -1,9 +1,9 @@
 /**
- * The API never reports "last seen"; every signal is indirect: donation
- * count changes (phase 2), plus a new war or capital attack appearing
- * since the last poll (phase 4, via hasNewAttacks — checked at the call
- * site in run-clan-war.ts/run-clan-capital.ts since those already have
- * the before/after attack counts on hand from their own upserts).
+ * La API nunca da "visto por última vez"; toda señal es indirecta:
+ * cambios en el contador de donaciones (fase 2), más un ataque nuevo de
+ * guerra o capital desde la última consulta (fase 4, vía hasNewAttacks —
+ * comprobado en run-clan-war.ts/run-clan-capital.ts, que ya tienen a mano
+ * los contadores de ataques antes/después de sus propios upserts).
  */
 export interface ActivitySignals {
   donationsChanged: boolean;
@@ -19,7 +19,7 @@ export function donationActivitySignals(
   current: { donations: number; donationsReceived: number },
 ): ActivitySignals {
   if (!previous) {
-    // First time we see this member: nothing to compare against yet.
+    // Primera vez que vemos a este miembro: todavía no hay nada con qué comparar.
     return { donationsChanged: false, donationsReceivedChanged: false };
   }
   return {
@@ -28,7 +28,7 @@ export function donationActivitySignals(
   };
 }
 
-/** A new war/capital attack appeared since the last poll (undefined previous = first time seeing this member here). */
+/** Apareció un ataque nuevo de guerra/capital desde la última consulta (previous undefined = primera vez que vemos a este miembro aquí). */
 export function hasNewAttacks(previousCount: number | undefined, currentCount: number): boolean {
   return currentCount > (previousCount ?? 0);
 }

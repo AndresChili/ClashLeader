@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 const noteSchema = z.object({
   clanMemberId: z.string().uuid(),
   clanId: z.string().uuid(),
-  tagSlug: z.string().min(1), // URL segment: playerTag without '#'
+  tagSlug: z.string().min(1), // segmento de URL: playerTag sin '#'
   note: z.string().trim().min(1, "Escribe algo antes de guardar.").max(2000),
 });
 
@@ -33,9 +33,9 @@ export async function addLeaderNote(_prev: NoteActionState, formData: FormData):
   } = await supabase.auth.getUser();
   if (!user) return { error: "Tienes que iniciar sesión." };
 
-  // RLS (leader_notes_insert_admin) is the real gate here — this check
-  // just turns a denied write into a clear message instead of a raw
-  // Postgres error.
+  // RLS (leader_notes_insert_admin) es la barrera real aquí — esta
+  // comprobación solo convierte una escritura denegada en un mensaje
+  // claro en vez de un error crudo de Postgres.
   const { error } = await supabase
     .from("leader_notes")
     .insert({ clan_member_id: parsed.data.clanMemberId, author_id: user.id, note: parsed.data.note });

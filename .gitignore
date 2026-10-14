@@ -35,6 +35,7 @@ coverage/
 playwright-report/
 test-results/
 blob-report/
+apps/web/e2e/.auth/
 
 # supabase
 supabase/.branches

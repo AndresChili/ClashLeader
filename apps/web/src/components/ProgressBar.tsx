@@ -1,4 +1,4 @@
-/** value is 0–100, or null/undefined to render an honest "no data yet" bar. */
+/** value va de 0 a 100, o null/undefined para pintar honestamente una barra "todavía sin datos". */
 export function ProgressBar({ label, value }: { label: string; value?: number | null }) {
   return (
     <div className="flex items-center gap-3 text-sm">

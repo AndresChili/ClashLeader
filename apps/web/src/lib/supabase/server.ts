@@ -4,9 +4,10 @@ import { authCookieOptions } from "./cookie-options";
 import { getSupabaseAnonKey, getSupabaseUrl } from "./env";
 
 /**
- * Server-side Supabase client, scoped to the current request's cookies.
- * RLS (not this client) is what actually enforces per-clan isolation; this
- * just carries the signed-in user's JWT so RLS has something to check.
+ * Cliente de Supabase del lado del servidor, con alcance a las cookies de
+ * la petición actual. Es RLS (no este cliente) lo que impone de verdad el
+ * aislamiento por clan; esto solo lleva el JWT del usuario autenticado
+ * para que RLS tenga algo que comprobar.
  */
 export async function createClient() {
   const cookieStore = await cookies();
@@ -23,8 +24,8 @@ export async function createClient() {
             cookieStore.set(name, value, options);
           }
         } catch {
-          // Called from a Server Component render; the proxy below refreshes
-          // the session on the way in, so this is safe to ignore.
+          // Se llama desde el render de un Server Component; el proxy de
+          // abajo refresca la sesión a la entrada, así que es seguro ignorarlo.
         }
       },
     },

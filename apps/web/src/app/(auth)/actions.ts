@@ -19,8 +19,8 @@ async function checkRateLimit(supabase: Awaited<ReturnType<typeof createClient>>
     p_window_seconds: RATE_LIMIT.windowSeconds,
   });
   if (error) {
-    // Fail closed: if the limiter itself is unreachable, don't let the
-    // auth attempt through unchecked.
+    // Fail closed: si el propio limitador no responde, no dejar pasar el
+    // intento de autenticación sin comprobar.
     return false;
   }
   return data === true;

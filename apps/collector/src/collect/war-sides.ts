@@ -6,11 +6,12 @@ export interface ResolvedWarSides {
 }
 
 /**
- * /clans/{tag}/currentwar always puts the requested clan in `war.clan`,
- * but /clanwarleagues/wars/{warTag} (used for every CWL war, since each
- * round's two clans both hit the same war object) makes no such promise —
- * either side can be `war.clan`. Always resolving by tag, instead of
- * assuming `war.clan` is "us", keeps both call sites correct.
+ * /clans/{tag}/currentwar siempre pone al clan consultado en `war.clan`,
+ * pero /clanwarleagues/wars/{warTag} (se usa en toda guerra de CWL, ya que
+ * los dos clanes de cada ronda comparten el mismo objeto de guerra) no
+ * promete eso — cualquiera de los dos lados puede ser `war.clan`. Resolver
+ * siempre por tag, en vez de asumir que `war.clan` somos "nosotros",
+ * mantiene correctos los dos puntos de llamada.
  */
 export function resolveWarSides(war: ClashApiWar, ourClanTag: string): ResolvedWarSides | null {
   if (war.clan.tag === ourClanTag) {

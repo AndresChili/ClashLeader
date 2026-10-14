@@ -23,7 +23,7 @@ export function Avatar({
 
   if (avatarUrl && !failed) {
     return (
-      // eslint-disable-next-line @next/next/no-img-element -- small remote avatar, not worth next/image's config
+      // eslint-disable-next-line @next/next/no-img-element -- avatar remoto pequeño, no compensa configurar next/image
       <img
         src={avatarUrl}
         alt={name}

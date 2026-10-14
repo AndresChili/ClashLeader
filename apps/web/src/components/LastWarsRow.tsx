@@ -1,7 +1,6 @@
 /**
- * 10 boxes, one per recent war, colored by stars (0 mal, 1-3 aviso, 4+
- * bien), empty/"hueco" when the member didn't participate. War history
- * doesn't exist until phase 4, so every box is a hueco for now.
+ * 10 cuadros, uno por guerra reciente, coloreados por estrellas (0 mal,
+ * 1-3 aviso, 4+ bien), vacío/"hueco" cuando el miembro no participó.
  */
 export function LastWarsRow({ stars = [] }: { stars?: (number | null)[] }) {
   const boxes = Array.from({ length: 10 }, (_, i) => stars[i] ?? null);

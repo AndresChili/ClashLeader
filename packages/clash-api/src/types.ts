@@ -1,12 +1,13 @@
 /**
- * Subset of the official Clash of Clans API response shapes this app
- * reads, cross-checked against the community-maintained typed wrapper
- * clashofclans.js (clashofclans.js.org/docs/api — source at
- * github.com/clashperk/clashofclans.js) since the official
- * developer.clashofclans.com portal has no downloadable schema.
- * ClashApiVerifyTokenResult is confirmed directly against that wrapper's
- * source (src/rest/RestManager.ts, src/types/api.ts), not just its docs
- * site, since clan registration depends on getting this one right.
+ * Subconjunto de las formas de respuesta de la API oficial de Clash of
+ * Clans que lee esta app, contrastado contra el wrapper tipado comunitario
+ * clashofclans.js (clashofclans.js.org/docs/api — fuente en
+ * github.com/clashperk/clashofclans.js) porque el portal oficial
+ * developer.clashofclans.com no tiene un esquema descargable.
+ * ClashApiVerifyTokenResult está confirmado directamente contra el código
+ * fuente de ese wrapper (src/rest/RestManager.ts, src/types/api.ts), no
+ * solo su documentación, porque el registro de clanes depende de que esto
+ * esté bien.
  */
 
 export type ClanMemberRole = "member" | "admin" | "coLeader" | "leader";
@@ -37,7 +38,7 @@ export interface ClashApiClan {
 }
 
 // ---------------------------------------------------------------------------
-// War (regular, friendly and CWL individual wars share this shape)
+// Guerra (guerras normales, amistosas e individuales de CWL comparten esta forma)
 // ---------------------------------------------------------------------------
 export type WarState = "notInWar" | "preparation" | "inWar" | "warEnded";
 
@@ -81,7 +82,7 @@ export interface ClashApiWar {
 }
 
 // ---------------------------------------------------------------------------
-// Clan War League
+// Liga de Clanes (CWL)
 // ---------------------------------------------------------------------------
 export type CwlState = "notInWar" | "preparation" | "inWar" | "ended";
 
@@ -96,7 +97,7 @@ export interface ClashApiCwlGroup {
 }
 
 // ---------------------------------------------------------------------------
-// Clan Capital
+// Capital del clan
 // ---------------------------------------------------------------------------
 export interface ClashApiCapitalRaidSeasonMember {
   tag: string;
@@ -117,7 +118,7 @@ export interface ClashApiCapitalRaidSeason {
 }
 
 // ---------------------------------------------------------------------------
-// Player (only used to read the "Games Champion" achievement)
+// Jugador (solo se usa para leer el logro "Games Champion")
 // ---------------------------------------------------------------------------
 export interface ClashApiAchievement {
   name: string;
@@ -133,7 +134,7 @@ export interface ClashApiPlayer {
 export const CLAN_GAMES_ACHIEVEMENT_NAME = "Games Champion";
 
 // ---------------------------------------------------------------------------
-// Player token verification (clan registration, phase 6)
+// Verificación del token del jugador (alta de clan, fase 6)
 // ---------------------------------------------------------------------------
 export interface ClashApiVerifyTokenResult {
   tag: string;

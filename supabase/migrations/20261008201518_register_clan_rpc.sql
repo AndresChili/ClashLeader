@@ -1,9 +1,10 @@
--- Clan registration itself (clans/clan_access inserts) is a plain SQL
--- RPC: the actual verification — the Clash of Clans player-token check
--- and the leader-role check — needs the API key and so happens in the
--- Next.js server (apps/web), never in Postgres. This function is only
--- called *after* that verification passes, and its only job is the
--- atomic insert + audit entry, under the caller's own identity.
+-- El alta de clan en sí (los inserts en clans/clan_access) es un RPC SQL
+-- simple: la verificación real — la comprobación del token de jugador de
+-- Clash of Clans y del rol de líder — necesita la clave de la API y por
+-- eso pasa en el servidor de Next.js (apps/web), nunca en Postgres. Esta
+-- función solo se llama *después* de que esa verificación pasa, y su
+-- único trabajo es el insert atómico más la entrada de auditoría, bajo la
+-- identidad de quien llama.
 create or replace function public.register_clan(p_tag text, p_name text)
 returns uuid
 language plpgsql

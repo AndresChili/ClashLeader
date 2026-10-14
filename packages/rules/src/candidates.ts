@@ -21,11 +21,12 @@ export interface ColeaderCandidateInput {
   attackUsagePct: number | null;
   donationsThisSeason: number;
   /**
-   * "Actividad casi diaria" has no exact definition in the data: the
-   * collector only keeps the latest detected-activity timestamp, not a
-   * day-by-day log (see README "Decisiones técnicas"). This is a
-   * documented proxy — recent, consistent detection — computed by the
-   * caller and passed in, so the rule itself stays a simple, testable gate.
+   * "Actividad casi diaria" no tiene una definición exacta en los datos: el
+   * recolector solo guarda la última marca de actividad detectada, no un
+   * registro día a día (ver README "Decisiones técnicas"). Es una
+   * aproximación documentada — detección reciente y constante — que calcula
+   * quien llama a esta función, para que la regla en sí siga siendo una
+   * comprobación simple y testeable.
    */
   nearDailyActivity: boolean;
 }

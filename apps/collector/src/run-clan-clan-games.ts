@@ -37,8 +37,9 @@ export async function collectClanGames(
       const player = await clashApi.getPlayer(member.tag);
       achievementValue = player?.achievements.find((a) => a.name === CLAN_GAMES_ACHIEVEMENT_NAME)?.value ?? null;
     } catch {
-      // One player's lookup failing (rate limit, transient error) shouldn't
-      // drop the rest of the clan's clan games tracking for this poll.
+      // Que falle la consulta de un jugador (límite de peticiones, error
+      // puntual) no debe tirar el seguimiento de juegos del clan del resto
+      // en esta consulta.
       continue;
     }
     if (achievementValue === null) continue;

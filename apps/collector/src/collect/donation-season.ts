@@ -4,20 +4,22 @@ export interface DonationCounts {
 }
 
 /**
- * Donations only ever go up within a season; a drop between two
- * consecutive polls is the only signal we get that a season reset
- * happened in between. When that happens, the *previous* poll's value was
- * the season's real total and must be saved before it's gone.
+ * Las donaciones solo suben dentro de una temporada; una bajada entre dos
+ * consultas seguidas es la única señal de que hubo un reinicio de
+ * temporada en medio. Cuando pasa, el valor de la consulta *anterior* era
+ * el total real de la temporada y hay que guardarlo antes de que se
+ * pierda.
  */
 export function didSeasonReset(previous: DonationCounts, current: DonationCounts): boolean {
   return current.donations < previous.donations || current.donationsReceived < previous.donationsReceived;
 }
 
 /**
- * Clash of Clans seasons don't line up with calendar months (they end on
- * the last Monday of the month), but we only need a stable, sortable label
- * for "which season was this", not the exact boundary — so the label is
- * approximate: the UTC year-month in which the reset was observed.
+ * Las temporadas de Clash of Clans no coinciden con los meses de
+ * calendario (terminan el último lunes del mes), pero solo necesitamos
+ * una etiqueta estable y ordenable de "qué temporada fue esta", no el
+ * límite exacto — así que la etiqueta es aproximada: el año-mes UTC en el
+ * que se observó el reinicio.
  */
 export function seasonIdForDate(date: Date): string {
   const year = date.getUTCFullYear();

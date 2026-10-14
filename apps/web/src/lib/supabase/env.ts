@@ -1,6 +1,6 @@
 /**
- * Only the URL and the anon/publishable key are ever read on the client.
- * The service role key lives exclusively in apps/collector; see SECURITY.md.
+ * En el cliente solo se leen la URL y la clave anónima/publicable. La
+ * clave de servicio vive exclusivamente en apps/collector.
  */
 function requireEnv(name: string): string {
   const value = process.env[name];

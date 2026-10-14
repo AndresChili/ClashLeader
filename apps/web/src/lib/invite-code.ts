@@ -1,8 +1,8 @@
-// No "server-only" guard needed: importing node:crypto already makes this
-// impossible to bundle into a Client Component.
+// No hace falta guarda "server-only": importar node:crypto ya hace
+// imposible empaquetar esto en un Client Component.
 import { randomBytes, createHash } from "node:crypto";
 
-const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no 0/O/1/I, easier to type by hand
+const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // sin 0/O/1/I, más fácil de escribir a mano
 const CODE_LENGTH = 10;
 export const INVITE_EXPIRY_DAYS = 7;
 
@@ -15,7 +15,7 @@ export function generateInviteCode(): string {
   return code;
 }
 
-/** Only the hash is ever stored (clan_invites.code_hash) — the plaintext code is shown to the admin once and never saved. */
+/** Solo se guarda el hash (clan_invites.code_hash) — el código en texto plano se le muestra al admin una vez y nunca se guarda. */
 export function hashInviteCode(code: string): string {
   return createHash("sha256").update(code.trim().toUpperCase()).digest("hex");
 }

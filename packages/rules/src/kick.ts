@@ -8,17 +8,17 @@ export interface KickEvaluation {
 }
 
 export interface LastFinishedWarRoster {
-  /** Was this member in the lineup for the most recently finished war? */
+  /** ¿Estaba este miembro en la alineación de la guerra terminada más reciente? */
   wasRostered: boolean;
   attacksUsed: number;
 }
 
 /**
- * Expulsar: more than kickInactivityDays with no detected activity, OR
- * zero attacks in the most recently finished war despite being rostered
- * for it. Scoped to the *most recent* finished war (not "ever"), since
- * benching/no-showing an old war that's since been followed by normal
- * play isn't an actionable signal any more.
+ * Expulsar: más de kickInactivityDays sin actividad detectada, O cero
+ * ataques en la guerra terminada más reciente pese a estar en la
+ * alineación. Se mira solo la guerra terminada *más reciente* (no
+ * "siempre"), porque faltar a una guerra antigua seguida de juego normal
+ * ya no es una señal sobre la que actuar.
  */
 export function evaluateKick(params: {
   lastActivityDetectedAt: Date | null;

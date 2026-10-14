@@ -18,7 +18,7 @@ export class ClashApiError extends Error {
   }
 }
 
-/** Clan/player tags use '#', which must be percent-encoded in the URL path. */
+/** Las tags de clan/jugador usan '#', que hay que codificar en la URL. */
 export function encodeTag(tag: string): string {
   const withHash = tag.startsWith("#") ? tag : `#${tag}`;
   return encodeURIComponent(withHash);
@@ -45,12 +45,12 @@ export class ClashApiClient {
     return this.get<ClashApiClan>(`/clans/${encodeTag(tag)}`, tag);
   }
 
-  /** null when the clan has no war log, its log is private, or no war tag exists yet. */
+  /** null si el clan no tiene registro de guerras, es privado, o todavía no hay tag de guerra. */
   async getCurrentWar(tag: string): Promise<ClashApiWar | null> {
     return this.getOrNull<ClashApiWar>(`/clans/${encodeTag(tag)}/currentwar`, tag);
   }
 
-  /** null when the clan isn't currently signed up for Clan War League. */
+  /** null si el clan no está apuntado a Liga de Clanes ahora mismo. */
   async getWarLeagueGroup(tag: string): Promise<ClashApiCwlGroup | null> {
     return this.getOrNull<ClashApiCwlGroup>(`/clans/${encodeTag(tag)}/currentwar/leaguegroup`, tag);
   }
@@ -72,11 +72,12 @@ export class ClashApiClient {
   }
 
   /**
-   * Verifies the one-time API token a player copies from in-game Settings
-   * (not the developer key this client itself authenticates with).
-   * Confirmed against clashofclans.js's source, not just its docs — see
-   * types.ts. Returns null only on 403/404 (bad tag); an "invalid" status
-   * for a wrong token is a normal 200 response, not an error.
+   * Verifica el token de un solo uso que el jugador copia desde Ajustes
+   * dentro del juego (no la clave de desarrollador con la que se autentica
+   * este cliente). Confirmado contra el código fuente de clashofclans.js,
+   * no solo su documentación — ver types.ts. Solo devuelve null en 403/404
+   * (tag inválida); un status "invalid" por token incorrecto es una
+   * respuesta 200 normal, no un error.
    */
   async verifyPlayerToken(tag: string, token: string): Promise<ClashApiVerifyTokenResult | null> {
     return this.getOrNull<ClashApiVerifyTokenResult>(`/players/${encodeTag(tag)}/verifytoken`, tag, {
@@ -103,11 +104,11 @@ export class ClashApiClient {
   }
 
   /**
-   * 403/404 are expected, non-error states for several of these endpoints
-   * (private war log, no war in progress, not in CWL) — callers treat
-   * "no data" and "not applicable right now" the same way, so this turns
-   * both into null instead of throwing. Any other status is still a real
-   * error and still throws.
+   * 403/404 son estados esperados, no errores, en varios de estos
+   * endpoints (registro de guerra privado, sin guerra en curso, no está en
+   * CWL) — quien llama trata "sin datos" y "no aplica ahora mismo" igual,
+   * así que esto convierte ambos en null en vez de lanzar. Cualquier otro
+   * status sigue siendo un error real y sigue lanzando.
    */
   private async getOrNull<T>(path: string, tag: string, init?: RequestInit): Promise<T | null> {
     try {

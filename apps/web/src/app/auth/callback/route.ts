@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
-/** Completes Google OAuth and the email verification link flow. */
+/** Completa el flujo de OAuth de Google y el del enlace de verificación de correo. */
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");

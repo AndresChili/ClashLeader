@@ -8,7 +8,7 @@ export interface LatestSnapshot {
   collectedAt: string;
 }
 
-/** Backed by the public.latest_member_snapshots() SQL function (DISTINCT ON). */
+/** Respaldado por la función SQL public.latest_member_snapshots() (DISTINCT ON). */
 export async function getLatestSnapshots(supabase: SupabaseClient, clanId: string): Promise<Map<string, LatestSnapshot>> {
   const { data, error } = await supabase.rpc("latest_member_snapshots", { p_clan_id: clanId });
 

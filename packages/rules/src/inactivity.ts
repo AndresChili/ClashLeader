@@ -1,11 +1,11 @@
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 /**
- * Only the inactivity half of the "Expulsar" rule — "más de
- * kickInactivityDays días sin actividad detectada". The other half ("una
- * guerra terminada sin ningún ataque estando en la alineación") needs war
- * data that doesn't exist until phase 4, so it isn't in this package yet;
- * see README "Fases".
+ * Solo la mitad de inactividad de la regla "Expulsar" — "más de
+ * kickInactivityDays días sin actividad detectada". La otra mitad ("una
+ * guerra terminada sin ningún ataque estando en la alineación") necesita
+ * datos de guerra que no existían hasta la fase 4, así que no estaba en
+ * este paquete al principio; ver README "Fases".
  */
 export function daysSinceLastActivity(params: {
   lastActivityDetectedAt: Date | null;

@@ -1,10 +1,11 @@
--- War stats for the web app. Both are SECURITY INVOKER (the default) so
--- they run as the caller and stay subject to wars/war_members/war_attacks
--- RLS — same reasoning as latest_member_snapshots_for_viewer().
+-- Estadísticas de guerra para la app web. Las dos son SECURITY INVOKER (el
+-- valor por defecto) así que corren como quien llama y siguen sujetas a
+-- RLS de wars/war_members/war_attacks — mismo razonamiento que
+-- latest_member_snapshots_for_viewer().
 
--- All-time reliability across every war this clan has finished: used to
--- order "Alineación recomendada" and to fill Miembros/Ficha's "usa el X% ·
--- Y por ataque" line.
+-- Fiabilidad de todos los tiempos a través de cada guerra que este clan ha
+-- terminado: se usa para ordenar "Alineación recomendada" y para rellenar
+-- la línea "usa el X% · Y por ataque" de Miembros/Ficha.
 create or replace function public.member_war_reliability(p_clan_id uuid)
 returns table (
   clan_member_id uuid,
@@ -36,8 +37,9 @@ $$;
 revoke all on function public.member_war_reliability(uuid) from public;
 grant execute on function public.member_war_reliability(uuid) to authenticated;
 
--- A member's last N finished wars (most recent first), one row per war
--- with their total stars that war — "Últimas 10 guerras" on the Ficha.
+-- Las últimas N guerras terminadas de un miembro (la más reciente primero),
+-- una fila por guerra con sus estrellas totales en esa guerra —
+-- "Últimas 10 guerras" en la Ficha.
 create or replace function public.member_recent_wars(p_clan_member_id uuid, p_limit integer default 10)
 returns table (
   war_id uuid,

@@ -1,19 +1,20 @@
 import type { ClanRules } from "./types";
 
 /**
- * The spec fixes the four category *weights* (and makes them editable via
- * clan_rules), but doesn't define how each raw stat maps to a 0–100
- * sub-score — that mapping is this file's own design decision, documented
- * here rather than hidden in magic numbers:
+ * El encargo fija los cuatro *pesos* de categoría (y los hace editables vía
+ * clan_rules), pero no define cómo convertir cada estadística cruda en un
+ * sub-score de 0 a 100 — esa conversión es una decisión de diseño de este
+ * archivo, documentada aquí en vez de escondida en números mágicos:
  *
- * - Guerra: half attack-usage%, half average stars (out of the max 3 a
- *   single attack can earn).
- * - Donaciones: donations this season against the clan's own colíder
- *   donation threshold as "full marks" — reuses an existing editable
- *   threshold instead of inventing a new one.
- * - Capital: capital attacks used this season against the attacks
- *   available (usage%, same idea as guerra).
- * - Juegos: points this season against the classic single-event cap.
+ * - Guerra: mitad % de ataques usados, mitad media de estrellas (sobre el
+ *   máximo de 3 que puede dar un solo ataque).
+ * - Donaciones: donaciones de la temporada frente al propio umbral
+ *   editable de colíder como "nota máxima" — reutiliza un umbral ya
+ *   existente en vez de inventar uno nuevo.
+ * - Capital: ataques de capital usados esta temporada frente a los
+ *   disponibles (% de uso, misma idea que guerra).
+ * - Juegos: puntos de esta temporada frente al tope clásico de un solo
+ *   evento.
  */
 const MAX_STARS_PER_ATTACK = 3;
 const CLAN_GAMES_FULL_SCORE_POINTS = 4000;

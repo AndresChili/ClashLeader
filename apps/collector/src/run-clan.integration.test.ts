@@ -3,14 +3,15 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { ClashApiClient, type ClashApiClan } from "@clashleader/clash-api";
 import { runClanCollection } from "./run-clan";
 
-// Runs against `npx supabase start`. These are the Supabase CLI's public
-// local-dev defaults (printed by every `supabase start`), never valid
-// against a hosted project, so hardcoding them here is safe.
+// Corre contra `npx supabase start`. Son los valores públicos por defecto
+// de desarrollo local del CLI de Supabase (los imprime cada `supabase
+// start`), nunca válidos contra un proyecto real, así que hardcodearlos
+// aquí es seguro.
 const SUPABASE_URL = process.env.SUPABASE_URL ?? "http://127.0.0.1:54321";
 const SERVICE_ROLE_KEY =
   process.env.SUPABASE_SERVICE_ROLE_KEY ??
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU";
-const DEMO_LEADER_ID = "a0000000-0000-0000-0000-000000000001"; // from supabase/seed.sql
+const DEMO_LEADER_ID = "a0000000-0000-0000-0000-000000000001"; // de supabase/seed.sql
 
 const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, { auth: { persistSession: false } });
 
@@ -81,8 +82,8 @@ describe("runClanCollection (integration, requires `npx supabase start`)", () =>
       .eq("clan_id", clanId);
     expect(membersAfterPollOne).toHaveLength(2);
 
-    // Poll two, 15 minutes later: P1 donated then the season reset
-    // (100 -> 10, a drop), P2 left, P3 joined.
+    // Consulta dos, 15 minutos después: P1 donó y luego se reinició la
+    // temporada (100 -> 10, una bajada), P2 se fue, P3 entró.
     const pollTwo: ClashApiClan = {
       tag: clanTag,
       name: "Clan Integración",
@@ -130,20 +131,20 @@ describe("runClanCollection (integration, requires `npx supabase start`)", () =>
     const p3 = membersAfterPollTwo!.find((m) => m.player_tag === "#P3")!;
 
     expect(p1.is_current).toBe(true);
-    expect(p1.last_activity_detected_at).not.toBeNull(); // donations changed (reset counts as activity)
+    expect(p1.last_activity_detected_at).not.toBeNull(); // las donaciones cambiaron (el reinicio cuenta como actividad)
 
     expect(p2.is_current).toBe(false);
     expect(p2.left_at).not.toBeNull();
 
     expect(p3.is_current).toBe(true);
-    expect(p3.last_activity_detected_at).toBeNull(); // no prior snapshot to compare against yet
+    expect(p3.last_activity_detected_at).toBeNull(); // todavía no hay snapshot anterior con el que comparar
 
     const { data: seasonTotals } = await supabase
       .from("donation_season_totals")
       .select("donations, donations_received")
       .eq("clan_member_id", p1.id);
     expect(seasonTotals).toHaveLength(1);
-    expect(seasonTotals![0]!.donations).toBe(100); // the pre-reset value, not the post-reset 10
+    expect(seasonTotals![0]!.donations).toBe(100); // el valor antes del reinicio, no el 10 de después
 
     const { data: events } = await supabase
       .from("membership_events")
@@ -161,6 +162,6 @@ describe("runClanCollection (integration, requires `npx supabase start`)", () =>
       .from("member_snapshots")
       .select("id", { count: "exact", head: true })
       .in("clan_member_id", [p1.id, p2.id, p3.id]);
-    expect(snapshotCount).toBe(4); // 2 members in poll one + 2 in poll two
+    expect(snapshotCount).toBe(4); // 2 miembros en la consulta uno + 2 en la consulta dos
   });
 });

@@ -5,9 +5,10 @@ export async function getClanRules(supabase: SupabaseClient, clanId: string): Pr
   const { data, error } = await supabase.from("clan_rules").select("*").eq("clan_id", clanId).single();
 
   if (error) {
-    // clan_rules always has a row (created by a trigger when the clan was
-    // inserted) so a read failure here means something's actually wrong;
-    // fall back to the documented defaults rather than crashing the page.
+    // clan_rules siempre tiene una fila (la crea un trigger al insertar el
+    // clan), así que un fallo de lectura aquí significa que algo va mal de
+    // verdad; se usan los valores por defecto documentados en vez de
+    // tumbar la página.
     console.error(`Failed to load clan_rules for ${clanId}, using defaults:`, error.message);
     return { clanId, ...DEFAULT_CLAN_RULES };
   }

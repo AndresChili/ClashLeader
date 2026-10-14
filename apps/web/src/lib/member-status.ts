@@ -7,9 +7,9 @@ export interface MemberStatus {
 }
 
 /**
- * Expulsar beats En riesgo beats the índice verdict: a member already
- * flagged for removal, or silent in the live war, is a more urgent signal
- * than their general standing.
+ * Expulsar gana a En riesgo, que gana al veredicto del índice: un miembro
+ * ya marcado para expulsar, o callado en la guerra en vivo, es una señal
+ * más urgente que su estado general.
  */
 export function getMemberStatus(evaluation: Pick<MemberEvaluation, "kick" | "atRisk" | "index">): MemberStatus {
   if (evaluation.kick.shouldKick) {
@@ -21,4 +21,17 @@ export function getMemberStatus(evaluation: Pick<MemberEvaluation, "kick" | "atR
   return evaluation.index.verdict === "Cumple"
     ? { label: "Cumple", tone: "good" }
     : { label: "Flojo", tone: "warn" };
+}
+
+/** Motivo legible para las filas de "Para expulsar" del Panel; cadena vacía si no aplica ninguna de las dos señales. */
+export function getKickReasonLabel(evaluation: Pick<MemberEvaluation, "kick" | "atRisk">, kickInactivityDays: number): string {
+  if (evaluation.kick.shouldKick) {
+    return evaluation.kick.reason === "inactivity"
+      ? `más de ${kickInactivityDays} días sin actividad detectada`
+      : "sin ataques en la última guerra";
+  }
+  if (evaluation.atRisk) {
+    return "todavía no ha atacado en la guerra en curso";
+  }
+  return "";
 }

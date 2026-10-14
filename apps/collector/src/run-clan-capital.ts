@@ -4,7 +4,7 @@ import { hasNewAttacks } from "./collect/activity";
 import { getCapitalAttacksUsedByTag, upsertCapitalContributions, upsertCapitalSeason } from "./db/capital";
 import { updateLastActivity } from "./db/clan-members";
 
-/** Only the most recent raid weekend matters for an ongoing poll; older ones never change again once fetched. */
+/** Solo importa el fin de semana de asalto más reciente en una consulta normal; los anteriores ya no cambian una vez leídos. */
 export async function collectCapital(
   clashApi: ClashApiClient,
   supabase: SupabaseClient,

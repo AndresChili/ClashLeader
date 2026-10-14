@@ -1,22 +1,24 @@
 /**
- * There is no Clan Games endpoint (see prompt's Datos section): the
- * "Games Champion" achievement only ever increases while a Clan Games
- * event is actually live (it's a lifetime point total, but points are
- * only awarded during the event), so a baseline taken at the start of a
- * tracking window and compared to the latest value correctly isolates
- * that window's points — without needing to know the real event calendar.
+ * No hay endpoint de Juegos del Clan: el logro "Games Champion" solo sube
+ * mientras un evento de Juegos del Clan está activo de verdad (es un
+ * contador de puntos acumulado de por vida, pero solo se dan puntos
+ * durante el evento), así que una base tomada al abrir una ventana de
+ * seguimiento y comparada con el valor más reciente aísla correctamente
+ * los puntos de esa ventana — sin necesitar conocer el calendario real
+ * del evento.
  *
- * The tracking window is "one UTC month" (reusing donation-season.ts's
- * seasonIdForDate), which comfortably contains exactly one Clan Games
- * event. See run-clan.ts for how this plugs into the collector loop.
+ * La ventana de seguimiento es "un mes UTC" (reutiliza seasonIdForDate de
+ * donation-season.ts), que contiene cómodamente un único evento de Juegos
+ * del Clan. Ver run-clan.ts para cómo encaja esto en el bucle del
+ * recolector.
  */
 export function shouldOpenNewSeason(currentOpenSeasonId: string | null, currentSeasonId: string): boolean {
   return currentOpenSeasonId !== currentSeasonId;
 }
 
 export function computeClanGamesPoints(before: number, after: number): number {
-  // The achievement value should never decrease, but never emit a
-  // negative score if something odd happens upstream (e.g. a manual
-  // in-game reset we don't know about).
+  // El valor del logro nunca debería bajar, pero nunca se emite un
+  // puntaje negativo si algo raro pasa aguas arriba (por ejemplo, un
+  // reinicio manual dentro del juego que no conocemos).
   return Math.max(0, after - before);
 }

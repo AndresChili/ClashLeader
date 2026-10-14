@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { attacksAllowedFor, formatRemainingTime, formatScore } from "./format-war";
+import { attacksAllowedFor, formatRemainingTime, formatScore, formatUpdatedAgo } from "./format-war";
 
 const now = new Date("2026-10-08T12:00:00Z");
 
@@ -39,5 +39,31 @@ describe("attacksAllowedFor", () => {
     expect(attacksAllowedFor("cwl")).toBe(1);
     expect(attacksAllowedFor("random")).toBe(2);
     expect(attacksAllowedFor("friendly")).toBe(2);
+  });
+});
+
+describe("formatUpdatedAgo", () => {
+  it("says so when the collector has never run", () => {
+    expect(formatUpdatedAgo(null, now)).toBe("todavía sin datos del recolector");
+  });
+
+  it("reports just now under a minute", () => {
+    const at = new Date(now.getTime() - 10_000).toISOString();
+    expect(formatUpdatedAgo(at, now)).toBe("actualizado justo ahora");
+  });
+
+  it("uses singular for exactly 1 minute", () => {
+    const at = new Date(now.getTime() - 60_000).toISOString();
+    expect(formatUpdatedAgo(at, now)).toBe("actualizado hace 1 min");
+  });
+
+  it("formats minutes under an hour", () => {
+    const at = new Date(now.getTime() - 12 * 60_000).toISOString();
+    expect(formatUpdatedAgo(at, now)).toBe("actualizado hace 12 min");
+  });
+
+  it("formats hours at or beyond 60 minutes", () => {
+    const at = new Date(now.getTime() - 125 * 60_000).toISOString();
+    expect(formatUpdatedAgo(at, now)).toBe("actualizado hace 2 h");
   });
 });

@@ -1,13 +1,13 @@
 /**
- * Populates a realistic fake clan so the web app can be built and tested
- * without a Clash of Clans API key — see "Lo que no puedes hacer tú" in
- * the top-level prompt and SETUP.md. Talks to Supabase directly (the same
- * db/ helpers the real collector uses) and never touches the Clash API.
+ * Rellena un clan ficticio realista para poder construir y probar la app
+ * web sin una clave de la API de Clash of Clans. Habla con Supabase
+ * directamente (los mismos helpers de db/ que usa el recolector real) y
+ * nunca toca la API de Clash.
  *
- * Usage: npm run seed:fixtures --workspace=collector
- * Requires a local Supabase (`npx supabase start`) with migrations and
- * seed.sql applied, since it attaches the fixture clan to the demo leader
- * account created there.
+ * Uso: npm run seed:fixtures --workspace=collector
+ * Necesita un Supabase local (`npx supabase start`) con las migraciones y
+ * seed.sql aplicados, porque asigna el clan ficticio a la cuenta de líder
+ * de ejemplo que se crea ahí.
  */
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { ClanMemberRole, ClashApiCapitalRaidSeason, ClashApiWar, ClashApiWarClan } from "@clashleader/clash-api";
@@ -21,7 +21,7 @@ const SUPABASE_URL = process.env.SUPABASE_URL ?? "http://127.0.0.1:54321";
 const SUPABASE_SERVICE_ROLE_KEY =
   process.env.SUPABASE_SERVICE_ROLE_KEY ??
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU";
-const DEMO_LEADER_ID = "a0000000-0000-0000-0000-000000000001"; // supabase/seed.sql
+const DEMO_LEADER_ID = "a0000000-0000-0000-0000-000000000001"; // ver supabase/seed.sql
 const FIXTURE_CLAN_TAG = "#QVCLJ2PY0";
 
 interface FixtureMember {
@@ -34,7 +34,7 @@ interface FixtureMember {
   trophies: number;
   townHallLevel: number;
   daysInClan: number;
-  /** Hours since last detected activity — kept recent for most, stale (>kick_inactivity_days) for the two meant to demo "Expulsar". */
+  /** Horas desde la última actividad detectada — reciente para la mayoría, antigua (>kick_inactivity_days) para los dos pensados para enseñar "Expulsar". */
   activityHoursAgo: number;
 }
 
@@ -140,7 +140,7 @@ function fixtureWarClan(
   };
 }
 
-/** One in-progress war (for the "En curso" tab) and one finished one (for "Historial"). */
+/** Una guerra en curso (para la pestaña "En curso") y una terminada (para "Historial"). */
 async function seedWars(supabase: SupabaseClient, clanId: string, clanMemberIdByTag: Map<string, string>) {
   const ongoing: ClashApiWar = {
     state: "inWar",
@@ -224,7 +224,7 @@ async function seedCapital(supabase: SupabaseClient, clanId: string) {
 }
 
 async function seedClanGames(supabase: SupabaseClient, clanId: string) {
-  const seasonId = new Date().toISOString().slice(0, 7); // same scheme as seasonIdForDate()
+  const seasonId = new Date().toISOString().slice(0, 7); // mismo esquema que seasonIdForDate()
   const seasonRowId = await openClanGamesSeason(supabase, clanId, seasonId, new Date());
 
   await upsertClanGamesPoints(

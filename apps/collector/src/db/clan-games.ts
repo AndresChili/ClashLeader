@@ -57,10 +57,10 @@ export interface ClanGamesPointInput {
 }
 
 /**
- * One row per member per season. A member seen for the first time this
- * season (joined mid-window) gets before == after == their current value,
- * so they start earning points from the moment we first see them, same as
- * everyone else's baseline.
+ * Una fila por miembro por temporada. Un miembro visto por primera vez
+ * esta temporada (se unió a mitad de evento) tiene before == after == su
+ * valor actual, así que empieza a sumar puntos desde el momento en que lo
+ * vemos por primera vez, igual que la base de todos los demás.
  */
 export async function upsertClanGamesPoints(
   supabase: SupabaseClient,

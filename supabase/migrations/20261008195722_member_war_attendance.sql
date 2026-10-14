@@ -1,9 +1,10 @@
--- Adds wars_attacked (count of finished wars where the member made at
--- least one attack) to member_war_reliability(), needed for "Candidato a
--- veterano" (atacó en todas sus guerras — presence, not volume, which is
--- what usage_pct already measures). The return shape is changing, so the
--- old function must be dropped first: CREATE OR REPLACE can't alter an
--- existing function's OUT-parameter row type.
+-- Añade wars_attacked (recuento de guerras terminadas en las que el
+-- miembro hizo al menos un ataque) a member_war_reliability(), necesario
+-- para "Candidato a veterano" (atacó en todas sus guerras — presencia, no
+-- volumen, que es lo que usage_pct ya mide). La forma del resultado
+-- cambia, así que hay que borrar primero la función vieja: CREATE OR
+-- REPLACE no puede alterar el tipo de fila de los parámetros OUT de una
+-- función existente.
 drop function if exists public.member_war_reliability(uuid);
 
 create function public.member_war_reliability(p_clan_id uuid)

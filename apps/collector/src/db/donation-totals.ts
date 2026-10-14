@@ -8,9 +8,9 @@ export interface DonationSeasonTotalInput {
 }
 
 /**
- * Idempotent: if the collector happens to detect the same reset twice
- * (e.g. a retried run), the second write just overwrites with the same
- * frozen total instead of erroring or duplicating.
+ * Idempotente: si el recolector detecta el mismo reinicio dos veces (por
+ * ejemplo, una ejecución reintentada), la segunda escritura simplemente
+ * sobrescribe con el mismo total congelado en vez de dar error o duplicar.
  */
 export async function upsertDonationSeasonTotal(supabase: SupabaseClient, input: DonationSeasonTotalInput): Promise<void> {
   const { error } = await supabase.from("donation_season_totals").upsert(

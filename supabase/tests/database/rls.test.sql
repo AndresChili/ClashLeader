@@ -1,7 +1,7 @@
--- RLS regression tests, run with: npx supabase test db
--- Proves two things for every clan-scoped table: (1) nobody gets in without
--- an explicit policy (deny by default), and (2) clan data is isolated
--- between clans and between the admin/reader roles.
+-- Tests de regresión de RLS, se ejecutan con: npx supabase test db
+-- Demuestra dos cosas para cada tabla con alcance de clan: (1) nadie entra
+-- sin una política explícita (denegado por defecto), y (2) los datos de
+-- cada clan están aislados entre clanes y entre los roles admin/reader.
 
 begin;
 create extension if not exists pgtap with schema extensions;
@@ -9,9 +9,9 @@ create extension if not exists pgtap with schema extensions;
 select plan(20);
 
 -- ---------------------------------------------------------------------------
--- Fixtures: two clans, each with an admin (leader) and a reader (co-leader),
--- created as postgres (bypasses RLS) so the tests below start from a known
--- state.
+-- Datos de ejemplo: dos clanes, cada uno con un admin (líder) y un reader
+-- (colíder), creados como postgres (se salta RLS) para que los tests de
+-- abajo partan de un estado conocido.
 -- ---------------------------------------------------------------------------
 insert into auth.users (id, email, raw_user_meta_data)
 values
@@ -39,7 +39,7 @@ insert into public.member_snapshots (clan_member_id, donations, donations_receiv
 values ('20000000-0000-0000-0000-000000000001', 320, 180, 'member');
 
 -- ---------------------------------------------------------------------------
--- Helpers to impersonate a Postgres role the way PostgREST does.
+-- Helpers para suplantar un rol de Postgres igual que hace PostgREST.
 -- ---------------------------------------------------------------------------
 create schema if not exists tests;
 
@@ -73,7 +73,7 @@ grant execute on function tests.auth_as_anon() to anon, authenticated;
 grant execute on function tests.try_update_kick_days(uuid, int) to anon, authenticated;
 
 -- ---------------------------------------------------------------------------
--- 1. Anonymous users see nothing, anywhere (deny by default).
+-- 1. Usuarios anónimos no ven nada, en ningún sitio (denegado por defecto).
 -- ---------------------------------------------------------------------------
 select tests.auth_as_anon();
 
@@ -94,7 +94,7 @@ select throws_ok(
 );
 
 -- ---------------------------------------------------------------------------
--- 2. Admin of clan 1 sees clan 1 only.
+-- 2. El admin del clan 1 solo ve el clan 1.
 -- ---------------------------------------------------------------------------
 select tests.auth_as('00000000-0000-0000-0000-000000000001'::uuid);
 
@@ -130,7 +130,7 @@ select lives_ok(
 );
 
 -- ---------------------------------------------------------------------------
--- 3. Reader of clan 1 can read but not write.
+-- 3. El reader del clan 1 puede leer pero no escribir.
 -- ---------------------------------------------------------------------------
 select tests.auth_as('00000000-0000-0000-0000-000000000002'::uuid);
 
@@ -139,7 +139,7 @@ select is(
   'clan 1 reader can see clan 1 members'
 );
 
--- an update attempt by a reader must affect zero rows under RLS:
+-- un intento de update por parte de un reader debe afectar a cero filas bajo RLS:
 select is(
   tests.try_update_kick_days('10000000-0000-0000-0000-000000000001', 99),
   0,
@@ -161,7 +161,7 @@ select throws_ok(
 );
 
 -- ---------------------------------------------------------------------------
--- 4. Admin of clan 2 cannot see clan 1 data (isolation between clans).
+-- 4. El admin del clan 2 no puede ver datos del clan 1 (aislamiento entre clanes).
 -- ---------------------------------------------------------------------------
 select tests.auth_as('00000000-0000-0000-0000-000000000003'::uuid);
 
@@ -176,7 +176,7 @@ select is(
 );
 
 -- ---------------------------------------------------------------------------
--- 5. An authenticated outsider with no clan_access rows sees nothing.
+-- 5. Un usuario autenticado sin filas en clan_access no ve nada.
 -- ---------------------------------------------------------------------------
 select tests.auth_as('00000000-0000-0000-0000-000000000004'::uuid);
 
@@ -196,7 +196,7 @@ select is(
 );
 
 -- ---------------------------------------------------------------------------
--- 6. register_clan() grants the caller admin access to a brand-new clan.
+-- 6. register_clan() le da a quien llama acceso de admin a un clan nuevo.
 -- ---------------------------------------------------------------------------
 select lives_ok(
   $$ select public.register_clan('#QVCLJ2PYG', 'Clan Nuevo') $$,

@@ -1,7 +1,8 @@
--- Local-dev-only fixture data, loaded by `supabase db reset` /
--- `supabase start`. Never runs against a hosted project. More fixtures
--- (a demo clan with members, wars, etc.) land as each phase adds the
--- tables they belong in; see docs in SETUP.md for how to log in locally.
+-- Datos de ejemplo solo para desarrollo local, cargados por
+-- `supabase db reset` / `supabase start`. Nunca corre contra un proyecto
+-- real. El resto de datos ficticios (un clan de ejemplo con miembros,
+-- guerras, etc.) se añaden con `npm run seed:fixtures --workspace=collector`
+-- una vez este seed crea la cuenta de líder de ejemplo.
 
 insert into auth.users (
   instance_id, id, aud, role, email, encrypted_password,

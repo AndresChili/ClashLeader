@@ -8,8 +8,8 @@ const toneClasses: Record<PillTone, string> = {
 };
 
 /**
- * 44x44 index box from the design. Shows "—" instead of a 0–100 number
- * until packages/rules computes the real weighted índice (phase 5).
+ * Cuadro de índice de 44x44 del diseño. Muestra "—" en vez de un número
+ * de 0 a 100 hasta que packages/rules calcula el índice ponderado real (fase 5).
  */
 export function IndexBadge({ tone, value }: { tone: PillTone; value?: number }) {
   return (

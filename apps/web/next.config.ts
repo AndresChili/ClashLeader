@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
-// Strict CSP: no inline scripts, nothing loaded from third parties except
-// the Supabase project itself and Google's OAuth/avatar endpoints.
+// CSP estricta: sin scripts inline, nada cargado de terceros salvo el
+// propio proyecto de Supabase y los endpoints de OAuth/avatar de Google.
 const supabaseOrigin = process.env.NEXT_PUBLIC_SUPABASE_URL
   ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).origin
   : "";
@@ -30,10 +30,11 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
-  // Cache Components (PPR-style static shells) buys nothing here: every
-  // route is behind auth and reads per-clan data, so there's no static
-  // content worth prerendering — only Suspense boilerplate for no benefit.
-  // See README "Decisiones técnicas".
+  // Cache Components (shells estáticos al estilo PPR) no aporta nada aquí:
+  // toda ruta está detrás de autenticación y lee datos por clan, así que
+  // no hay contenido estático que valga la pena pre-renderizar — solo
+  // boilerplate de Suspense sin ningún beneficio real. Ver README
+  // "Decisiones técnicas".
   turbopack: {
     rules: {
       "*.css": {

@@ -25,10 +25,10 @@ export interface MemberEvaluation {
 export interface MemberEvaluationContext {
   now: Date;
   rules: ClanRules;
-  /** From the current in-progress war's roster, or undefined if they aren't in it (no war, or not rostered). */
+  /** De la alineación de la guerra en curso, o undefined si no está en ella (sin guerra, o no alineado). */
   currentWarAttacks: number | undefined;
   inCurrentWar: boolean;
-  /** null only when the clan has no finished war on record at all. */
+  /** null solo cuando el clan no tiene ninguna guerra terminada registrada. */
   lastFinishedWar: LastFinishedWarRoster | null;
   capitalAttacksUsed: number | null;
   capitalAttacksAvailable: number | null;

@@ -1,9 +1,9 @@
 import { defineConfig } from "vitest/config";
 
 /**
- * Runs only src/**\/*.integration.test.ts against a real local Supabase
- * (`npx supabase start`). Deliberately separate from the default `test`
- * script so plain `npm test` never needs Docker to pass.
+ * Corre solo src/**\/*.integration.test.ts contra un Supabase local real
+ * (`npx supabase start`). Separado a propósito del script `test` por
+ * defecto, para que `npm test` nunca necesite Docker para pasar.
  */
 export default defineConfig({
   test: {

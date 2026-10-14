@@ -28,7 +28,7 @@ export interface MemberSummary {
   leagueName: string | null;
   trophies: number | null;
   townHallLevel: number | null;
-  /** All-time across every finished war on record (see member_war_reliability()); null until the member's first finished war. */
+  /** De todos los tiempos, a través de cada guerra terminada registrada (ver member_war_reliability()); null hasta la primera guerra terminada del miembro. */
   avgStarsPerAttack: number | null;
   attackUsagePct: number | null;
   attacksUsed: number | null;
@@ -38,10 +38,11 @@ export interface MemberSummary {
 }
 
 /**
- * Raw facts only — no rule evaluation here. Kick/at-risk/candidate/índice
- * verdicts are computed from this by lib/member-evaluation.ts, which also
- * needs war/capital/clan-games data this function doesn't fetch, so
- * mixing the two here would just mean fetching it twice.
+ * Solo hechos crudos — aquí no se evalúa ninguna regla. Los veredictos de
+ * expulsión/riesgo/candidato/índice los calcula a partir de esto
+ * lib/member-evaluation.ts, que además necesita datos de guerra/capital/
+ * juegos del clan que esta función no trae, así que mezclar las dos cosas
+ * aquí solo significaría traerlos dos veces.
  */
 export async function getClanMembers(supabase: SupabaseClient, clanId: string): Promise<MemberSummary[]> {
   const [{ data: members, error: membersError }, { data: snapshots, error: snapshotsError }, reliabilityByMemberId] =
@@ -92,8 +93,34 @@ export async function getClanMembers(supabase: SupabaseClient, clanId: string): 
 }
 
 export async function getClanMemberByTag(supabase: SupabaseClient, clanId: string, playerTag: string): Promise<MemberSummary | null> {
-  // A single clan has at most 50 members, so reusing the list query is
-  // simpler and no slower in practice than a bespoke single-row query.
+  // Un clan tiene como mucho 50 miembros, así que reutilizar la consulta
+  // de la lista es más simple y en la práctica no más lento que una
+  // consulta de una sola fila hecha a medida.
   const members = await getClanMembers(supabase, clanId);
   return members.find((member) => member.playerTag === playerTag) ?? null;
+}
+
+export interface RecentExit {
+  playerTag: string;
+  name: string;
+  leftAt: string;
+}
+
+/** Los miembros marcados como salidos (is_current = false) más recientes, para la sección "Movimientos" del Panel. */
+export async function getRecentExits(supabase: SupabaseClient, clanId: string, limit = 5): Promise<RecentExit[]> {
+  const { data, error } = await supabase
+    .from("clan_members")
+    .select("player_tag, name, left_at")
+    .eq("clan_id", clanId)
+    .eq("is_current", false)
+    .order("left_at", { ascending: false })
+    .limit(limit);
+
+  if (error) throw new Error(`Failed to load recent exits: ${error.message}`);
+
+  return data.map((row) => ({
+    playerTag: row.player_tag as string,
+    name: row.name as string,
+    leftAt: row.left_at as string,
+  }));
 }

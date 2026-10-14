@@ -1,14 +1,15 @@
--- Row Level Security: every table is locked down by default (RLS enabled,
--- no policy = no access). Policies below are the only doors in.
+-- Row Level Security: toda tabla está cerrada por defecto (RLS activado,
+-- sin política = sin acceso). Las políticas de abajo son las únicas puertas.
 --
--- Write access for in-game data (members, wars, capital, games) belongs to
--- the collector, which uses the Supabase service role key and therefore
--- bypasses RLS entirely. Authenticated users only ever read that data, or
--- write to the small set of "leader decision" tables, and only as 'admin'.
+-- La escritura de datos del juego (miembros, guerras, capital, juegos) es
+-- cosa del recolector, que usa la clave de servicio de Supabase y por
+-- tanto se salta RLS por completo. Los usuarios autenticados solo leen
+-- esos datos, o escriben en el pequeño grupo de tablas de "decisión del
+-- líder", y solo como 'admin'.
 
 -- ---------------------------------------------------------------------------
--- Helper functions (SECURITY DEFINER so they can check membership without
--- re-triggering RLS on clan_access, which would recurse).
+-- Funciones auxiliares (SECURITY DEFINER para poder comprobar membresía
+-- sin volver a disparar RLS en clan_access, que recursionaría).
 -- ---------------------------------------------------------------------------
 create or replace function public.has_clan_access(p_clan_id uuid)
 returns boolean
@@ -90,7 +91,7 @@ grant execute on function public.clan_id_for_capital_season(uuid) to authenticat
 grant execute on function public.clan_id_for_clan_games_season(uuid) to authenticated;
 
 -- ---------------------------------------------------------------------------
--- Enable RLS everywhere
+-- Activar RLS en todas partes
 -- ---------------------------------------------------------------------------
 alter table public.profiles enable row level security;
 alter table public.clans enable row level security;
@@ -114,8 +115,9 @@ alter table public.promotion_decisions enable row level security;
 alter table public.audit_log enable row level security;
 alter table public.rate_limit_attempts enable row level security;
 
--- Force RLS for table owners too (defence in depth; the app never connects
--- as the table owner, but this keeps the guarantee explicit).
+-- Forzar RLS también para los dueños de las tablas (defensa en profundidad;
+-- la app nunca se conecta como dueño de la tabla, pero esto deja la
+-- garantía explícita).
 alter table public.profiles force row level security;
 alter table public.clans force row level security;
 alter table public.clan_access force row level security;
@@ -153,9 +155,9 @@ create policy "profiles_update_own" on public.profiles
 create policy "clans_select_member" on public.clans
   for select using (public.has_clan_access(id));
 
--- Creation happens through the register_clan() RPC (security definer) after
--- verifying the player token and leader role server-side; no direct insert
--- policy for clients.
+-- La creación pasa por el RPC register_clan() (security definer) después
+-- de verificar el token del jugador y el rol de líder en el servidor; no
+-- hay política de insert directa para clientes.
 create policy "clans_update_admin" on public.clans
   for update using (public.is_clan_admin(id)) with check (public.is_clan_admin(id));
 
@@ -165,8 +167,8 @@ create policy "clans_update_admin" on public.clans
 create policy "clan_access_select_member" on public.clan_access
   for select using (public.has_clan_access(clan_id));
 
--- Rows are only written by register_clan() (first admin) and
--- redeem_clan_invite() (new reader), both SECURITY DEFINER RPCs.
+-- Las filas solo las escriben register_clan() (primer admin) y
+-- redeem_clan_invite() (nuevo reader), ambos RPCs SECURITY DEFINER.
 
 -- ---------------------------------------------------------------------------
 -- clan_invites
@@ -177,7 +179,7 @@ create policy "clan_invites_select_admin" on public.clan_invites
 create policy "clan_invites_insert_admin" on public.clan_invites
   for insert with check (public.is_clan_admin(clan_id));
 
--- Redemption (setting used_at/used_by) happens through redeem_clan_invite().
+-- El canje (fijar used_at/used_by) pasa por redeem_clan_invite().
 
 -- ---------------------------------------------------------------------------
 -- clan_rules
@@ -198,7 +200,7 @@ create policy "clan_members_update_admin" on public.clan_members
   for update using (public.is_clan_admin(clan_id)) with check (public.is_clan_admin(clan_id));
 
 -- ---------------------------------------------------------------------------
--- Read-only, collector-fed history tables
+-- Tablas de histórico de solo lectura, alimentadas por el recolector
 -- ---------------------------------------------------------------------------
 create policy "member_snapshots_select_member" on public.member_snapshots
   for select using (public.has_clan_access(public.clan_id_for_member(clan_member_id)));
@@ -267,5 +269,5 @@ create policy "audit_log_select_admin" on public.audit_log
 create policy "audit_log_insert_self" on public.audit_log
   for insert with check (actor_id = auth.uid() and public.has_clan_access(clan_id));
 
--- rate_limit_attempts: intentionally no policies at all. Only server-side
--- code using the service role key reads or writes it.
+-- rate_limit_attempts: sin políticas, a propósito. Solo la lee o escribe
+-- código del servidor usando la clave de servicio.
