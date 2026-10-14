@@ -8,7 +8,21 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
 }
 
-type WindowWithPwaPrompt = Window & { __pwaInstallPrompt?: BeforeInstallPromptEvent };
+// Se registra al cargar este módulo (durante la hidratación), no dentro de
+// useEffect, para ganarle la carrera a Chrome: si el listener llega tarde,
+// Chrome muestra su propio banner nativo en vez de dejarnos controlar el
+// prompt. No puede ir en un <script> inline porque el CSP del proyecto es
+// script-src 'self' y bloquea scripts inline sin nonce.
+let capturedPrompt: BeforeInstallPromptEvent | null = null;
+const readyListeners = new Set<() => void>();
+
+if (typeof window !== "undefined") {
+  window.addEventListener("beforeinstallprompt", (event) => {
+    event.preventDefault();
+    capturedPrompt = event as BeforeInstallPromptEvent;
+    readyListeners.forEach((listener) => listener());
+  });
+}
 
 function isStandalone() {
   return (
@@ -29,27 +43,19 @@ export function InstallPwaButton() {
 
   useEffect(() => {
     setInstalled(isStandalone());
+    if (capturedPrompt) setDeferredPrompt(capturedPrompt);
 
-    // El evento beforeinstallprompt lo captura un script en <head> que corre
-    // antes de la hidratación (ver layout.tsx), para que Chrome nunca llegue
-    // a mostrar su propio banner nativo mientras React aún no ha montado.
-    const win = window as WindowWithPwaPrompt;
-
-    const pickUpPrompt = () => {
-      if (win.__pwaInstallPrompt) setDeferredPrompt(win.__pwaInstallPrompt);
-    };
-    pickUpPrompt();
-
+    const onReady = () => setDeferredPrompt(capturedPrompt);
     const onInstalled = () => {
       setInstalled(true);
       setDeferredPrompt(null);
-      win.__pwaInstallPrompt = undefined;
+      capturedPrompt = null;
     };
 
-    window.addEventListener("pwa-install-ready", pickUpPrompt);
+    readyListeners.add(onReady);
     window.addEventListener("appinstalled", onInstalled);
     return () => {
-      window.removeEventListener("pwa-install-ready", pickUpPrompt);
+      readyListeners.delete(onReady);
       window.removeEventListener("appinstalled", onInstalled);
     };
   }, []);
@@ -66,7 +72,7 @@ export function InstallPwaButton() {
       const { outcome } = await deferredPrompt.userChoice;
       if (outcome === "accepted") setInstalled(true);
       setDeferredPrompt(null);
-      (window as WindowWithPwaPrompt).__pwaInstallPrompt = undefined;
+      capturedPrompt = null;
       return;
     }
     setShowManualHint(true);
