@@ -51,6 +51,7 @@ export async function signUpWithPassword(_prev: AuthActionState, formData: FormD
   });
 
   if (error) {
+    console.error("signUp falló:", error.code, error.status, error.message);
     return { error: "No se pudo crear la cuenta. Prueba con otro correo." };
   }
 
@@ -77,6 +78,7 @@ export async function signInWithPassword(_prev: AuthActionState, formData: FormD
   const { error } = await supabase.auth.signInWithPassword(parsed.data);
 
   if (error) {
+    console.error("signIn falló:", error.code, error.status, error.message);
     return { error: "Correo o contraseña incorrectos." };
   }
 
