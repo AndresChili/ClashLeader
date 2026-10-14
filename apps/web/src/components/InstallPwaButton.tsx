@@ -8,6 +8,8 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
 }
 
+type WindowWithPwaPrompt = Window & { __pwaInstallPrompt?: BeforeInstallPromptEvent };
+
 function isStandalone() {
   return (
     window.matchMedia("(display-mode: standalone)").matches ||
@@ -28,19 +30,26 @@ export function InstallPwaButton() {
   useEffect(() => {
     setInstalled(isStandalone());
 
-    const onBeforeInstallPrompt = (event: Event) => {
-      event.preventDefault();
-      setDeferredPrompt(event as BeforeInstallPromptEvent);
+    // El evento beforeinstallprompt lo captura un script en <head> que corre
+    // antes de la hidratación (ver layout.tsx), para que Chrome nunca llegue
+    // a mostrar su propio banner nativo mientras React aún no ha montado.
+    const win = window as WindowWithPwaPrompt;
+
+    const pickUpPrompt = () => {
+      if (win.__pwaInstallPrompt) setDeferredPrompt(win.__pwaInstallPrompt);
     };
+    pickUpPrompt();
+
     const onInstalled = () => {
       setInstalled(true);
       setDeferredPrompt(null);
+      win.__pwaInstallPrompt = undefined;
     };
 
-    window.addEventListener("beforeinstallprompt", onBeforeInstallPrompt);
+    window.addEventListener("pwa-install-ready", pickUpPrompt);
     window.addEventListener("appinstalled", onInstalled);
     return () => {
-      window.removeEventListener("beforeinstallprompt", onBeforeInstallPrompt);
+      window.removeEventListener("pwa-install-ready", pickUpPrompt);
       window.removeEventListener("appinstalled", onInstalled);
     };
   }, []);
@@ -54,6 +63,7 @@ export function InstallPwaButton() {
       const { outcome } = await deferredPrompt.userChoice;
       if (outcome === "accepted") setInstalled(true);
       setDeferredPrompt(null);
+      (window as WindowWithPwaPrompt).__pwaInstallPrompt = undefined;
       return;
     }
     setShowIosHint(true);
