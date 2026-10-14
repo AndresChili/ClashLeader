@@ -44,3 +44,4 @@ supabase/.temp
 # misc
 *.tsbuildinfo
 .vercel
+apps/web/AGENTS.md

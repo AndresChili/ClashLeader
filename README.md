@@ -1,23 +1,21 @@
 # ClashLeader
 
-Panel para líderes de clanes de **Clash of Clans**: recoge automáticamente
-las estadísticas de los miembros con la API oficial y ayuda a decidir a
-quién expulsar, a quién ascender y a quién meter en guerra. La app solo
-avisa y propone — expulsar y ascender se hace siempre dentro del juego.
+Panel de gestión para líderes de clanes de **Clash of Clans**. Recoge
+automáticamente las estadísticas del clan desde la API oficial del juego y
+ayuda a tomar decisiones de liderazgo —a quién expulsar, a quién ascender
+y a quién convocar en guerra— con datos reales y actualizados, en vez de
+hojas de cálculo o memoria.
+
+La aplicación solo avisa y propone: expulsar y ascender se hace siempre
+dentro del juego.
 
 > Este material no es oficial y no está respaldado por Supercell. Más
 > información en la [Política de contenido de fans de Supercell](https://www.supercell.com/fan-content-policy).
-> La app no cobra por nada.
-
-Proyecto de portfolio, construido por fases y documentado a medida que
-avanza. Estado actual: **fase 7 de 7, cerrado** (ver [Fases](#fases)).
+> ClashLeader no cobra por ningún servicio.
 
 ## Capturas
 
-Capturas reales (390 px, clan ficticio de `seed:fixtures`, nada maquetado
-a mano) en `docs/screenshots/`:
-
-| Panel | Miembros | Ficha |
+| Panel | Miembros | Ficha del miembro |
 | --- | --- | --- |
 | ![Panel](docs/screenshots/panel.png) | ![Miembros](docs/screenshots/miembros.png) | ![Ficha](docs/screenshots/ficha.png) |
 
@@ -25,308 +23,96 @@ a mano) en `docs/screenshots/`:
 | --- | --- | --- | --- |
 | ![Guerra](docs/screenshots/guerra.png) | ![Equipo](docs/screenshots/equipo.png) | ![Ascensos](docs/screenshots/ascensos.png) | ![Reglas](docs/screenshots/reglas.png) |
 
+## Funcionalidades
+
+- **Panel general**: estado de la guerra en curso, miembros, ataques
+  pendientes, capital acumulado, miembros a vigilar y últimos movimientos
+  del clan, todo en una sola vista.
+- **Miembros**: listado completo con búsqueda y filtros (todos, a
+  expulsar, para guerra), con el índice de rendimiento de cada uno de un
+  vistazo.
+- **Ficha del miembro**: índice 0–100 desglosado por guerra, donaciones,
+  capital y juegos del clan; historial de las últimas 10 guerras; notas
+  del líder; opción de poner a un miembro en observación.
+- **Guerra**: guerra en curso con ataques pendientes y alineación
+  recomendada, historial de guerras anteriores y seguimiento de Liga de
+  Clanes (CWL).
+- **Ascensos**: candidatos a veterano y a colíder calculados
+  automáticamente según las reglas del clan, con aprobación o descarte
+  manual y registro de quién decidió qué.
+- **Reglas del clan**: umbrales de expulsión, ascenso y ponderación del
+  índice totalmente editables por el líder.
+- **Equipo y permisos**: alta de clan con verificación del líder dentro
+  del juego, invitaciones de un solo uso para colíderes y control de quién
+  tiene acceso a cada clan.
+- **Instalable como app**: funciona como aplicación web progresiva (PWA),
+  instalable en el móvil con icono propio.
+
+## Tecnología
+
+**Frontend**
+- [Next.js](https://nextjs.org/) 16 (App Router) con TypeScript estricto
+- [Tailwind CSS](https://tailwindcss.com/) 4
+- [React](https://react.dev/) 19
+
+**Backend y datos**
+- [Supabase](https://supabase.com/) — PostgreSQL, Auth (correo y Google) y
+  Row Level Security por clan
+- Recolector en Node/TypeScript, ejecutado cada 15 minutos mediante GitHub
+  Actions, que sincroniza clanes, guerras, capital y juegos del clan desde
+  la API oficial de Clash of Clans
+- Motor de reglas en TypeScript puro para el índice de rendimiento y las
+  decisiones de expulsión y ascenso
+
+**Calidad**
+- [Vitest](https://vitest.dev/) para tests unitarios e integración
+- [Playwright](https://playwright.dev/) para pruebas end-to-end contra una
+  base de datos real
+- [pgTAP](https://pgtap.org/) para verificar las políticas de seguridad a
+  nivel de fila
+- Integración continua con lint, tipado estricto, tests y auditoría de
+  dependencias en cada cambio
+
 ## Arquitectura
 
 ```
-┌──────────────────┐        cada 15 min, GitHub Actions
-│  apps/collector   │ ───────────────────────────────────┐
-│  (script TS)      │                                     │
-└─────────┬─────────┘                                     │
-          │ HTTPS vía proxy RoyaleAPI (IP fija)            │
-          ▼                                                ▼
-┌──────────────────┐   clave de servicio    ┌─────────────────────┐
-│ API oficial de    │◄───────────────────────│     Supabase        │
-│ Clash of Clans     │   (bypassa RLS)         │  Postgres + Auth    │
-└──────────────────┘                          │  + RLS por clan      │
-                                               └──────────┬───────────┘
-                                                           │ clave anónima
-                                                           │ (sujeta a RLS)
-                                                  ┌────────▼─────────┐
-                                                  │     apps/web       │
-                                                  │  Next.js App Router │
-                                                  │  (Vercel)            │
-                                                  └───────────────────┘
+ API oficial de Clash of Clans
+               │
+               │  el recolector sincroniza cada 15 min (Node/TypeScript, vía proxy con IP fija)
+               ▼
+          Supabase
+ Postgres · Auth · RLS por clan
+               │
+               │  la aplicación lee y escribe con permisos limitados por clan
+               ▼
+      Aplicación web (Next.js)
 ```
 
-- **apps/web**: Next.js (App Router, TypeScript estricto, Tailwind CSS).
-  Interfaz en español. Server Actions para toda mutación; nunca llama a la
-  API de Clash of Clans directamente.
-- **apps/collector**: script de Node/TypeScript independiente, sin
-  dependencia de Next.js. Es el único componente con la clave de la API de
-  Clash of Clans y la clave de servicio de Supabase.
-- **packages/rules**: funciones puras (umbrales de expulsión, ascensos,
-  índice 0–100), con sus propios tests, sin dependencias de Next ni de
-  Supabase.
-- **supabase/**: migraciones SQL (`migrations/`), políticas de RLS, datos
-  de ejemplo para desarrollo local (`seed.sql`) y tests pgTAP
-  (`tests/database/`).
+El recolector es el único componente con credenciales de la API de Clash
+of Clans y acceso completo a la base de datos; la aplicación web solo lee
+y escribe con permisos limitados por clan, impuestos por la base de datos.
 
-## Decisiones técnicas y por qué
+## Seguridad
 
-- **Monorepo con npm workspaces, no pnpm**: el entorno de desarrollo no
-  tenía permisos para instalar pnpm globalmente vía corepack; npm
-  workspaces no necesita instalación aparte y cubre lo que hace falta aquí
-  (tres paquetes, sin publicación a npm).
-- **El recolector llama a RoyaleAPI, no a la API oficial directamente**: la
-  clave de la API de Clash of Clans está atada a una IP, y ni la máquina de
-  desarrollo ni los runners de GitHub Actions tienen una IP fija. El proxy
-  de RoyaleAPI sí la tiene; la URL base es variable de entorno
-  (`CLASH_API_BASE_URL`) para poder cambiarla sin tocar código.
-- **El límite de intentos vive en Postgres (`check_rate_limit`), no en la
-  clave de servicio dentro de `apps/web`**: registrar intentos de
-  login/registro/invitación requiere escribir en una tabla antes incluso de
-  que el usuario esté autenticado, pero la clave de servicio de Supabase
-  debe quedarse únicamente en el recolector. Una función `SECURITY
-  DEFINER` callable con la clave anónima resuelve esto sin romper esa
-  regla.
-- **RLS probada con pgTAP, no solo "revisada a ojo"**:
-  `supabase/tests/database/rls.test.sql` simula login como admin, como
-  reader y como usuario sin acceso (vía `request.jwt.claim.sub` + `set
-  role`, igual que hace PostgREST) y comprueba que cada uno ve exactamente
-  lo que debería, nada más. Corre en CI en un Postgres real (`supabase
-  start` dentro del runner), no contra una base simulada.
-- **`clan_members` separa "episodios de membresía" de "snapshots"**: un
-  jugador puede salir y volver a entrar al clan; cada entrada es una fila
-  distinta en `clan_members` (con su propio `first_seen_at`), mientras que
-  `member_snapshots` guarda el estado crudo de cada consulta del
-  recolector. Así "días en el clan" y el histórico de donaciones no se
-  mezclan entre dos periodos distintos de membresía del mismo jugador.
-- **Proxy en vez de Middleware**: Next.js 16 renombró `middleware.ts` a
-  `proxy.ts`; se usa la convención actual del framework, no la heredada.
-- **Los tipos de la API de Clash of Clans están verificados contra dos
-  fuentes, no solo contra memoria del modelo**: el portal
-  developer.clashofclans.com no publica un archivo OpenAPI descargable, así
-  que `apps/collector/src/clash-api/types.ts` se contrastó contra el
-  wrapper tipado comunitario [clashofclans.js](https://clashofclans.js.org/docs/api)
-  (activamente mantenido contra la API real) y, por separado, contra el
-  campo `achievements` de un jugador real para confirmar que "Games
-  Champion" es un contador acumulado de por vida (de ahí que fase 5 pueda
-  calcular puntos de Juegos del Clan como una resta de antes/después).
-- **"Días en el clan" vive en `clan_members`, no se recalcula al vuelo**:
-  cada episodio de membresía guarda su propio `first_seen_at`; si alguien
-  sale y vuelve, el recolector crea una fila nueva en vez de revivir la
-  antigua, así que el contador de días siempre refleja la membresía
-  actual, no la histórica acumulada.
-- **Miembros/Ficha muestran "—" en vez de inventar números**: el índice
-  0–100, las 4 barras (guerra/donaciones/capital/juegos), la media por
-  ataque, el % de ataques usados y "Últimas 10 guerras" dependen de datos
-  de guerra/capital/juegos (fase 4) y del paquete de reglas (fase 5), que
-  todavía no existen. Donaciones, días en el clan, última actividad y el
-  estado "Expulsar" por inactividad sí son reales porque sólo dependen de
-  lo que el recolector ya guarda. Decisión confirmada con el usuario antes
-  de construir las pantallas, para no tener que rehacerlas en fase 4/5.
-- **`cacheComponents` (PPR) va desactivado en `next.config.ts`**: toda la
-  app está detrás de autenticación y lee datos por clan en cada petición,
-  así que no hay contenido estático que valga la pena pre-renderizar;
-  activarlo solo obligaba a envolver cada página en `<Suspense>` sin
-  ningún beneficio real.
-- **Juegos del clan: la ventana de seguimiento es "un mes UTC", no el
-  calendario real del evento**: no hay forma de saber por API cuándo
-  empiezan o terminan los Juegos del Clan. El logro "Games Champion" es un
-  contador acumulado de por vida que solo sube mientras el evento está
-  activo, así que comparar su valor al abrir una ventana mensual contra su
-  valor más reciente aísla correctamente los puntos del evento sin
-  necesitar conocer sus fechas exactas — mismo principio que la detección
-  de reinicio de donaciones.
-- **"Última actividad" ahora también mira ataques de guerra y de
-  capital**, no solo donaciones: un ataque nuevo desde la última consulta
-  cuenta como actividad igual que una donación nueva (`hasNewAttacks` en
-  `collect/activity.ts`).
-- **Cada guerra necesita una clave estable para el upsert, pero la API solo
-  da `warTag` en ligas de clanes**: para guerras normales/amistosas se
-  sintetiza una (`reg:<preparationStartTime>`), así una sola restricción
-  `unique (clan_id, war_tag)` sirve para los dos casos en vez de dos
-  índices parciales (que `ON CONFLICT` no puede usar desde un `upsert()`
-  simple).
-- **El índice reparte cada categoría a 0–100 con puntos de referencia
-  reutilizados, no inventados**: el prompt fija los *pesos* (guerra 40,
-  donaciones 30, capital 15, juegos 15, todos editables) pero no cómo
-  convertir cada estadística cruda en un 0–100. Donaciones usa el propio
-  umbral editable de colíder como "nota máxima" en vez de un número mágico
-  nuevo; capital y guerra usan el % de ataques utilizados; juegos usa el
-  tope clásico de 4000 puntos por evento. Documentado en
-  `packages/rules/src/index-score.ts`, no escondido en el código.
-- **"Actividad casi diaria" (requisito de colíder) es una aproximación
-  documentada, no un cálculo exacto**: el recolector solo guarda la última
-  marca de actividad detectada, no un registro día a día, así que no hay
-  forma de contar "cuántos días distintos estuvo activo" con el esquema
-  actual. La app trata "detectada en las últimas 48 horas" como el proxy,
-  explicado en `packages/rules/src/candidates.ts` y
-  `lib/member-evaluation.ts`.
-- **El clan ficticio reveló su propio bug**: al añadir guerra/capital/
-  juegos al fixture, nadie tenía `last_activity_detected_at`, así que la
-  regla de expulsión por inactividad usaba `first_seen_at` como respaldo y
-  marcaba a todo el clan como "Expulsar" (días de pertenencia, no de
-  inactividad real). Arreglado dándole a cada miembro ficticio una marca
-  de actividad realista — dos de ellos deliberadamente antigua, para que
-  el fixture siga enseñando el caso "Expulsar" que muestra el diseño.
-- **El recolector se prueba contra un Postgres real, no solo con mocks**:
-  `run-clan.integration.test.ts` corre dos capturas seguidas contra
-  `supabase start` y comprueba entradas, salidas, reinicio de temporada de
-  donaciones y detección de actividad de punta a punta. Se ejecuta aparte
-  del resto de tests (`npm run test:integration --workspace=collector`,
-  también en el job `db` de CI) para que `npm test` nunca necesite Docker.
+- Acceso a los datos aislado por clan mediante Row Level Security,
+  denegado por defecto y verificado con tests automatizados.
+- Límite de intentos en inicio de sesión, registro, invitaciones y
+  verificación de identidad.
+- Cookies de sesión `HttpOnly`, `Secure` y `SameSite`, cabeceras de
+  seguridad estrictas (CSP, HSTS) y registro de auditoría de las acciones
+  del administrador.
+- Invitaciones de un solo uso, con caducidad y almacenadas como hash.
 
-## Puesta en marcha en local
+## Puesta en marcha
 
-Requisitos: Node 20+, Docker (para Supabase local).
+Requiere Node.js 20+ y un proyecto de [Supabase](https://supabase.com/).
 
 ```bash
 npm install
-
-# Arranca Postgres + Auth + Studio locales y aplica supabase/migrations
-npx supabase start
-
-# Copia las URLs/claves que imprime el comando anterior a apps/web/.env.local
 cp apps/web/.env.example apps/web/.env.local
-# edita apps/web/.env.local con los valores de `supabase start`
+# completa apps/web/.env.local con tus credenciales de Supabase y Google
 
-npm run dev --workspace=web
+npm run dev
 ```
 
-Inicia sesión con la cuenta de ejemplo creada por `supabase/seed.sql`:
-`lider@demo.test` / `demo12345`.
-
-Hasta que configures tus propias credenciales de Supabase, Google y la API
-de Clash of Clans, prueba la app con un clan ficticio en vez de la API
-real:
-
-```bash
-npm run seed:fixtures --workspace=collector
-```
-
-Esto crea "Clan Ficticio" (8 miembros, donaciones y roles variados) y se
-lo asigna a la cuenta de ejemplo, usando exactamente las mismas funciones
-de escritura que usa el recolector real — así que si el fixture se ve
-bien, el recolector real también lo hará.
-
-### Comandos útiles
-
-| Comando | Qué hace |
-| --- | --- |
-| `npm run lint` / `npm run typecheck` / `npm run test` | En los tres workspaces a la vez. |
-| `npx supabase test db` | Tests pgTAP de RLS contra el Postgres local. |
-| `npx supabase db reset` | Reaplica migraciones + `seed.sql` desde cero. |
-| `npm run collector` | Ejecuta `apps/collector` una vez contra la API real (requiere sus variables de entorno). |
-| `npm run seed:fixtures --workspace=collector` | Crea/reemplaza el clan ficticio para desarrollo local, sin clave de la API. |
-| `npm run test:integration --workspace=collector` | Tests del recolector contra un Postgres local real (no solo mocks). |
-| `npm run test:e2e --workspace=web` | Playwright contra la app real + Supabase local (login, RLS, límite de intentos). Requiere `supabase start` y `seed:fixtures` primero. |
-
-## Fases
-
-1. **Base** — repositorio, CI, esquema con RLS y cuentas. ✅
-2. **Recolector** — miembros, capturas periódicas, entradas, salidas y última actividad. ✅
-3. **Miembros y ficha con datos reales.** ✅
-4. **Guerras, liga, capital y juegos del clan, con histórico.** ✅
-5. **Reglas: expulsión, ascensos, decisiones manuales e índice.** ✅
-6. **Equipo: alta de clanes con verificación del líder, invitaciones y permisos.** ✅
-7. **Cierre: panel, instalación en móvil, README y documentación de seguridad.** ✅
-
-### Estado de la fase 6
-
-Verificado con pgTAP contra Postgres real: el esquema y las políticas de
-RLS para `register_clan()` (RPC que da de alta un clan y hace admin a quien
-lo registra) y para `promotion_decisions`.
-
-- `/alta-clan`: formulario que verifica el token del jugador
-  (`POST /players/{tag}/verifytoken`, confirmado contra el código fuente de
-  clashofclans.js, no solo su documentación) y que su rol en el clan es
-  `leader`, antes de llamar a `register_clan()`.
-- `/unirse`: canje de código de invitación (reutiliza `redeem_clan_invite()`
-  de la fase 1).
-- `/equipo`: lista de quién tiene acceso (con foto de perfil de Google o
-  iniciales), invitaciones pendientes y tarjeta para generar un código
-  (hash SHA-256, nunca se guarda en claro).
-- `packages/clash-api`: el cliente de la API se extrajo de
-  `apps/collector` a un paquete compartido (`@clashleader/clash-api`)
-  porque ahora `apps/web` también lo necesita, con su propio
-  `verifyPlayerToken` añadido y probado.
-
-Cerrada tras una revisión estática de los tres server actions y las tres
-RPC implicadas, más un `next build` de producción completo (no un smoke
-test en navegador: el entorno que la hizo no tiene Docker para levantar
-Supabase local ni un token real de líder de CoC). Esa revisión encontró y
-corrigió dos bugs reales:
-
-- `createInvite` no tenía límite de intentos, a diferencia de
-  `registerClan` y `redeemInvite` (incumplía el requisito "límite de
-  intentos en inicio de sesión, registro, invitaciones y verificación de
-  token").
-- El login con Google redirigía a `/iniciar-sesion?error=google` (y el
-  callback a `?error=callback`) pero la página nunca leía ese parámetro:
-  el error se perdía en silencio. `AuthErrorBanner` lo muestra ahora,
-  envuelto en `<Suspense>` porque `useSearchParams` fuerza ese límite en
-  un árbol de cliente sin bloquear el prerenderizado estático de
-  `/iniciar-sesion` (confirmado con `next build`: sigue marcada `○`).
-
-Los mensajes "Todavía no tienes un clan" de las cinco pantallas que los
-usan ya apuntaban bien a `/alta-clan`; se dejaron todos sobre el mismo
-componente `NoClanCard` en vez de uno duplicado a mano en `/equipo`.
-
-La brecha que quedaba abierta ("revisado" pero no "probado") se cerró en
-fase 7: ver [Estado de la fase 7](#estado-de-la-fase-7).
-
-### Estado de la fase 7
-
-- **Panel real**: construido sobre los mismos `lib/data/*` que ya usaban
-  Miembros/Guerra/Ascensos, sin datos nuevos inventados. Tarjeta de guerra
-  en curso (tamaño, pastilla de tiempo restante, marcador, barra de
-  ataques), tres mosaicos (miembros, ataques pendientes, capital), "Para
-  expulsar" (reutiliza `kick`/`atRisk` de `packages/rules`), tarjeta-enlace
-  a Ascensos con el recuento de candidatos pendientes, y "Movimientos"
-  (altas desde `clan_members.first_seen_at`, bajas desde
-  `is_current = false` — ninguna tabla nueva, el collector ya las
-  guardaba).
-- **Playwright contra Supabase local real** (`apps/web/e2e/`, no mocks):
-  login con la cuenta demo, sesión vía cookie real, y una pasada por las
-  7 pantallas con el clan ficticio. Encontró un bug real al primer intento
-  — ver más abajo — y confirma que el límite de intentos de
-  `/iniciar-sesion` corta al quinto intento de verdad (lo disparé sin
-  querer reejecutando la suite a mano). Corre en CI (job `e2e` en
-  `.github/workflows/ci.yml`) contra un Supabase local real, igual que el
-  job `db`.
-- **Bug real que encontró el propio Playwright, no "revisado a ojo"**:
-  `/equipo` rompía en caliente con `Could not embed because more than one
-  relationship was found for 'clan_access' and 'profiles'`. `clan_access`
-  tiene dos columnas que apuntan a `profiles` (`user_id` e `invited_by`),
-  así que el embed implícito de PostgREST (`profiles(display_name,
-  avatar_url)`) es ambiguo y Postgres no puede elegir sola. Arreglado
-  fijando la relación con el nombre exacto del constraint
-  (`profiles!clan_access_user_id_fkey(...)` en `lib/data/team.ts`) en vez
-  de dejar que PostgREST adivine.
-- **Icono propio, no genérico**: `Icono.png` (subido por el usuario) se
-  redimensiona a los tamaños que pide cada convención — `app/icon.png` y
-  `app/apple-icon.png` (favicon y Apple vía las convenciones de archivo de
-  Next.js), más `public/icons/icon-{192,512}.png` e
-  `icon-maskable-512.png` (con zona segura al 80%, para que los masks
-  circulares/redondeados de Android no corten la corona) para el
-  manifiesto PWA.
-- **Instalable en el móvil**: `app/manifest.ts` (convención de Next.js,
-  sirve `/manifest.webmanifest`), `display: "standalone"`,
-  `start_url: "/panel"`, mismos colores que el tema oscuro
-  (`background_color`/`theme_color: #0e1318`).
-- **Capturas reales, no maquetas**: generadas con el propio Playwright
-  (sesión guardada + `page.screenshot()` a 390 px) contra el clan
-  ficticio, no recortadas a mano de Figma.
-
-## Limitaciones conocidas
-
-- La API de Clash of Clans es de solo lectura y solo da el estado actual:
-  todo histórico (donaciones por temporada, estrellas por guerra, última
-  actividad) existe únicamente porque el recolector lo guarda en cada
-  ejecución. Si el recolector lleva más de 15 minutos sin correr, esa
-  ventana de historial simplemente no existe.
-- "Última actividad" es una estimación (cambios en donaciones, ataques de
-  guerra o capital), nunca un dato exacto de la API; la UI siempre la
-  etiqueta como "sin actividad detectada".
-- La API no distingue una salida voluntaria de una expulsión.
-- No hay endpoint de Juegos del Clan: los puntos se calculan como la
-  diferencia del logro "Games Champion" antes/después, con un tope de 4000
-  impuesto por el propio juego.
-- Una dependencia de desarrollo (`eslint-config-next`, a través de su
-  dependencia `@next/eslint-plugin-next`) arrastra una versión de `braces`
-  con un aviso de denegación de servicio por expresión regular
-  (GHSA-vfj7-8cjw-p6xm). Es una dependencia de *lint*, no llega al bundle
-  servido ni corre en producción; no hay una versión compatible con
-  Next.js 16 que la resuelva todavía. Se revisa con cada actualización de
-  Dependabot.
+La aplicación queda disponible en `http://localhost:3000`.
