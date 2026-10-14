@@ -1,27 +1,10 @@
 import type { NextConfig } from "next";
 
-// CSP estricta: sin scripts inline, nada cargado de terceros salvo el
-// propio proyecto de Supabase y los endpoints de OAuth/avatar de Google.
-const supabaseOrigin = process.env.NEXT_PUBLIC_SUPABASE_URL
-  ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).origin
-  : "";
-
-const csp = [
-  "default-src 'self'",
-  `connect-src 'self' ${supabaseOrigin} https://accounts.google.com`,
-  "img-src 'self' data: https://lh3.googleusercontent.com",
-  "script-src 'self'",
-  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-  "font-src 'self' https://fonts.gstatic.com",
-  "frame-ancestors 'none'",
-  "form-action 'self' https://accounts.google.com",
-  "base-uri 'self'",
-]
-  .filter(Boolean)
-  .join("; ");
-
+// El Content-Security-Policy se genera por petición en src/proxy.ts (con
+// nonce), no aquí: Next.js inyecta sus propios <script> inline para
+// hidratar React, y sin nonce el navegador los bloquea y la app entera
+// se queda sin hidratar. Un CSP estático no puede llevar nonce.
 const securityHeaders = [
-  { key: "Content-Security-Policy", value: csp },
   { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "X-Frame-Options", value: "DENY" },
