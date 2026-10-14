@@ -14,7 +14,7 @@ function buildCsp(nonce: string) {
     "default-src 'self'",
     `connect-src 'self' ${supabaseOrigin} https://accounts.google.com`,
     "img-src 'self' data: https://lh3.googleusercontent.com",
-    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`,
+    `script-src 'self' 'nonce-${nonce}'`,
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' https://fonts.gstatic.com",
     "frame-ancestors 'none'",
