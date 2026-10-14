@@ -16,7 +16,7 @@
     "collector": "npm run start --workspace=collector"
   },
   "devDependencies": {
-    "@eslint/js": "^9.18.0",
+    "@eslint/js": "^10.0.1",
     "typescript-eslint": "^8.20.0"
   },
   "engines": {
