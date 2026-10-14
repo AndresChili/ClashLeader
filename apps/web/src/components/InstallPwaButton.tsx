@@ -23,7 +23,7 @@ function isIos() {
 
 export function InstallPwaButton() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
-  const [showIosHint, setShowIosHint] = useState(false);
+  const [showManualHint, setShowManualHint] = useState(false);
   const [dismissed, setDismissed] = useState(false);
   const [installed, setInstalled] = useState(true);
 
@@ -55,8 +55,11 @@ export function InstallPwaButton() {
   }, []);
 
   if (installed || dismissed) return null;
-  if (!deferredPrompt && !isIos()) return null;
 
+  // Chrome no siempre dispara beforeinstallprompt (heurísticas de
+  // interacción, o si el usuario ya descartó el aviso nativo antes), así
+  // que si no llega el evento mostramos igualmente el botón con las
+  // instrucciones manuales en vez de escondernos.
   const handleClick = async () => {
     if (deferredPrompt) {
       await deferredPrompt.prompt();
@@ -66,7 +69,7 @@ export function InstallPwaButton() {
       (window as WindowWithPwaPrompt).__pwaInstallPrompt = undefined;
       return;
     }
-    setShowIosHint(true);
+    setShowManualHint(true);
   };
 
   return (
@@ -87,9 +90,11 @@ export function InstallPwaButton() {
           </button>
         </div>
       </div>
-      {showIosHint ? (
+      {showManualHint ? (
         <p className="text-xs text-text-secondary">
-          Toca el botón Compartir de Safari y luego &quot;Añadir a pantalla de inicio&quot;.
+          {isIos()
+            ? 'Toca el botón Compartir de Safari y luego "Añadir a pantalla de inicio".'
+            : 'Abre el menú ⋮ de Chrome y toca "Instalar aplicación" o "Añadir a pantalla de inicio".'}
         </p>
       ) : null}
     </div>
