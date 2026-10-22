@@ -57,9 +57,21 @@ export async function registerClan(_prev: AltaClanActionState, formData: FormDat
     return { error: "Demasiados intentos. Prueba de nuevo en unos minutos." };
   }
 
-  const clashApi = createClashApiServerClient();
+  let clashApi;
+  try {
+    clashApi = createClashApiServerClient();
+  } catch (error) {
+    console.error("No se pudo crear el cliente de la API de Clash of Clans:", error);
+    return { error: "El servicio no está disponible ahora mismo. Inténtalo más tarde." };
+  }
 
-  const verification = await clashApi.verifyPlayerToken(parsed.data.playerTag, parsed.data.playerToken);
+  let verification;
+  try {
+    verification = await clashApi.verifyPlayerToken(parsed.data.playerTag, parsed.data.playerToken);
+  } catch (error) {
+    console.error("Fallo al verificar el token de jugador:", error);
+    return { error: "No se pudo comprobar tu token ahora mismo. Inténtalo de nuevo." };
+  }
   if (!verification || verification.status !== "ok") {
     return { error: "Ese token no es válido para ese jugador. Cópialo de Ajustes › Más ajustes en el juego." };
   }
