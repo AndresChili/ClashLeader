@@ -9,10 +9,12 @@ import type { MemberEvaluation } from "@/lib/member-evaluation";
 import { getMemberStatus } from "@/lib/member-status";
 import { ROLE_LABELS } from "@/lib/role-labels";
 
-type Chip = "todos" | "expulsar" | "guerra";
+export type MembersChip = "todos" | "expulsar" | "guerra" | "colideres" | "veteranos";
 
-const CHIPS: { id: Chip; label: string }[] = [
+const CHIPS: { id: MembersChip; label: string }[] = [
   { id: "todos", label: "Todos" },
+  { id: "colideres", label: "Colíderes" },
+  { id: "veteranos", label: "Veteranos" },
   { id: "expulsar", label: "A expulsar" },
   { id: "guerra", label: "Para guerra" },
 ];
@@ -21,20 +23,25 @@ export function MembersList({
   members,
   evaluations,
   currentWarTags,
+  initialChip = "todos",
 }: {
   members: MemberSummary[];
   evaluations: Map<string, MemberEvaluation>;
   /** Tags de jugador en la alineación de la guerra en curso, o null cuando no hay guerra ahora mismo. */
   currentWarTags: Set<string> | null;
+  /** Chip con el que arranca la lista, para enlazar desde el Panel directamente filtrado. */
+  initialChip?: MembersChip;
 }) {
   const [query, setQuery] = useState("");
-  const [chip, setChip] = useState<Chip>("todos");
+  const [chip, setChip] = useState<MembersChip>(initialChip);
 
   const filtered = useMemo(() => {
     const byQuery = members.filter((member) => member.name.toLowerCase().includes(query.trim().toLowerCase()));
 
     if (chip === "expulsar") return byQuery.filter((member) => evaluations.get(member.id)?.kick.shouldKick);
     if (chip === "guerra") return currentWarTags ? byQuery.filter((member) => currentWarTags.has(member.playerTag)) : [];
+    if (chip === "colideres") return byQuery.filter((member) => member.inGameRole === "coLeader");
+    if (chip === "veteranos") return byQuery.filter((member) => member.inGameRole === "admin");
     return byQuery;
   }, [members, query, chip, currentWarTags, evaluations]);
 
@@ -48,7 +55,7 @@ export function MembersList({
         className="rounded-xl border border-border bg-card px-3.5 py-2.5 text-sm text-text placeholder:text-text-secondary focus:border-accent focus:outline-none"
       />
 
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         {CHIPS.map((c) => (
           <button
             key={c.id}

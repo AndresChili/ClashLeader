@@ -45,3 +45,38 @@ export async function getLatestCapitalSeason(supabase: SupabaseClient, clanId: s
     })),
   };
 }
+
+/**
+ * Suma del oro de capital saqueado por un jugador en todos los fines de
+ * semana de asalto registrados desde que entró al clan (start_time >=
+ * fecha de entrada). Se filtra por tag, no por clan_member_id, así que si
+ * el jugador salió y volvió a entrar antes solo cuenta lo de este episodio.
+ */
+export async function getCapitalLootSinceJoin(
+  supabase: SupabaseClient,
+  clanId: string,
+  playerTag: string,
+  joinedAt: Date,
+): Promise<number> {
+  const { data: seasons, error: seasonsError } = await supabase
+    .from("capital_seasons")
+    .select("id")
+    .eq("clan_id", clanId)
+    .gte("start_time", joinedAt.toISOString());
+
+  if (seasonsError) throw new Error(`Failed to load capital seasons since join: ${seasonsError.message}`);
+  if (!seasons || seasons.length === 0) return 0;
+
+  const { data: contributions, error: contributionsError } = await supabase
+    .from("capital_contributions")
+    .select("capital_gold_looted")
+    .eq("player_tag", playerTag)
+    .in(
+      "capital_season_id",
+      seasons.map((s) => s.id as string),
+    );
+
+  if (contributionsError) throw new Error(`Failed to load capital contributions since join: ${contributionsError.message}`);
+
+  return (contributions ?? []).reduce((sum, row) => sum + (row.capital_gold_looted as number), 0);
+}

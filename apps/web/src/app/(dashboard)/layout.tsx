@@ -12,7 +12,7 @@ export default async function DashboardLayout({ children }: { children: ReactNod
 
   return (
     <div className="mx-auto flex min-h-full w-full max-w-[720px] flex-col">
-      <div className="flex-1 px-4 pb-4 pt-6">{children}</div>
+      <div className="flex-1 px-4 pt-6 pb-28">{children}</div>
       <BottomNav />
     </div>
   );

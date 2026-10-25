@@ -124,3 +124,15 @@ export async function getRecentExits(supabase: SupabaseClient, clanId: string, l
     leftAt: row.left_at as string,
   }));
 }
+
+/** Suma de donaciones congeladas en cada reinicio de temporada anterior, sin incluir la temporada en curso (eso es member.donations). */
+export async function getDonationSeasonsTotal(supabase: SupabaseClient, clanMemberId: string): Promise<number> {
+  const { data, error } = await supabase
+    .from("donation_season_totals")
+    .select("donations")
+    .eq("clan_member_id", clanMemberId);
+
+  if (error) throw new Error(`Failed to load donation season totals: ${error.message}`);
+
+  return (data ?? []).reduce((sum, row) => sum + (row.donations as number), 0);
+}

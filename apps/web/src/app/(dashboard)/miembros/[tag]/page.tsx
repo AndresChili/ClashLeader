@@ -5,6 +5,9 @@ import { LastWarsRow } from "@/components/LastWarsRow";
 import { ProgressBar } from "@/components/ProgressBar";
 import { Card } from "@/components/ui/Card";
 import { Pill } from "@/components/ui/Pill";
+import { getCapitalLootSinceJoin } from "@/lib/data/capital";
+import { getCurrentClanGamesPoints } from "@/lib/data/clan-games";
+import { getDonationSeasonsTotal } from "@/lib/data/members";
 import { getLeaderNotes } from "@/lib/data/notes";
 import { getViewerClan } from "@/lib/data/viewer-clan";
 import { getMemberRecentWars } from "@/lib/data/wars";
@@ -28,10 +31,17 @@ export default async function FichaPage({ params }: { params: Promise<{ tag: str
   if (!member) notFound();
   const evaluation = evaluations.get(member.id)!;
 
-  const [notes, recentWars] = await Promise.all([
+  const joinedAt = new Date(member.manualJoinDate ?? member.firstSeenAt);
+
+  const [notes, recentWars, donationSeasonsTotal, capitalLootSinceJoin, clanGamesPointsByTag] = await Promise.all([
     getLeaderNotes(supabase, member.id),
     getMemberRecentWars(supabase, member.id),
+    getDonationSeasonsTotal(supabase, member.id),
+    getCapitalLootSinceJoin(supabase, viewerClan.clanId, member.playerTag, joinedAt),
+    getCurrentClanGamesPoints(supabase, viewerClan.clanId),
   ]);
+  const donationsTotal = (member.donations ?? 0) + donationSeasonsTotal;
+  const clanGamesPoints = clanGamesPointsByTag.get(member.playerTag) ?? null;
   const status = getMemberStatus(evaluation);
   // Más antigua primero, más reciente al final — coincide con el pie "de
   // la más antigua a la más reciente"; recentWars llega en orden
@@ -84,10 +94,20 @@ export default async function FichaPage({ params }: { params: Promise<{ tag: str
           </p>
         </Card>
         <Card>
-          <p className="text-xs text-text-secondary">Donadas y recibidas</p>
-          <p className="font-heading text-lg">
-            {member.donations ?? "—"} / {member.donationsReceived ?? "—"}
-          </p>
+          <p className="text-xs text-text-secondary">Donado esta temporada</p>
+          <p className="font-heading text-lg">{member.donations ?? "—"}</p>
+        </Card>
+        <Card>
+          <p className="text-xs text-text-secondary">Donado en total</p>
+          <p className="font-heading text-lg">{donationsTotal.toLocaleString("es-ES")}</p>
+        </Card>
+        <Card>
+          <p className="text-xs text-text-secondary">Puntos juegos del clan</p>
+          <p className="font-heading text-lg">{clanGamesPoints ?? "—"}</p>
+        </Card>
+        <Card>
+          <p className="text-xs text-text-secondary">Oro de capital aportado</p>
+          <p className="font-heading text-lg">{capitalLootSinceJoin.toLocaleString("es-ES")}</p>
         </Card>
         <Card>
           <p className="text-xs text-text-secondary">Liga</p>

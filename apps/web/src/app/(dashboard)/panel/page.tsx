@@ -1,15 +1,14 @@
-import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { Card } from "@/components/ui/Card";
 import { Pill } from "@/components/ui/Pill";
 import { ProgressBar } from "@/components/ProgressBar";
 import { NoClanCard } from "@/components/NoClanCard";
-import { getLatestCapitalSeason } from "@/lib/data/capital";
 import { getRecentExits } from "@/lib/data/members";
 import { getPromotionDecisions } from "@/lib/data/promotions";
 import { getViewerClan } from "@/lib/data/viewer-clan";
 import { attacksAllowedFor, formatRemainingTime, formatScore, formatUpdatedAgo } from "@/lib/format-war";
 import { getClanEvaluations } from "@/lib/get-clan-evaluations";
+import type { MemberEvaluation } from "@/lib/member-evaluation";
 import { getKickReasonLabel } from "@/lib/member-status";
 import { createClient } from "@/lib/supabase/server";
 
@@ -17,6 +16,7 @@ export const metadata = { title: "Panel · ClashLeader" };
 
 const MAX_FLAGGED = 5;
 const MAX_MOVEMENTS = 5;
+const MAX_CANDIDATES = 6;
 
 function daysAgoLabel(at: string, now: Date): string {
   const days = Math.max(0, Math.floor((now.getTime() - new Date(at).getTime()) / (24 * 60 * 60 * 1000)));
@@ -36,8 +36,7 @@ export default async function PanelPage() {
   const now = new Date();
   const { members, evaluations, currentWar } = await getClanEvaluations(supabase, viewerClan.clanId, now);
 
-  const [capitalSeason, recentExits, decisions] = await Promise.all([
-    getLatestCapitalSeason(supabase, viewerClan.clanId),
+  const [recentExits, decisions] = await Promise.all([
     getRecentExits(supabase, viewerClan.clanId, MAX_MOVEMENTS),
     getPromotionDecisions(supabase, members.map((m) => m.id)),
   ]);
@@ -46,25 +45,30 @@ export default async function PanelPage() {
     .sort((a, b) => new Date(b.firstSeenAt).getTime() - new Date(a.firstSeenAt).getTime())
     .slice(0, MAX_MOVEMENTS);
 
-  const flagged = members
+  const coleaderCount = members.filter((m) => m.inGameRole === "coLeader").length;
+  const veteranCount = members.filter((m) => m.inGameRole === "admin").length;
+
+  const toKick = members
     .map((m) => ({ member: m, evaluation: evaluations.get(m.id) }))
-    .filter((f) => f.evaluation && (f.evaluation.kick.shouldKick || f.evaluation.atRisk))
-    .sort((a, b) => Number(b.evaluation!.kick.shouldKick) - Number(a.evaluation!.kick.shouldKick))
+    .filter((f): f is { member: (typeof members)[number]; evaluation: MemberEvaluation } => Boolean(f.evaluation?.kick.shouldKick))
     .slice(0, MAX_FLAGGED);
 
-  const promotionCandidateCount = members.filter((m) => {
-    const evaluation = evaluations.get(m.id);
-    if (!evaluation) return false;
-    const coleaderDecision = decisions.get(`${m.id}:coleader`);
-    const veteranDecision = decisions.get(`${m.id}:veteran`);
-    const isColeaderPending = evaluation.isColeaderCandidate && coleaderDecision?.status !== "discarded";
-    const isVeteranPending = evaluation.isVeteranCandidate && veteranDecision?.status !== "discarded";
-    return isColeaderPending || isVeteranPending;
-  }).length;
-
-  const pendingAttacks = currentWar
-    ? currentWar.members.filter((m) => m.attacksUsed < attacksAllowedFor(currentWar.warType))
-    : [];
+  const promotionCandidates = members
+    .flatMap((member) => {
+      const evaluation = evaluations.get(member.id);
+      if (!evaluation) return [];
+      const coleaderDecision = decisions.get(`${member.id}:coleader`);
+      const veteranDecision = decisions.get(`${member.id}:veteran`);
+      const items: { member: typeof member; type: "coleader" | "veteran" }[] = [];
+      if (evaluation.isColeaderCandidate && coleaderDecision?.status !== "discarded") {
+        items.push({ member, type: "coleader" });
+      }
+      if (evaluation.isVeteranCandidate && veteranDecision?.status !== "discarded") {
+        items.push({ member, type: "veteran" });
+      }
+      return items;
+    })
+    .slice(0, MAX_CANDIDATES);
 
   const totalAttacksUsed = currentWar ? currentWar.members.reduce((sum, m) => sum + m.attacksUsed, 0) : 0;
   const totalAttacksAvailable = currentWar ? currentWar.teamSize * attacksAllowedFor(currentWar.warType) : 0;
@@ -73,10 +77,31 @@ export default async function PanelPage() {
   const remainingTime = currentWar ? formatRemainingTime(currentWar.endTime, now) : null;
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-5">
       <div>
-        <h1 className="font-heading text-2xl">{viewerClan.name}</h1>
-        <p className="text-sm text-text-secondary">{formatUpdatedAgo(viewerClan.lastCollectedAt, now)}</p>
+        <h1 className="font-heading text-[28px] leading-tight tracking-tight">{viewerClan.name}</h1>
+        <p className="mt-0.5 text-sm text-text-secondary">{formatUpdatedAgo(viewerClan.lastCollectedAt, now)}</p>
+      </div>
+
+      <div className="grid grid-cols-3 gap-3">
+        <Link href="/miembros">
+          <Card className="flex flex-col gap-1 transition active:scale-[0.97]">
+            <span className="text-xs text-text-secondary">Miembros</span>
+            <span className="font-heading text-xl">{members.length}/50</span>
+          </Card>
+        </Link>
+        <Link href="/miembros?chip=colideres">
+          <Card className="flex flex-col gap-1 transition active:scale-[0.97]">
+            <span className="text-xs text-text-secondary">Colíderes</span>
+            <span className="font-heading text-xl">{coleaderCount}</span>
+          </Card>
+        </Link>
+        <Link href="/miembros?chip=veteranos">
+          <Card className="flex flex-col gap-1 transition active:scale-[0.97]">
+            <span className="text-xs text-text-secondary">Veteranos</span>
+            <span className="font-heading text-xl">{veteranCount}</span>
+          </Card>
+        </Link>
       </div>
 
       <Card>
@@ -104,58 +129,52 @@ export default async function PanelPage() {
         )}
       </Card>
 
-      <div className="grid grid-cols-3 gap-3">
-        <Card className="flex flex-col gap-1">
-          <span className="text-xs text-text-secondary">Miembros</span>
-          <span className="font-heading text-xl">{members.length}/50</span>
-        </Card>
-        <Card className="flex flex-col gap-1">
-          <span className="text-xs text-text-secondary">Ataques pendientes</span>
-          <span className="font-heading text-xl">{currentWar ? pendingAttacks.length : "—"}</span>
-        </Card>
-        <Card className="flex flex-col gap-1">
-          <span className="text-xs text-text-secondary">Capital</span>
-          <span className="font-heading text-xl">{capitalSeason ? capitalSeason.capitalTotalLoot.toLocaleString("es-ES") : "—"}</span>
-        </Card>
-      </div>
-
       <section className="flex flex-col gap-2">
-        <h2 className="text-sm text-text-secondary">Para expulsar</h2>
-        {flagged.length === 0 ? (
+        <h2 className="text-sm text-text-secondary">Candidatos a ascender</h2>
+        {promotionCandidates.length === 0 ? (
           <Card>
-            <p className="text-sm text-text-secondary">Nadie está marcado para expulsar ni en riesgo.</p>
+            <p className="text-sm text-text-secondary">Nadie cumple todavía los requisitos para ascender.</p>
           </Card>
         ) : (
           <Card className="flex flex-col divide-y divide-border p-0">
-            {flagged.map(({ member, evaluation }) => {
-              const status = evaluation!.kick.shouldKick ? { label: "Expulsar", tone: "bad" as const } : { label: "En riesgo", tone: "warn" as const };
-              return (
-                <Link
-                  key={member.id}
-                  href={`/miembros/${encodeURIComponent(member.playerTag.replace("#", ""))}`}
-                  className="flex items-center justify-between gap-3 p-4"
-                >
-                  <div className="min-w-0">
-                    <p className="truncate font-medium">{member.name}</p>
-                    <p className="truncate text-xs text-text-secondary">{getKickReasonLabel(evaluation!, 3)}</p>
-                  </div>
-                  <Pill tone={status.tone}>{status.label}</Pill>
-                </Link>
-              );
-            })}
+            {promotionCandidates.map(({ member, type }) => (
+              <Link
+                key={`${member.id}:${type}`}
+                href={`/miembros/${encodeURIComponent(member.playerTag.replace("#", ""))}`}
+                className="flex items-center justify-between gap-3 p-4"
+              >
+                <p className="truncate font-medium">{member.name}</p>
+                <Pill tone="good">a {type === "coleader" ? "Colíder" : "Veterano"}</Pill>
+              </Link>
+            ))}
           </Card>
         )}
       </section>
 
-      <Link href="/ascensos">
-        <Card className="flex items-center justify-between">
-          <div>
-            <p className="font-medium">Candidatos a ascender</p>
-            <p className="text-sm text-text-secondary">{promotionCandidateCount} pendiente{promotionCandidateCount === 1 ? "" : "s"}</p>
-          </div>
-          <ChevronRight size={20} className="shrink-0 text-text-secondary" aria-hidden />
-        </Card>
-      </Link>
+      <section className="flex flex-col gap-2">
+        <h2 className="text-sm text-text-secondary">Para expulsar</h2>
+        {toKick.length === 0 ? (
+          <Card>
+            <p className="text-sm text-text-secondary">Nadie está marcado para expulsar.</p>
+          </Card>
+        ) : (
+          <Card className="flex flex-col divide-y divide-border p-0">
+            {toKick.map(({ member, evaluation }) => (
+              <Link
+                key={member.id}
+                href={`/miembros/${encodeURIComponent(member.playerTag.replace("#", ""))}`}
+                className="flex items-center justify-between gap-3 p-4"
+              >
+                <div className="min-w-0">
+                  <p className="truncate font-medium">{member.name}</p>
+                  <p className="truncate text-xs text-text-secondary">{getKickReasonLabel(evaluation, 3)}</p>
+                </div>
+                <Pill tone="bad">Expulsar</Pill>
+              </Link>
+            ))}
+          </Card>
+        )}
+      </section>
 
       <section className="flex flex-col gap-2">
         <h2 className="text-sm text-text-secondary">Movimientos</h2>
