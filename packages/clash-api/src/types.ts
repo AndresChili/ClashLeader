@@ -31,9 +31,16 @@ export interface ClashApiClanMember {
   donationsReceived: number;
 }
 
+export interface ClashApiBadgeUrls {
+  small: string;
+  medium: string;
+  large: string;
+}
+
 export interface ClashApiClan {
   tag: string;
   name: string;
+  badgeUrls?: ClashApiBadgeUrls;
   memberList: ClashApiClanMember[];
 }
 

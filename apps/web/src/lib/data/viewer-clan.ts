@@ -7,6 +7,7 @@ export interface ViewerClan {
   name: string;
   role: "admin" | "reader";
   lastCollectedAt: string | null;
+  badgeUrl: string | null;
 }
 
 /**
@@ -21,7 +22,7 @@ export async function getViewerClan(supabase: SupabaseClient): Promise<ViewerCla
 
   const { data, error } = await supabase
     .from("clan_access")
-    .select("role, clans(id, tag, name, last_collected_at)")
+    .select("role, clans(id, tag, name, last_collected_at, badge_url)")
     .eq("user_id", user.id)
     .order("created_at", { ascending: true })
     .limit(1)
@@ -32,7 +33,13 @@ export async function getViewerClan(supabase: SupabaseClient): Promise<ViewerCla
   }
   if (!data || !data.clans) return null;
 
-  const clan = data.clans as unknown as { id: string; tag: string; name: string; last_collected_at: string | null };
+  const clan = data.clans as unknown as {
+    id: string;
+    tag: string;
+    name: string;
+    last_collected_at: string | null;
+    badge_url: string | null;
+  };
 
   return {
     clanId: clan.id,
@@ -40,5 +47,6 @@ export async function getViewerClan(supabase: SupabaseClient): Promise<ViewerCla
     name: clan.name,
     role: data.role as "admin" | "reader",
     lastCollectedAt: clan.last_collected_at,
+    badgeUrl: clan.badge_url,
   };
 }

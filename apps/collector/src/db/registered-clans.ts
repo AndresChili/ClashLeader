@@ -37,3 +37,14 @@ export async function markClanCollected(supabase: SupabaseClient, clanId: string
     throw new Error(`Failed to update last_collected_at for clan ${clanId}: ${error.message}`);
   }
 }
+
+/** Refresca el escudo del clan desde la API; no hace nada si la respuesta no trae badgeUrls. */
+export async function updateClanBadge(supabase: SupabaseClient, clanId: string, badgeUrl: string | undefined): Promise<void> {
+  if (!badgeUrl) return;
+
+  const { error } = await supabase.from("clans").update({ badge_url: badgeUrl }).eq("id", clanId);
+
+  if (error) {
+    throw new Error(`Failed to update badge_url for clan ${clanId}: ${error.message}`);
+  }
+}

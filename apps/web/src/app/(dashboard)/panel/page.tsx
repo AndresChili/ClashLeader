@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ClanBadge } from "@/components/ClanBadge";
 import { Card } from "@/components/ui/Card";
 import { Pill } from "@/components/ui/Pill";
 import { ProgressBar } from "@/components/ProgressBar";
@@ -78,9 +79,12 @@ export default async function PanelPage() {
 
   return (
     <div className="flex flex-col gap-5">
-      <div>
-        <h1 className="font-heading text-[28px] leading-tight tracking-tight">{viewerClan.name}</h1>
-        <p className="mt-0.5 text-sm text-text-secondary">{formatUpdatedAgo(viewerClan.lastCollectedAt, now)}</p>
+      <div className="flex items-center gap-3">
+        <ClanBadge url={viewerClan.badgeUrl} size={52} />
+        <div>
+          <h1 className="font-heading text-[28px] leading-tight tracking-tight">{viewerClan.name}</h1>
+          <p className="mt-0.5 text-sm text-text-secondary">{formatUpdatedAgo(viewerClan.lastCollectedAt, now)}</p>
+        </div>
       </div>
 
       <div className="grid grid-cols-3 gap-3">

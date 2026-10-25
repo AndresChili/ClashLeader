@@ -94,6 +94,7 @@ export async function registerClan(_prev: AltaClanActionState, formData: FormDat
   const { error: registerError } = await supabase.rpc("register_clan", {
     p_tag: parsed.data.clanTag,
     p_name: clan.name,
+    p_badge_url: clan.badgeUrls?.medium ?? null,
   });
 
   if (registerError) {

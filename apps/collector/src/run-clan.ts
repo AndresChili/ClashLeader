@@ -13,7 +13,7 @@ import {
 import { upsertDonationSeasonTotal } from "./db/donation-totals";
 import { insertMembershipEvents, type MembershipEventInput } from "./db/membership-events";
 import { getLatestSnapshots, insertMemberSnapshots, type MemberSnapshotInput } from "./db/snapshots";
-import type { RegisteredClan } from "./db/registered-clans";
+import { updateClanBadge, type RegisteredClan } from "./db/registered-clans";
 import { collectClanWarLeague, collectCurrentWar } from "./run-clan-war";
 import { collectCapital } from "./run-clan-capital";
 import { collectClanGames } from "./run-clan-clan-games";
@@ -38,6 +38,7 @@ export async function runClanCollection(
   now: Date = new Date(),
 ): Promise<RunClanResult> {
   const apiClan = await clashApi.getClan(clan.tag);
+  await updateClanBadge(supabase, clan.id, apiClan.badgeUrls?.medium);
 
   const currentMembers = await getCurrentMembers(supabase, clan.id);
   const currentByTag = new Map(currentMembers.map((member) => [member.playerTag, member]));

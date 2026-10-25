@@ -13,7 +13,7 @@ function buildCsp(nonce: string) {
   return [
     "default-src 'self'",
     `connect-src 'self' ${supabaseOrigin}`,
-    "img-src 'self' data: https://lh3.googleusercontent.com",
+    "img-src 'self' data: https://lh3.googleusercontent.com https://api-assets.clashofclans.com",
     `script-src 'self' 'nonce-${nonce}'`,
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' https://fonts.gstatic.com",
