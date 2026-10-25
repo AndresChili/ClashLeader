@@ -1,13 +1,10 @@
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 import { BottomNav } from "@/components/nav/BottomNav";
-import { createClient } from "@/lib/supabase/server";
+import { getAuthUser } from "@/lib/supabase/server";
 
 export default async function DashboardLayout({ children }: { children: ReactNode }) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthUser();
 
   if (!user) {
     redirect("/iniciar-sesion");

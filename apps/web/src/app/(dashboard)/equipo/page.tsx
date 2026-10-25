@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/Card";
 import { Pill } from "@/components/ui/Pill";
 import { getPendingInvites, getTeamMembers } from "@/lib/data/team";
 import { getViewerClan } from "@/lib/data/viewer-clan";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { InviteCard } from "./InviteCard";
 
 export const metadata = { title: "Equipo · ClashLeader" };
@@ -18,9 +18,7 @@ export default async function EquipoPage() {
     return <NoClanCard />;
   }
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthUser();
   const [team, pendingInvites] = await Promise.all([
     getTeamMembers(supabase, viewerClan.clanId),
     viewerClan.role === "admin" ? getPendingInvites(supabase, viewerClan.clanId) : Promise.resolve([]),

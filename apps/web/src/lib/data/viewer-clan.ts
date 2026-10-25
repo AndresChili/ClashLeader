@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { getAuthUser } from "@/lib/supabase/server";
 
 export interface ViewerClan {
   clanId: string;
@@ -15,9 +16,7 @@ export interface ViewerClan {
  * antigua, que para una cuenta de ejemplo de un solo clan es la única que hay.
  */
 export async function getViewerClan(supabase: SupabaseClient): Promise<ViewerClan | null> {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthUser();
   if (!user) return null;
 
   const { data, error } = await supabase

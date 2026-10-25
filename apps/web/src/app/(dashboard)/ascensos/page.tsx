@@ -5,7 +5,7 @@ import { getPromotionDecisions } from "@/lib/data/promotions";
 import { getViewerClan } from "@/lib/data/viewer-clan";
 import { daysInClan } from "@/lib/format-member";
 import { getClanEvaluations } from "@/lib/get-clan-evaluations";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { CandidateCard, DiscardedCard } from "./CandidateCard";
 
 export const metadata = { title: "Ascensos · ClashLeader" };
@@ -24,9 +24,7 @@ export default async function AscensosPage() {
   const decisions = await getPromotionDecisions(supabase, members.map((m) => m.id));
   const canEdit = viewerClan.role === "admin";
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthUser();
   const decidedByLabel = (decidedByUserId: string | null, decidedByName: string | null) =>
     decidedByUserId && decidedByUserId === user?.id ? "ti" : decidedByName;
 
