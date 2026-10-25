@@ -145,6 +145,7 @@ export default async function PanelPage() {
               <Link
                 key={`${member.id}:${type}`}
                 href={`/miembros/${encodeURIComponent(member.playerTag.replace("#", ""))}`}
+                prefetch={false}
                 className="flex items-center justify-between gap-3 p-4"
               >
                 <p className="truncate font-medium">{member.name}</p>
@@ -167,6 +168,7 @@ export default async function PanelPage() {
               <Link
                 key={member.id}
                 href={`/miembros/${encodeURIComponent(member.playerTag.replace("#", ""))}`}
+                prefetch={false}
                 className="flex items-center justify-between gap-3 p-4"
               >
                 <div className="min-w-0">

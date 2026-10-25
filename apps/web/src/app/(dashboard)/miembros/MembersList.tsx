@@ -87,6 +87,7 @@ export function MembersList({
               <li key={member.id}>
                 <Link
                   href={`/miembros/${encodeURIComponent(member.playerTag.replace("#", ""))}`}
+                  prefetch={false}
                   className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3"
                 >
                   <IndexBadge tone={status.tone} value={evaluation?.index.score} />
