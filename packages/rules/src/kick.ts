@@ -1,6 +1,7 @@
 import { isInactiveBeyondThreshold } from "./inactivity";
 
-export type KickReason = "inactivity" | "no_war_attacks";
+/** low_score: la puntuación cae en el tramo "Expulsar" (ver indexBand); se decide en quien combina kick e índice. */
+export type KickReason = "inactivity" | "no_war_attacks" | "low_score";
 
 export interface KickEvaluation {
   shouldKick: boolean;

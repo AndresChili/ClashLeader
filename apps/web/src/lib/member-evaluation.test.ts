@@ -35,11 +35,9 @@ function context(overrides: Partial<MemberEvaluationContext> = {}): MemberEvalua
   return {
     now,
     rules,
-    currentWarAttacks: undefined,
-    inCurrentWar: false,
     lastFinishedWar: null,
-    capitalAttacksUsed: null,
-    capitalAttacksAvailable: null,
+    recentWar: null,
+    capitalSeason: null,
     clanGamesPoints: null,
     ...overrides,
   };
@@ -52,11 +50,6 @@ describe("evaluateMember", () => {
       context(),
     );
     expect(result.kick).toEqual({ shouldKick: true, reason: "inactivity" });
-  });
-
-  it("wires a rostered-but-silent current war into an at-risk verdict", () => {
-    const result = evaluateMember(member(), context({ inCurrentWar: true, currentWarAttacks: 0 }));
-    expect(result.atRisk).toBe(true);
   });
 
   it("qualifies a veteran candidate end to end", () => {
@@ -81,14 +74,27 @@ describe("evaluateMember", () => {
     expect(result.isColeaderCandidate).toBe(false);
   });
 
-  it("produces an índice score consistent with packages/rules for a maxed-out member", () => {
-    const maxed = member({
-      donations: DEFAULT_CLAN_RULES.coleaderMinDonationsPerSeason,
-      avgStarsPerAttack: 3,
-      attackUsagePct: 100,
-    });
-    const result = evaluateMember(maxed, context({ capitalAttacksUsed: 6, capitalAttacksAvailable: 6, clanGamesPoints: 4000 }));
+  it("does not penalise a member who was never in a war lineup", () => {
+    const result = evaluateMember(member({ donations: 500 }), context({ recentWar: null }));
+    expect(result.index.breakdown.war).toBeNull();
     expect(result.index.score).toBe(100);
-    expect(result.index.verdict).toBe("Cumple");
+    expect(result.index.band).toBe("Excelente");
+  });
+
+  it("only scores capital when the member was already in the clan for that raid weekend", () => {
+    const capitalSeason = { startTime: "2026-10-02T07:00:00Z", attacksUsed: 0, attackLimit: 6 };
+    const veteranMember = evaluateMember(member(), context({ capitalSeason }));
+    const newcomer = evaluateMember(member({ firstSeenAt: "2026-10-05T00:00:00Z" }), context({ capitalSeason }));
+    expect(veteranMember.index.breakdown.capital).toBe(0);
+    expect(newcomer.index.breakdown.capital).toBeNull();
+  });
+
+  it("marks for kick when the score falls in the Expulsar band", () => {
+    const result = evaluateMember(
+      member({ lastActivityDetectedAt: new Date(now.getTime() - 2.9 * 24 * 60 * 60 * 1000).toISOString() }),
+      context({ recentWar: { usagePct: 0, avgStars: null }, clanGamesPoints: 0 }),
+    );
+    expect(result.index.band).toBe("Expulsar");
+    expect(result.kick).toEqual({ shouldKick: true, reason: "low_score" });
   });
 });

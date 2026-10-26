@@ -6,7 +6,7 @@ import { MembersList, type MembersChip } from "./MembersList";
 
 export const metadata = { title: "Miembros · ClashLeader" };
 
-const VALID_CHIPS: MembersChip[] = ["todos", "expulsar", "guerra", "colideres", "veteranos"];
+const VALID_CHIPS: MembersChip[] = ["todos", "colideres", "veteranos"];
 
 export default async function MiembrosPage({ searchParams }: { searchParams: Promise<{ chip?: string }> }) {
   const { chip } = await searchParams;
@@ -21,8 +21,7 @@ export default async function MiembrosPage({ searchParams }: { searchParams: Pro
     );
   }
 
-  const { members, evaluations, currentWar } = await getClanEvaluations(supabase, viewerClan.clanId);
-  const currentWarTags = currentWar ? new Set(currentWar.members.map((m) => m.playerTag)) : null;
+  const { members, evaluations } = await getClanEvaluations(supabase, viewerClan.clanId);
 
   return (
     <div className="flex flex-col gap-4">
@@ -31,7 +30,7 @@ export default async function MiembrosPage({ searchParams }: { searchParams: Pro
         <span className="text-sm text-text-secondary">{members.length} de 50</span>
       </div>
 
-      <MembersList members={members} evaluations={evaluations} currentWarTags={currentWarTags} initialChip={initialChip} />
+      <MembersList members={members} evaluations={evaluations} initialChip={initialChip} />
     </div>
   );
 }

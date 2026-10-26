@@ -9,15 +9,22 @@ export interface CapitalContribution {
 
 export interface CapitalSeasonSummary {
   seasonId: string;
+  startTime: string | null;
   capitalTotalLoot: number;
   contributions: CapitalContribution[];
 }
 
-export async function getLatestCapitalSeason(supabase: SupabaseClient, clanId: string): Promise<CapitalSeasonSummary | null> {
+/** El último fin de semana de asaltos ya terminado: uno en curso todavía no se le puede exigir a nadie. */
+export async function getLatestFinishedCapitalSeason(
+  supabase: SupabaseClient,
+  clanId: string,
+  now: Date,
+): Promise<CapitalSeasonSummary | null> {
   const { data: season, error: seasonError } = await supabase
     .from("capital_seasons")
-    .select("id, season_id")
+    .select("id, season_id, start_time")
     .eq("clan_id", clanId)
+    .lte("end_time", now.toISOString())
     .order("start_time", { ascending: false })
     .limit(1)
     .maybeSingle();
@@ -36,6 +43,7 @@ export async function getLatestCapitalSeason(supabase: SupabaseClient, clanId: s
 
   return {
     seasonId: season.season_id as string,
+    startTime: season.start_time as string | null,
     capitalTotalLoot: total,
     contributions: contributions.map((row) => ({
       playerTag: row.player_tag as string,

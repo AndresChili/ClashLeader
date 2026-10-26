@@ -5,6 +5,7 @@ describe("DEFAULT_CLAN_RULES", () => {
   it("index weights sum to 100, matching the clan_rules_weights_sum_100 db constraint", () => {
     const sum =
       DEFAULT_CLAN_RULES.indexWeightWar +
+      DEFAULT_CLAN_RULES.indexWeightActivity +
       DEFAULT_CLAN_RULES.indexWeightDonations +
       DEFAULT_CLAN_RULES.indexWeightCapital +
       DEFAULT_CLAN_RULES.indexWeightGames;

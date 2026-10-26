@@ -30,7 +30,7 @@ export default async function PanelPage() {
   }
 
   const now = new Date();
-  const { members, evaluations, currentWar } = await getClanEvaluations(supabase, viewerClan.clanId, now);
+  const { rules, members, evaluations, currentWar } = await getClanEvaluations(supabase, viewerClan.clanId, now);
 
   const [movements, decisions] = await Promise.all([
     getMovements(supabase, viewerClan.clanId, 0, MOVEMENTS_PAGE_SIZE),
@@ -163,7 +163,7 @@ export default async function PanelPage() {
               >
                 <div className="min-w-0">
                   <p className="truncate font-medium">{member.name}</p>
-                  <p className="truncate text-xs text-text-secondary">{getKickReasonLabel(evaluation, 3)}</p>
+                  <p className="truncate text-xs text-text-secondary">{getKickReasonLabel(evaluation, rules.kickInactivityDays)}</p>
                 </div>
                 <Pill tone="bad">Expulsar</Pill>
               </Link>

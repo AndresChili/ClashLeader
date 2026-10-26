@@ -1,13 +1,17 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { LastFinishedWarRoster } from "@clashleader/rules";
-import { getLatestCapitalSeason } from "@/lib/data/capital";
+import type { ClanRules, LastFinishedWarRoster } from "@clashleader/rules";
+import { getLatestFinishedCapitalSeason } from "@/lib/data/capital";
 import { getClanRules } from "@/lib/data/clan-rules";
 import { getCurrentClanGamesPoints } from "@/lib/data/clan-games";
 import { getClanMembers, type MemberSummary } from "@/lib/data/members";
-import { getCurrentWar, getWarHistory, type WarSummary } from "@/lib/data/wars";
+import { getCurrentWar, getMemberReliability, getWarHistory, type WarSummary } from "@/lib/data/wars";
 import { evaluateMember, type MemberEvaluation } from "@/lib/member-evaluation";
 
+/** La parte de guerra del índice mira las últimas N guerras en las que cada miembro estuvo en la alineación. */
+const INDEX_RECENT_WARS = 10;
+
 export interface ClanEvaluations {
+  rules: ClanRules;
   members: MemberSummary[];
   evaluations: Map<string, MemberEvaluation>;
   currentWar: WarSummary | null;
@@ -15,19 +19,21 @@ export interface ClanEvaluations {
 
 /** Todo lo que necesitan Miembros, Ficha y Ascensos: los datos crudos más cada miembro pasado por packages/rules. */
 export async function getClanEvaluations(supabase: SupabaseClient, clanId: string, now: Date = new Date()): Promise<ClanEvaluations> {
-  const [rules, members, currentWar, lastFinishedWars, capitalSeason, clanGamesPoints] = await Promise.all([
+  const [rules, members, currentWar, lastFinishedWars, capitalSeason, clanGamesPoints, recentWarsByMemberId] = await Promise.all([
     getClanRules(supabase, clanId),
     getClanMembers(supabase, clanId),
     getCurrentWar(supabase, clanId),
     getWarHistory(supabase, clanId, 1),
-    getLatestCapitalSeason(supabase, clanId),
+    getLatestFinishedCapitalSeason(supabase, clanId, now),
     getCurrentClanGamesPoints(supabase, clanId),
+    getMemberReliability(supabase, clanId, INDEX_RECENT_WARS),
   ]);
 
-  const currentWarAttacksByTag = new Map(currentWar?.members.map((m) => [m.playerTag, m.attacksUsed]) ?? []);
   const lastFinishedWar = lastFinishedWars[0] ?? null;
   const lastFinishedWarRosterByTag = new Map(lastFinishedWar?.members.map((m) => [m.playerTag, m.attacksUsed]) ?? []);
   const capitalByTag = new Map(capitalSeason?.contributions.map((c) => [c.playerTag, c]) ?? []);
+  // Los Juegos han empezado en cuanto alguien del clan ha sumado puntos esta temporada.
+  const clanGamesStarted = [...clanGamesPoints.values()].some((points) => points > 0);
 
   const evaluations = new Map<string, MemberEvaluation>();
 
@@ -40,21 +46,25 @@ export async function getClanEvaluations(supabase: SupabaseClient, clanId: strin
       : null;
 
     const capital = capitalByTag.get(member.playerTag);
+    const recentWar = recentWarsByMemberId.get(member.id);
 
     evaluations.set(
       member.id,
       evaluateMember(member, {
         now,
         rules,
-        inCurrentWar: currentWarAttacksByTag.has(member.playerTag),
-        currentWarAttacks: currentWarAttacksByTag.get(member.playerTag),
         lastFinishedWar: lastFinishedWarRoster,
-        capitalAttacksUsed: capital?.attacksUsed ?? null,
-        capitalAttacksAvailable: capital?.attackLimit ?? null,
-        clanGamesPoints: clanGamesPoints.get(member.playerTag) ?? null,
+        recentWar:
+          recentWar && recentWar.warsCounted > 0 && recentWar.usagePct != null
+            ? { usagePct: Number(recentWar.usagePct), avgStars: recentWar.avgStars == null ? null : Number(recentWar.avgStars) }
+            : null,
+        capitalSeason: capitalSeason
+          ? { startTime: capitalSeason.startTime, attacksUsed: capital?.attacksUsed ?? null, attackLimit: capital?.attackLimit ?? null }
+          : null,
+        clanGamesPoints: clanGamesStarted ? (clanGamesPoints.get(member.playerTag) ?? 0) : null,
       }),
     );
   }
 
-  return { members, evaluations, currentWar };
+  return { rules, members, evaluations, currentWar };
 }

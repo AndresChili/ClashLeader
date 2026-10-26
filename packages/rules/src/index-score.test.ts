@@ -1,90 +1,83 @@
 import { describe, expect, it } from "vitest";
 import { DEFAULT_CLAN_RULES } from "./types";
-import { computeIndex } from "./index-score";
+import { activityScore, computeIndex, indexBand, type IndexInputs } from "./index-score";
+
+const allMaxed: IndexInputs = {
+  war: { usagePct: 100, avgStars: 3 },
+  daysSinceActivity: 0,
+  capital: { attacksUsed: 6, attacksAvailable: 6 },
+  clanGamesPoints: 10_000,
+  donations: { donated: 500, expected: 250 },
+};
 
 describe("computeIndex", () => {
-  it("scores 100 across the board for a maxed-out member", () => {
-    const result = computeIndex(
-      {
-        warUsagePct: 100,
-        warAvgStars: 3,
-        donationsThisSeason: DEFAULT_CLAN_RULES.coleaderMinDonationsPerSeason,
-        capitalAttacksUsed: 6,
-        capitalAttacksAvailable: 6,
-        clanGamesPoints: 4000,
-      },
-      DEFAULT_CLAN_RULES,
-    );
-    expect(result).toEqual({ score: 100, verdict: "Cumple", breakdown: { war: 100, donations: 100, capital: 100, games: 100 } });
-  });
-
-  it("scores 0 across the board with no data anywhere", () => {
-    const result = computeIndex(
-      { warUsagePct: null, warAvgStars: null, donationsThisSeason: null, capitalAttacksUsed: null, capitalAttacksAvailable: null, clanGamesPoints: null },
-      DEFAULT_CLAN_RULES,
-    );
-    expect(result.score).toBe(0);
-    expect(result.verdict).toBe("Flojo");
-  });
-
-  it("clamps donations above the benchmark instead of exceeding 100", () => {
-    const result = computeIndex(
-      {
-        warUsagePct: 0,
-        warAvgStars: 0,
-        donationsThisSeason: DEFAULT_CLAN_RULES.coleaderMinDonationsPerSeason * 5,
-        capitalAttacksUsed: 0,
-        capitalAttacksAvailable: 6,
-        clanGamesPoints: 0,
-      },
-      DEFAULT_CLAN_RULES,
-    );
-    expect(result.breakdown.donations).toBe(100);
-  });
-
-  it("matches the default weights (40/30/15/15) exactly for a half-and-half member", () => {
-    // guerra=50, donaciones=50, capital=50, juegos=50 -> la media ponderada debe dar 50 sin importar los pesos, como comprobación.
-    const result = computeIndex(
-      {
-        warUsagePct: 50,
-        warAvgStars: 1.5,
-        donationsThisSeason: DEFAULT_CLAN_RULES.coleaderMinDonationsPerSeason / 2,
-        capitalAttacksUsed: 3,
-        capitalAttacksAvailable: 6,
-        clanGamesPoints: 2000,
-      },
-      DEFAULT_CLAN_RULES,
-    );
-    expect(result.score).toBe(50);
-  });
-
-  it("passes (Cumple) at exactly the configured threshold, fails just below it", () => {
-    const inputsFor = (score: number) => ({
-      warUsagePct: score,
-      warAvgStars: (score / 100) * 3,
-      donationsThisSeason: (score / 100) * DEFAULT_CLAN_RULES.coleaderMinDonationsPerSeason,
-      capitalAttacksUsed: (score / 100) * 6,
-      capitalAttacksAvailable: 6,
-      clanGamesPoints: (score / 100) * 4000,
+  it("scores 100 when every part is maxed out", () => {
+    expect(computeIndex(allMaxed, DEFAULT_CLAN_RULES)).toEqual({
+      score: 100,
+      band: "Excelente",
+      breakdown: { war: 100, activity: 100, capital: 100, games: 100, donations: 100 },
     });
-
-    expect(computeIndex(inputsFor(70), DEFAULT_CLAN_RULES).verdict).toBe("Cumple");
-    expect(computeIndex(inputsFor(69), DEFAULT_CLAN_RULES).verdict).toBe("Flojo");
   });
 
-  it("respects a custom pass threshold from clan_rules", () => {
-    const customRules = { ...DEFAULT_CLAN_RULES, indexPassThreshold: 90 };
+  it("does not penalise a member who was never in a war lineup", () => {
+    const result = computeIndex({ ...allMaxed, war: null }, DEFAULT_CLAN_RULES);
+    expect(result.score).toBe(100);
+    expect(result.breakdown.war).toBeNull();
+  });
+
+  it("leaves out every part that does not apply, scoring on activity alone if needed", () => {
     const result = computeIndex(
-      {
-        warUsagePct: 80,
-        warAvgStars: 2.4,
-        donationsThisSeason: DEFAULT_CLAN_RULES.coleaderMinDonationsPerSeason * 0.8,
-        capitalAttacksUsed: 5,
-        capitalAttacksAvailable: 6,
-        clanGamesPoints: 3200,
-      },
-      customRules,
+      { war: null, daysSinceActivity: 0, capital: null, clanGamesPoints: null, donations: null },
+      DEFAULT_CLAN_RULES,
     );
-    expect(result.verdict).toBe("Flojo"); // ~80 < 90
+    expect(result.score).toBe(100);
+  });
+
+  it("weighs war attacks 70/30 between usage and stars", () => {
+    const result = computeIndex(
+      { war: { usagePct: 100, avgStars: 0 }, daysSinceActivity: 0, capital: null, clanGamesPoints: null, donations: null },
+      { ...DEFAULT_CLAN_RULES, indexWeightActivity: 0, indexWeightWar: 100 },
+    );
+    expect(result.breakdown.war).toBe(70);
+  });
+
+  it("maps clan games points straight to the score: 9400 points is a 94", () => {
+    expect(computeIndex({ ...allMaxed, clanGamesPoints: 9400 }, DEFAULT_CLAN_RULES).breakdown.games).toBe(94);
+    expect(computeIndex({ ...allMaxed, clanGamesPoints: 12_000 }, DEFAULT_CLAN_RULES).breakdown.games).toBe(100);
+  });
+
+  it("uses the clan weights over the parts that apply", () => {
+    // Guerra 50 (peso 45) y actividad 100 (peso 25); el resto no aplica.
+    const result = computeIndex(
+      { war: { usagePct: 50, avgStars: 1.5 }, daysSinceActivity: 0, capital: null, clanGamesPoints: null, donations: null },
+      DEFAULT_CLAN_RULES,
+    );
+    expect(result.score).toBe(Math.round((50 * 45 + 100 * 25) / 70));
+  });
+});
+
+describe("activityScore", () => {
+  it("is 100 within the first day and drops to 0 at the kick threshold", () => {
+    expect(activityScore(0.5, 3)).toBe(100);
+    expect(Math.round(activityScore(2, 3))).toBe(67);
+    expect(Math.round(activityScore(3, 3))).toBe(33);
+    expect(activityScore(4, 3)).toBe(0);
+  });
+});
+
+describe("indexBand", () => {
+  it.each([
+    [100, "Excelente"],
+    [85, "Excelente"],
+    [84, "Genial"],
+    [70, "Genial"],
+    [60, "Bien"],
+    [50, "Suficiente"],
+    [30, "Flojo"],
+    [20, "Muy flojo"],
+    [19, "Expulsar"],
+    [0, "Expulsar"],
+  ] as const)("%i is %s", (score, band) => {
+    expect(indexBand(score)).toBe(band);
   });
 });

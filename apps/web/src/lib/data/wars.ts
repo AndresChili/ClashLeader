@@ -118,8 +118,13 @@ export interface MemberReliability {
   avgStars: number | null;
 }
 
-export async function getMemberReliability(supabase: SupabaseClient, clanId: string): Promise<Map<string, MemberReliability>> {
-  const { data, error } = await supabase.rpc("member_war_reliability", { p_clan_id: clanId });
+/** lastN: solo las últimas N guerras en las que cada miembro estuvo en la alineación; sin él, todas. */
+export async function getMemberReliability(
+  supabase: SupabaseClient,
+  clanId: string,
+  lastN: number | null = null,
+): Promise<Map<string, MemberReliability>> {
+  const { data, error } = await supabase.rpc("member_war_reliability", { p_clan_id: clanId, p_last_n: lastN });
   if (error) throw new Error(`Failed to load member war reliability: ${error.message}`);
 
   const byMemberId = new Map<string, MemberReliability>();

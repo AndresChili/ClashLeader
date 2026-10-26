@@ -22,9 +22,9 @@ export async function getClanRules(supabase: SupabaseClient, clanId: string): Pr
     coleaderMinAttackUsagePct: data.coleader_min_attack_usage_pct as number,
     coleaderMinDonationsPerSeason: data.coleader_min_donations_per_season as number,
     indexWeightWar: data.index_weight_war as number,
+    indexWeightActivity: data.index_weight_activity as number,
     indexWeightDonations: data.index_weight_donations as number,
     indexWeightCapital: data.index_weight_capital as number,
     indexWeightGames: data.index_weight_games as number,
-    indexPassThreshold: data.index_pass_threshold as number,
   };
 }

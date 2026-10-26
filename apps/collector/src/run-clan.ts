@@ -140,7 +140,9 @@ export async function runClanCollection(
     const signals = donationActivitySignals(activityBaseline, apiMember);
     let playedSinceLastRun = false;
     const player = players.get(apiMember.tag);
-    if (player) {
+    // Sin lista de logros (respuesta incompleta de la API) no se puede
+    // comparar; se salta este miembro en vez de tumbar la recogida del clan.
+    if (Array.isArray(player?.achievements)) {
       const score = playerActivityScore(player.achievements);
       const previousScore = currentByTag.get(apiMember.tag)?.activityScore ?? null;
       playedSinceLastRun = hasNewPlayerActivity(previousScore, score);

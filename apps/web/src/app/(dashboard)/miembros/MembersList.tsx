@@ -9,41 +9,53 @@ import type { MemberEvaluation } from "@/lib/member-evaluation";
 import { getMemberStatus } from "@/lib/member-status";
 import { ROLE_LABELS } from "@/lib/role-labels";
 
-export type MembersChip = "todos" | "expulsar" | "guerra" | "colideres" | "veteranos";
+export type MembersChip = "todos" | "colideres" | "veteranos";
 
 const CHIPS: { id: MembersChip; label: string }[] = [
   { id: "todos", label: "Todos" },
   { id: "colideres", label: "Colíderes" },
   { id: "veteranos", label: "Veteranos" },
-  { id: "expulsar", label: "A expulsar" },
-  { id: "guerra", label: "Para guerra" },
+];
+
+type SortOrder = "puntuacion-desc" | "puntuacion-asc" | "nombre";
+
+const SORTS: { id: SortOrder; label: string }[] = [
+  { id: "puntuacion-desc", label: "Más puntuación" },
+  { id: "puntuacion-asc", label: "Menos puntuación" },
+  { id: "nombre", label: "Nombre" },
 ];
 
 export function MembersList({
   members,
   evaluations,
-  currentWarTags,
   initialChip = "todos",
 }: {
   members: MemberSummary[];
   evaluations: Map<string, MemberEvaluation>;
-  /** Tags de jugador en la alineación de la guerra en curso, o null cuando no hay guerra ahora mismo. */
-  currentWarTags: Set<string> | null;
   /** Chip con el que arranca la lista, para enlazar desde el Panel directamente filtrado. */
   initialChip?: MembersChip;
 }) {
   const [query, setQuery] = useState("");
   const [chip, setChip] = useState<MembersChip>(initialChip);
+  const [sort, setSort] = useState<SortOrder>("puntuacion-desc");
 
   const filtered = useMemo(() => {
     const byQuery = members.filter((member) => member.name.toLowerCase().includes(query.trim().toLowerCase()));
 
-    if (chip === "expulsar") return byQuery.filter((member) => evaluations.get(member.id)?.kick.shouldKick);
-    if (chip === "guerra") return currentWarTags ? byQuery.filter((member) => currentWarTags.has(member.playerTag)) : [];
-    if (chip === "colideres") return byQuery.filter((member) => member.inGameRole === "coLeader");
-    if (chip === "veteranos") return byQuery.filter((member) => member.inGameRole === "admin");
-    return byQuery;
-  }, [members, query, chip, currentWarTags, evaluations]);
+    const byChip =
+      chip === "colideres"
+        ? byQuery.filter((member) => member.inGameRole === "coLeader")
+        : chip === "veteranos"
+          ? byQuery.filter((member) => member.inGameRole === "admin")
+          : byQuery;
+
+    const score = (member: MemberSummary) => evaluations.get(member.id)?.index.score ?? -1;
+    return [...byChip].sort((a, b) => {
+      if (sort === "nombre") return a.name.localeCompare(b.name, "es", { sensitivity: "base" });
+      const diff = sort === "puntuacion-desc" ? score(b) - score(a) : score(a) - score(b);
+      return diff !== 0 ? diff : a.name.localeCompare(b.name, "es", { sensitivity: "base" });
+    });
+  }, [members, query, chip, sort, evaluations]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -70,11 +82,22 @@ export function MembersList({
         ))}
       </div>
 
-      {chip === "guerra" && !currentWarTags ? (
-        <p className="rounded-xl border border-border bg-card p-4 text-sm text-text-secondary">
-          No hay guerra en curso registrada todavía.
-        </p>
-      ) : filtered.length === 0 ? (
+      <label className="flex items-center justify-between gap-3 text-sm text-text-secondary">
+        Ordenar por
+        <select
+          value={sort}
+          onChange={(event) => setSort(event.target.value as SortOrder)}
+          className="rounded-xl border border-border bg-card px-3 py-2 text-sm text-text focus:border-accent focus:outline-none"
+        >
+          {SORTS.map((s) => (
+            <option key={s.id} value={s.id}>
+              {s.label}
+            </option>
+          ))}
+        </select>
+      </label>
+
+      {filtered.length === 0 ? (
         <p className="rounded-xl border border-border bg-card p-4 text-sm text-text-secondary">
           Nadie coincide con esa búsqueda.
         </p>

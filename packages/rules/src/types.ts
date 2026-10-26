@@ -8,10 +8,10 @@ export interface ClanRules {
   coleaderMinAttackUsagePct: number;
   coleaderMinDonationsPerSeason: number;
   indexWeightWar: number;
+  indexWeightActivity: number;
   indexWeightDonations: number;
   indexWeightCapital: number;
   indexWeightGames: number;
-  indexPassThreshold: number;
 }
 
 export const DEFAULT_CLAN_RULES: Omit<ClanRules, "clanId"> = {
@@ -21,9 +21,9 @@ export const DEFAULT_CLAN_RULES: Omit<ClanRules, "clanId"> = {
   coleaderMinDays: 90,
   coleaderMinAttackUsagePct: 90,
   coleaderMinDonationsPerSeason: 1000,
-  indexWeightWar: 40,
-  indexWeightDonations: 30,
+  indexWeightWar: 45,
+  indexWeightActivity: 25,
+  indexWeightDonations: 5,
   indexWeightCapital: 15,
-  indexWeightGames: 15,
-  indexPassThreshold: 70,
+  indexWeightGames: 10,
 };

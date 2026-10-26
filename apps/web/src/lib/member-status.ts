@@ -1,3 +1,4 @@
+import type { IndexBand } from "@clashleader/rules";
 import type { PillTone } from "@/components/ui/Pill";
 import type { MemberEvaluation } from "@/lib/member-evaluation";
 
@@ -6,32 +7,39 @@ export interface MemberStatus {
   tone: PillTone;
 }
 
+const BAND_TONES: Record<IndexBand, PillTone> = {
+  Excelente: "good",
+  Genial: "good",
+  Bien: "info",
+  Suficiente: "info",
+  Flojo: "warn",
+  "Muy flojo": "warn",
+  Expulsar: "bad",
+};
+
 /**
- * Expulsar gana a En riesgo, que gana al veredicto del índice: un miembro
- * ya marcado para expulsar, o callado en la guerra en vivo, es una señal
- * más urgente que su estado general.
+ * Expulsar gana al tramo de la puntuación: un miembro sin ataques en la
+ * última guerra o inactivo de más sale como Expulsar aunque su puntuación
+ * sea buena.
  */
-export function getMemberStatus(evaluation: Pick<MemberEvaluation, "kick" | "atRisk" | "index">): MemberStatus {
+export function getMemberStatus(evaluation: Pick<MemberEvaluation, "kick" | "index">): MemberStatus {
   if (evaluation.kick.shouldKick) {
     return { label: "Expulsar", tone: "bad" };
   }
-  if (evaluation.atRisk) {
-    return { label: "En riesgo", tone: "warn" };
-  }
-  return evaluation.index.verdict === "Cumple"
-    ? { label: "Cumple", tone: "good" }
-    : { label: "Flojo", tone: "warn" };
+  return { label: evaluation.index.band, tone: BAND_TONES[evaluation.index.band] };
 }
 
-/** Motivo legible para las filas de "Para expulsar" del Panel; cadena vacía si no aplica ninguna de las dos señales. */
-export function getKickReasonLabel(evaluation: Pick<MemberEvaluation, "kick" | "atRisk">, kickInactivityDays: number): string {
-  if (evaluation.kick.shouldKick) {
-    return evaluation.kick.reason === "inactivity"
-      ? `más de ${kickInactivityDays} días sin actividad detectada`
-      : "sin ataques en la última guerra";
+/** Motivo legible para las filas de "Para expulsar" del Panel; cadena vacía si no hay que expulsar. */
+export function getKickReasonLabel(evaluation: Pick<MemberEvaluation, "kick" | "index">, kickInactivityDays: number): string {
+  if (!evaluation.kick.shouldKick) return "";
+  switch (evaluation.kick.reason) {
+    case "inactivity":
+      return `más de ${kickInactivityDays} días sin actividad detectada`;
+    case "no_war_attacks":
+      return "sin ataques en la última guerra";
+    case "low_score":
+      return `puntuación muy baja (${evaluation.index.score})`;
+    default:
+      return "";
   }
-  if (evaluation.atRisk) {
-    return "todavía no ha atacado en la guerra en curso";
-  }
-  return "";
 }

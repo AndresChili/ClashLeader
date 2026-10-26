@@ -1,22 +1,27 @@
 import {
   computeIndex,
+  daysIntoSeason,
   evaluateKick,
-  isAtRisk,
   isColeaderCandidate,
   isVeteranCandidate,
   type ClanRules,
   type IndexResult,
   type KickEvaluation,
   type LastFinishedWarRoster,
+  seasonProgress,
 } from "@clashleader/rules";
 import type { MemberSummary } from "@/lib/data/members";
 import { daysInClan } from "@/lib/format-member";
 
 const NEAR_DAILY_ACTIVITY_WINDOW_DAYS = 2;
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+/** Los primeros días de temporada todo el mundo está a cero donaciones: no se puntúan. */
+const DONATIONS_GRACE_DAYS = 3;
+/** Ataques de capital base cuando el jugador no aparece en el fin de semana (no atacó). */
+const DEFAULT_CAPITAL_ATTACK_LIMIT = 5;
 
 export interface MemberEvaluation {
   kick: KickEvaluation;
-  atRisk: boolean;
   isVeteranCandidate: boolean;
   isColeaderCandidate: boolean;
   index: IndexResult;
@@ -25,13 +30,13 @@ export interface MemberEvaluation {
 export interface MemberEvaluationContext {
   now: Date;
   rules: ClanRules;
-  /** De la alineación de la guerra en curso, o undefined si no está en ella (sin guerra, o no alineado). */
-  currentWarAttacks: number | undefined;
-  inCurrentWar: boolean;
   /** null solo cuando el clan no tiene ninguna guerra terminada registrada. */
   lastFinishedWar: LastFinishedWarRoster | null;
-  capitalAttacksUsed: number | null;
-  capitalAttacksAvailable: number | null;
+  /** Sus últimas 10 guerras en alineación; null si no ha estado en ninguna. */
+  recentWar: { usagePct: number; avgStars: number | null } | null;
+  /** Último fin de semana de asaltos terminado; null si no hay ninguno registrado. */
+  capitalSeason: { startTime: string | null; attacksUsed: number | null; attackLimit: number | null } | null;
+  /** null = los Juegos del Clan de esta temporada todavía no han empezado. */
   clanGamesPoints: number | null;
 }
 
@@ -45,11 +50,6 @@ export function evaluateMember(member: MemberSummary, context: MemberEvaluationC
     now: context.now,
     kickInactivityDays: context.rules.kickInactivityDays,
     lastFinishedWar: context.lastFinishedWar,
-  });
-
-  const atRisk = isAtRisk({
-    inCurrentWar: context.inCurrentWar,
-    attacksUsedInCurrentWar: context.currentWarAttacks ?? 0,
   });
 
   const nearDailyActivity =
@@ -76,17 +76,36 @@ export function evaluateMember(member: MemberSummary, context: MemberEvaluationC
     context.rules,
   );
 
+  const activityReference = lastActivityDetectedAt ?? joinedAt;
+  const capitalSeasonStart = context.capitalSeason?.startTime ? new Date(context.capitalSeason.startTime) : null;
+  const wasInClanForCapital = context.capitalSeason != null && (capitalSeasonStart == null || joinedAt <= capitalSeasonStart);
+
   const index = computeIndex(
     {
-      warUsagePct: member.attackUsagePct,
-      warAvgStars: member.avgStarsPerAttack,
-      donationsThisSeason: member.donations,
-      capitalAttacksUsed: context.capitalAttacksUsed,
-      capitalAttacksAvailable: context.capitalAttacksAvailable,
+      war: context.recentWar,
+      daysSinceActivity: (context.now.getTime() - activityReference.getTime()) / MS_PER_DAY,
+      capital: wasInClanForCapital
+        ? {
+            attacksUsed: context.capitalSeason?.attacksUsed ?? 0,
+            attacksAvailable: context.capitalSeason?.attackLimit ?? DEFAULT_CAPITAL_ATTACK_LIMIT,
+          }
+        : null,
       clanGamesPoints: context.clanGamesPoints,
+      donations:
+        daysIntoSeason(context.now) < DONATIONS_GRACE_DAYS
+          ? null
+          : {
+              donated: member.donations ?? 0,
+              expected: context.rules.veteranMinDonationsPerSeason * seasonProgress(context.now),
+            },
     },
     context.rules,
   );
 
-  return { kick, atRisk, isVeteranCandidate: veteranCandidate, isColeaderCandidate: coleaderCandidate, index };
+  // Una puntuación en el tramo "Expulsar" también marca para expulsar,
+  // aunque no salte ninguna de las dos reglas directas.
+  const finalKick: KickEvaluation =
+    !kick.shouldKick && index.band === "Expulsar" ? { shouldKick: true, reason: "low_score" } : kick;
+
+  return { kick: finalKick, isVeteranCandidate: veteranCandidate, isColeaderCandidate: coleaderCandidate, index };
 }

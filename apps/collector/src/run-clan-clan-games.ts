@@ -35,7 +35,7 @@ export async function collectClanGames(
   for (const member of members) {
     const player = players.get(member.tag);
     const achievementValue =
-      player?.achievements.find((a) => a.name === CLAN_GAMES_ACHIEVEMENT_NAME)?.value ?? null;
+      player?.achievements?.find((a) => a.name === CLAN_GAMES_ACHIEVEMENT_NAME)?.value ?? null;
     if (achievementValue === null) continue;
 
     const before = baselines.get(member.tag) ?? achievementValue;

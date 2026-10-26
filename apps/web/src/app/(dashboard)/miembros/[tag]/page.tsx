@@ -67,13 +67,18 @@ export default async function FichaPage({ params }: { params: Promise<{ tag: str
       <Card className="flex flex-col gap-4">
         <div className="flex items-center gap-4">
           <IndexBadge tone={status.tone} value={evaluation.index.score} />
-          <div className="flex-1 flex-col gap-2">
+          <div className="flex flex-1 flex-col gap-2">
             <ProgressBar label="Guerra" value={evaluation.index.breakdown.war} />
-            <ProgressBar label="Donaciones" value={evaluation.index.breakdown.donations} />
+            <ProgressBar label="Actividad" value={evaluation.index.breakdown.activity} />
             <ProgressBar label="Capital" value={evaluation.index.breakdown.capital} />
             <ProgressBar label="Juegos" value={evaluation.index.breakdown.games} />
+            <ProgressBar label="Donaciones" value={evaluation.index.breakdown.donations} />
           </div>
         </div>
+        <p className="text-xs text-text-secondary">
+          Puntuación de 0 a 100. Una parte con «—» no cuenta ahora mismo (sin guerras en alineación, sin Juegos
+          empezados, primeros días de temporada…) y no resta.
+        </p>
       </Card>
 
       <div>

@@ -12,10 +12,20 @@ const rulesSchema = z.object({
   coleaderMinMonths: z.coerce.number().int().min(1).max(36),
   coleaderMinAttackUsagePct: z.coerce.number().int().min(0).max(100),
   coleaderMinDonationsPerSeason: z.coerce.number().int().min(0).max(100_000),
-});
+  indexWeightWar: z.coerce.number().int().min(0).max(100),
+  indexWeightActivity: z.coerce.number().int().min(0).max(100),
+  indexWeightCapital: z.coerce.number().int().min(0).max(100),
+  indexWeightGames: z.coerce.number().int().min(0).max(100),
+  indexWeightDonations: z.coerce.number().int().min(0).max(100),
+}).refine(
+  (r) => r.indexWeightWar + r.indexWeightActivity + r.indexWeightCapital + r.indexWeightGames + r.indexWeightDonations === 100,
+  "Los pesos de la puntuación tienen que sumar 100.",
+);
 
 export interface RulesActionState {
   error: string | null;
+  /** Lo que se envió, para volver a pintarlo tras un error: React vacía el formulario después de cada envío. */
+  values?: Record<string, string>;
 }
 
 export async function updateClanRules(_prev: RulesActionState, formData: FormData): Promise<RulesActionState> {
@@ -27,17 +37,24 @@ export async function updateClanRules(_prev: RulesActionState, formData: FormDat
     coleaderMinMonths: formData.get("coleaderMinMonths"),
     coleaderMinAttackUsagePct: formData.get("coleaderMinAttackUsagePct"),
     coleaderMinDonationsPerSeason: formData.get("coleaderMinDonationsPerSeason"),
+    indexWeightWar: formData.get("indexWeightWar"),
+    indexWeightActivity: formData.get("indexWeightActivity"),
+    indexWeightCapital: formData.get("indexWeightCapital"),
+    indexWeightGames: formData.get("indexWeightGames"),
+    indexWeightDonations: formData.get("indexWeightDonations"),
   });
 
+  const values = Object.fromEntries([...formData.entries()].map(([key, value]) => [key, String(value)]));
+
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Datos no válidos." };
+    return { error: parsed.error.issues[0]?.message ?? "Datos no válidos.", values };
   }
 
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { error: "Tienes que iniciar sesión." };
+  if (!user) return { error: "Tienes que iniciar sesión.", values };
 
   const { error } = await supabase
     .from("clan_rules")
@@ -48,12 +65,17 @@ export async function updateClanRules(_prev: RulesActionState, formData: FormDat
       coleader_min_days: parsed.data.coleaderMinMonths * 30,
       coleader_min_attack_usage_pct: parsed.data.coleaderMinAttackUsagePct,
       coleader_min_donations_per_season: parsed.data.coleaderMinDonationsPerSeason,
+      index_weight_war: parsed.data.indexWeightWar,
+      index_weight_activity: parsed.data.indexWeightActivity,
+      index_weight_capital: parsed.data.indexWeightCapital,
+      index_weight_games: parsed.data.indexWeightGames,
+      index_weight_donations: parsed.data.indexWeightDonations,
       updated_by: user.id,
     })
     .eq("clan_id", parsed.data.clanId);
 
   if (error) {
-    return { error: "No se pudo guardar. Solo el líder puede editar las reglas." };
+    return { error: "No se pudo guardar. Solo el líder puede editar las reglas.", values };
   }
 
   await supabase.from("audit_log").insert({
