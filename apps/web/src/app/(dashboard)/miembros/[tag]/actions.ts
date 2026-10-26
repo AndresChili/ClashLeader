@@ -5,8 +5,8 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 
 const noteSchema = z.object({
-  clanMemberId: z.string().uuid(),
-  clanId: z.string().uuid(),
+  clanMemberId: z.guid(),
+  clanId: z.guid(),
   tagSlug: z.string().min(1), // segmento de URL: playerTag sin '#'
   note: z.string().trim().min(1, "Escribe algo antes de guardar.").max(2000),
 });
@@ -57,8 +57,8 @@ export async function addLeaderNote(_prev: NoteActionState, formData: FormData):
 }
 
 const watchSchema = z.object({
-  clanMemberId: z.string().uuid(),
-  clanId: z.string().uuid(),
+  clanMemberId: z.guid(),
+  clanId: z.guid(),
   tagSlug: z.string().min(1),
   onWatch: z.boolean(),
 });

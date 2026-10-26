@@ -8,9 +8,9 @@ import { z } from "zod";
  * código.
  */
 const configSchema = z.object({
-  CLASH_API_BASE_URL: z.string().url().default("https://cocproxy.royaleapi.dev/v1"),
+  CLASH_API_BASE_URL: z.url().default("https://cocproxy.royaleapi.dev/v1"),
   CLASH_API_TOKEN: z.string().min(1, "CLASH_API_TOKEN is required"),
-  SUPABASE_URL: z.string().url(),
+  SUPABASE_URL: z.url(),
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1, "SUPABASE_SERVICE_ROLE_KEY is required"),
   MAX_CLANS_PER_RUN: z.coerce.number().int().positive().default(20),
 });

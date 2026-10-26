@@ -5,7 +5,7 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 
 const rulesSchema = z.object({
-  clanId: z.string().uuid(),
+  clanId: z.guid(),
   kickInactivityDays: z.coerce.number().int().min(1).max(30),
   veteranMinMonths: z.coerce.number().int().min(1).max(24),
   veteranMinDonationsPerSeason: z.coerce.number().int().min(0).max(100_000),

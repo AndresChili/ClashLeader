@@ -5,9 +5,9 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 
 const decisionSchema = z.object({
-  clanMemberId: z.string().uuid(),
+  clanMemberId: z.guid(),
   candidateType: z.enum(["veteran", "coleader"]),
-  clanId: z.string().uuid(),
+  clanId: z.guid(),
 });
 
 export type CandidateDecisionInput = z.infer<typeof decisionSchema>;

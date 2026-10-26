@@ -5,7 +5,7 @@ import { z } from "zod";
 import { generateInviteCode, hashInviteCode, INVITE_EXPIRY_DAYS } from "@/lib/invite-code";
 import { createClient } from "@/lib/supabase/server";
 
-const schema = z.object({ clanId: z.string().uuid() });
+const schema = z.object({ clanId: z.guid() });
 
 export interface CreateInviteState {
   code: string | null;

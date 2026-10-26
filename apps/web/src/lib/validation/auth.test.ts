@@ -35,4 +35,9 @@ describe("signInSchema", () => {
     const result = signInSchema.safeParse({ email: "not-an-email", password: "x" });
     expect(result.success).toBe(false);
   });
+
+  it("trims surrounding spaces before validating the email", () => {
+    const result = signInSchema.safeParse({ email: "  lider@demo.test ", password: "x" });
+    expect(result.success && result.data.email).toBe("lider@demo.test");
+  });
 });

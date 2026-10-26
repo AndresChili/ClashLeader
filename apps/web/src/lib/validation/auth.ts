@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const signUpSchema = z.object({
   displayName: z.string().trim().min(2, "Pon al menos 2 caracteres.").max(60),
-  email: z.string().trim().email("Correo no válido."),
+  email: z.string().trim().pipe(z.email("Correo no válido.")),
   password: z
     .string()
     .min(10, "Mínimo 10 caracteres.")
@@ -12,7 +12,7 @@ export const signUpSchema = z.object({
 });
 
 export const signInSchema = z.object({
-  email: z.string().trim().email("Correo no válido."),
+  email: z.string().trim().pipe(z.email("Correo no válido.")),
   password: z.string().min(1, "Pon tu contraseña."),
 });
 
