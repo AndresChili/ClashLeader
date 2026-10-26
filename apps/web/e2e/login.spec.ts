@@ -18,7 +18,7 @@ test("wrong password shows an error instead of logging in", async ({ page }) => 
   await expect(page).toHaveURL(/\/iniciar-sesion$/);
 });
 
-test("google login error redirect shows the banner (fix from phase 6)", async ({ page }) => {
-  await page.goto("/iniciar-sesion?error=google");
-  await expect(page.getByText(/no se pudo iniciar sesión con google/i)).toBeVisible();
+test("an expired confirmation link shows the banner", async ({ page }) => {
+  await page.goto("/iniciar-sesion?error=callback");
+  await expect(page.getByText("El enlace ha caducado o ya se usó. Inicia sesión de nuevo.")).toBeVisible();
 });

@@ -56,12 +56,12 @@ test("equipo shows the signed-in leader and an invite card", async ({ page }) =>
 
 test("bottom nav links between the four tabs", async ({ page }) => {
   await page.goto("/panel");
-  await page.getByRole("link", { name: "Miembros" }).click();
+  await page.getByRole("link", { name: "Miembros", exact: true }).click();
   await expect(page).toHaveURL(/\/miembros$/);
-  await page.getByRole("link", { name: "Guerra" }).click();
+  await page.getByRole("link", { name: "Guerra", exact: true }).click();
   await expect(page).toHaveURL(/\/guerra$/);
-  await page.getByRole("link", { name: "Equipo" }).click();
+  await page.getByRole("link", { name: "Equipo", exact: true }).click();
   await expect(page).toHaveURL(/\/equipo$/);
-  await page.getByRole("link", { name: "Panel" }).click();
+  await page.getByRole("link", { name: "Panel", exact: true }).click();
   await expect(page).toHaveURL(/\/panel$/);
 });
