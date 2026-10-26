@@ -7,13 +7,13 @@ export interface MemberStatus {
   tone: PillTone;
 }
 
-const BAND_TONES: Record<IndexBand, PillTone> = {
-  Excelente: "good",
-  Genial: "good",
-  Bien: "info",
-  Suficiente: "info",
-  Flojo: "warn",
-  "Muy flojo": "warn",
+export const BAND_TONES: Record<IndexBand, PillTone> = {
+  Excelente: "band-excelente",
+  Genial: "band-genial",
+  Bien: "band-bien",
+  Suficiente: "band-suficiente",
+  Flojo: "band-flojo",
+  "Muy flojo": "band-muy-flojo",
   Expulsar: "bad",
 };
 

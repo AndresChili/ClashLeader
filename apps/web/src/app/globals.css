@@ -18,6 +18,20 @@
   --color-status-info-bg: #16293d;
   --color-status-info-text: #9ccbff;
 
+  /* Tramos de puntuación: de frío (mejor) a cálido (peor). Expulsar usa status-bad. */
+  --color-band-excelente-bg: #133a28;
+  --color-band-excelente-text: #6ee7a8;
+  --color-band-genial-bg: #113634;
+  --color-band-genial-text: #5eead4;
+  --color-band-bien-bg: #16293d;
+  --color-band-bien-text: #93c5fd;
+  --color-band-suficiente-bg: #2a2342;
+  --color-band-suficiente-text: #c4b5fd;
+  --color-band-flojo-bg: #3d3216;
+  --color-band-flojo-text: #f6c866;
+  --color-band-muy-flojo-bg: #43291a;
+  --color-band-muy-flojo-text: #fdba74;
+
   --font-heading: var(--font-space-grotesk);
   --font-body: var(--font-ibm-plex-sans);
 }
@@ -39,6 +53,19 @@
   --color-status-bad-text: var(--color-status-bad-text);
   --color-status-info-bg: var(--color-status-info-bg);
   --color-status-info-text: var(--color-status-info-text);
+
+  --color-band-excelente-bg: var(--color-band-excelente-bg);
+  --color-band-excelente-text: var(--color-band-excelente-text);
+  --color-band-genial-bg: var(--color-band-genial-bg);
+  --color-band-genial-text: var(--color-band-genial-text);
+  --color-band-bien-bg: var(--color-band-bien-bg);
+  --color-band-bien-text: var(--color-band-bien-text);
+  --color-band-suficiente-bg: var(--color-band-suficiente-bg);
+  --color-band-suficiente-text: var(--color-band-suficiente-text);
+  --color-band-flojo-bg: var(--color-band-flojo-bg);
+  --color-band-flojo-text: var(--color-band-flojo-text);
+  --color-band-muy-flojo-bg: var(--color-band-muy-flojo-bg);
+  --color-band-muy-flojo-text: var(--color-band-muy-flojo-text);
 
   --font-heading: var(--font-heading);
   --font-body: var(--font-body);

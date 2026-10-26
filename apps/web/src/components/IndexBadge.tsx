@@ -1,16 +1,6 @@
-import type { PillTone } from "@/components/ui/Pill";
+import { toneClasses, type PillTone } from "@/components/ui/Pill";
 
-const toneClasses: Record<PillTone, string> = {
-  good: "bg-status-good-bg text-status-good-text",
-  warn: "bg-status-warn-bg text-status-warn-text",
-  bad: "bg-status-bad-bg text-status-bad-text",
-  info: "bg-status-info-bg text-status-info-text",
-};
-
-/**
- * Cuadro de índice de 44x44 del diseño. Muestra "—" en vez de un número
- * de 0 a 100 hasta que packages/rules calcula el índice ponderado real (fase 5).
- */
+/** Cuadro de 44x44 con la puntuación de 0 a 100, del color de su tramo; "—" si no hay evaluación. */
 export function IndexBadge({ tone, value }: { tone: PillTone; value?: number }) {
   return (
     <div

@@ -1,9 +1,11 @@
 "use client";
 
 import { useActionState, useEffect, useRef, useState } from "react";
-import type { ClanRules } from "@clashleader/rules";
+import type { ClanRules, IndexBand } from "@clashleader/rules";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { Pill } from "@/components/ui/Pill";
+import { BAND_TONES } from "@/lib/member-status";
 import { TextField } from "@/components/ui/TextField";
 import { updateClanRules, type RulesActionState } from "./actions";
 
@@ -25,7 +27,7 @@ const BANDS = [
   ["Flojo", "30 – 49"],
   ["Muy flojo", "20 – 29"],
   ["Expulsar", "menos de 20"],
-] as const;
+] as const satisfies readonly (readonly [IndexBand, string])[];
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
@@ -171,7 +173,10 @@ export function RulesEditor({ rules, canEdit }: { rules: ClanRules; canEdit: boo
       <Card>
         <h2 className="mb-1 font-heading text-base">Tramos</h2>
         {BANDS.map(([band, range]) => (
-          <Row key={band} label={band} value={range} />
+          <div key={band} className="flex items-center justify-between py-1.5 text-sm">
+            <Pill tone={BAND_TONES[band]}>{band}</Pill>
+            <span className="text-text">{range}</span>
+          </div>
         ))}
       </Card>
     </div>
