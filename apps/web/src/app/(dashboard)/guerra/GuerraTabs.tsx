@@ -4,7 +4,8 @@ import { useState } from "react";
 import { Card } from "@/components/ui/Card";
 import { Pill } from "@/components/ui/Pill";
 import type { WarSummary } from "@/lib/data/wars";
-import { formatRemainingTime, formatScore } from "@/lib/format-war";
+import { WarScore } from "@/components/WarScore";
+import { warPhase } from "@/lib/format-war";
 
 type Tab = "en-curso" | "historial" | "liga";
 
@@ -89,16 +90,19 @@ function EnCurso({
     );
   }
 
-  const remaining = formatRemainingTime(currentWar.endTime);
+  const phase = warPhase(currentWar);
 
   return (
     <div className="flex flex-col gap-4">
       <Card className="flex flex-col gap-1">
         <div className="flex items-center justify-between">
           <span className="text-sm text-text-secondary">Guerra {currentWar.teamSize} contra {currentWar.teamSize}</span>
-          {remaining ? <Pill tone="warn">{remaining}</Pill> : null}
+          <Pill tone={phase.label === "Preparación" ? "info" : "warn"}>{phase.label}</Pill>
         </div>
-        <p className="font-heading text-xl">{formatScore(currentWar.clanStars, currentWar.opponentStars)}</p>
+        <div className="flex items-baseline justify-between gap-3">
+          <WarScore className="font-heading text-xl" clanStars={currentWar.clanStars} opponentStars={currentWar.opponentStars} />
+          {phase.countdown ? <span className="text-sm text-text-secondary">{phase.countdown}</span> : null}
+        </div>
       </Card>
 
       <div>
@@ -163,7 +167,7 @@ function Historial({ wars }: { wars: WarSummary[] }) {
         <li key={war.id} className="flex items-center justify-between rounded-2xl border border-border bg-card p-3">
           <div>
             <p className="text-sm text-text">vs. {war.opponentName ?? "—"}</p>
-            <p className="text-xs text-text-secondary">{formatScore(war.clanStars, war.opponentStars)}</p>
+            <WarScore className="text-xs" clanStars={war.clanStars} opponentStars={war.opponentStars} />
           </div>
           <Pill tone={war.result === "win" ? "good" : war.result === "tie" ? "info" : "bad"}>
             {war.result === "win" ? "Victoria" : war.result === "tie" ? "Empate" : "Derrota"}
@@ -190,7 +194,7 @@ function Liga({ group }: { group: { season: string; state: string; wars: WarSumm
         <div key={war.id} className="flex items-center justify-between rounded-2xl border border-border bg-card p-3">
           <div>
             <p className="text-sm text-text">vs. {war.opponentName ?? "—"}</p>
-            <p className="text-xs text-text-secondary">{formatScore(war.clanStars, war.opponentStars)}</p>
+            <WarScore className="text-xs" clanStars={war.clanStars} opponentStars={war.opponentStars} />
           </div>
           <Pill tone={war.state === "warEnded" ? (war.result === "win" ? "good" : war.result === "tie" ? "info" : "bad") : "warn"}>
             {war.state === "warEnded" ? (war.result === "win" ? "Victoria" : war.result === "tie" ? "Empate" : "Derrota") : "En curso"}

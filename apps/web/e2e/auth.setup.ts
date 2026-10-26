@@ -10,7 +10,7 @@ const STORAGE_STATE = "e2e/.auth/demo-leader.json";
 setup("authenticate as the demo leader", async ({ page }) => {
   await page.goto("/iniciar-sesion");
   await page.getByLabel("Correo").fill("lider@demo.test");
-  await page.getByLabel("Contraseña").fill("demo12345");
+  await page.getByRole("textbox", { name: /^Contraseña/ }).fill("demo12345");
   await page.getByRole("button", { name: "Iniciar sesión" }).click();
 
   await expect(page).toHaveURL(/\/panel$/);

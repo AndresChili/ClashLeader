@@ -7,7 +7,8 @@ import { NoClanCard } from "@/components/NoClanCard";
 import { getRecentExits } from "@/lib/data/members";
 import { getPromotionDecisions } from "@/lib/data/promotions";
 import { getViewerClan } from "@/lib/data/viewer-clan";
-import { attacksAllowedFor, formatRemainingTime, formatScore, formatUpdatedAgo } from "@/lib/format-war";
+import { attacksAllowedFor, formatUpdatedAgo, warPhase } from "@/lib/format-war";
+import { WarScore } from "@/components/WarScore";
 import { getClanEvaluations } from "@/lib/get-clan-evaluations";
 import type { MemberEvaluation } from "@/lib/member-evaluation";
 import { getKickReasonLabel } from "@/lib/member-status";
@@ -75,7 +76,7 @@ export default async function PanelPage() {
   const totalAttacksAvailable = currentWar ? currentWar.teamSize * attacksAllowedFor(currentWar.warType) : 0;
   const attacksUsedPct = currentWar && totalAttacksAvailable > 0 ? Math.round((100 * totalAttacksUsed) / totalAttacksAvailable) : null;
 
-  const remainingTime = currentWar ? formatRemainingTime(currentWar.endTime, now) : null;
+  const phase = currentWar ? warPhase(currentWar, now) : null;
 
   return (
     <div className="flex flex-col gap-5">
@@ -113,13 +114,12 @@ export default async function PanelPage() {
           <div className="flex flex-col gap-3">
             <div className="flex items-center justify-between">
               <span className="text-sm text-text-secondary">Guerra {currentWar.teamSize} contra {currentWar.teamSize}</span>
-              {remainingTime ? (
-                <Pill tone="warn">{remainingTime}</Pill>
-              ) : (
-                <Pill tone="warn">{currentWar.state === "preparation" ? "Preparación" : "Sin hora"}</Pill>
-              )}
+              {phase ? <Pill tone={phase.label === "Preparación" ? "info" : "warn"}>{phase.label}</Pill> : null}
             </div>
-            <p className="font-heading text-2xl">{formatScore(currentWar.clanStars, currentWar.opponentStars)}</p>
+            <div className="flex items-baseline justify-between gap-3">
+              <WarScore className="font-heading text-2xl" clanStars={currentWar.clanStars} opponentStars={currentWar.opponentStars} />
+              {phase?.countdown ? <span className="text-sm text-text-secondary">{phase.countdown}</span> : null}
+            </div>
             <ProgressBar label="Ataques" value={attacksUsedPct} />
           </div>
         ) : (

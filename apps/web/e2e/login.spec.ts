@@ -11,7 +11,7 @@ test("visiting a protected page redirects to login", async ({ page }) => {
 test("wrong password shows an error instead of logging in", async ({ page }) => {
   await page.goto("/iniciar-sesion");
   await page.getByLabel("Correo").fill("lider@demo.test");
-  await page.getByLabel("Contraseña").fill("wrong-password");
+  await page.getByRole("textbox", { name: /^Contraseña/ }).fill("wrong-password");
   await page.getByRole("button", { name: "Iniciar sesión" }).click();
 
   await expect(page.getByText("Correo o contraseña incorrectos.")).toBeVisible();
