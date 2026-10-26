@@ -1,12 +1,21 @@
 name: Collector
 
 on:
+  # Respaldo: GitHub retrasa mucho los schedule (horas). El disparo real
+  # cada 5 min llega por workflow_dispatch desde pg_cron en Supabase (ver
+  # supabase/migrations/20261026120100_collector_dispatch_cron.sql).
   schedule:
     - cron: "*/15 * * * *"
   workflow_dispatch:
 
 permissions:
   contents: read
+
+# Nunca dos recolecciones a la vez: compararían contra la misma referencia
+# y duplicarían snapshots. Si llega un disparo con otra en marcha, espera.
+concurrency:
+  group: collector
+  cancel-in-progress: false
 
 jobs:
   collect:

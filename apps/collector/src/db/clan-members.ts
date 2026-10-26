@@ -6,12 +6,13 @@ export interface CurrentClanMember {
   playerTag: string;
   name: string;
   inGameRole: ClanMemberRole;
+  activityScore: number | null;
 }
 
 export async function getCurrentMembers(supabase: SupabaseClient, clanId: string): Promise<CurrentClanMember[]> {
   const { data, error } = await supabase
     .from("clan_members")
-    .select("id, player_tag, name, in_game_role")
+    .select("id, player_tag, name, in_game_role, activity_score")
     .eq("clan_id", clanId)
     .eq("is_current", true);
 
@@ -24,6 +25,8 @@ export async function getCurrentMembers(supabase: SupabaseClient, clanId: string
     playerTag: row.player_tag as string,
     name: row.name as string,
     inGameRole: row.in_game_role as ClanMemberRole,
+    // bigint llega como número o como texto según el tamaño; se normaliza.
+    activityScore: row.activity_score === null ? null : Number(row.activity_score),
   }));
 }
 
@@ -83,5 +86,13 @@ export async function updateLastActivity(supabase: SupabaseClient, clanMemberId:
 
   if (error) {
     throw new Error(`Failed to update last activity for member ${clanMemberId}: ${error.message}`);
+  }
+}
+
+export async function updateActivityScore(supabase: SupabaseClient, clanMemberId: string, score: number): Promise<void> {
+  const { error } = await supabase.from("clan_members").update({ activity_score: score }).eq("id", clanMemberId);
+
+  if (error) {
+    throw new Error(`Failed to update activity score for member ${clanMemberId}: ${error.message}`);
   }
 }

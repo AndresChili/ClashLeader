@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { CLAN_GAMES_ACHIEVEMENT_NAME, type ClashApiClient } from "@clashleader/clash-api";
+import { CLAN_GAMES_ACHIEVEMENT_NAME, type ClashApiPlayer } from "@clashleader/clash-api";
 import { computeClanGamesPoints, shouldOpenNewSeason } from "./collect/clan-games";
 import { seasonIdForDate } from "./collect/donation-season";
 import {
@@ -11,11 +11,12 @@ import {
   type ClanGamesPointInput,
 } from "./db/clan-games";
 
+/** players: perfiles ya pedidos por run-clan (ausente = la consulta de ese jugador falló en este ciclo). */
 export async function collectClanGames(
-  clashApi: ClashApiClient,
   supabase: SupabaseClient,
   clanId: string,
   members: { tag: string; name: string }[],
+  players: Map<string, ClashApiPlayer | null>,
   now: Date = new Date(),
 ): Promise<number> {
   const currentSeasonId = seasonIdForDate(now);
@@ -32,16 +33,9 @@ export async function collectClanGames(
   const rows: ClanGamesPointInput[] = [];
 
   for (const member of members) {
-    let achievementValue: number | null = null;
-    try {
-      const player = await clashApi.getPlayer(member.tag);
-      achievementValue = player?.achievements.find((a) => a.name === CLAN_GAMES_ACHIEVEMENT_NAME)?.value ?? null;
-    } catch {
-      // Que falle la consulta de un jugador (límite de peticiones, error
-      // puntual) no debe tirar el seguimiento de juegos del clan del resto
-      // en esta consulta.
-      continue;
-    }
+    const player = players.get(member.tag);
+    const achievementValue =
+      player?.achievements.find((a) => a.name === CLAN_GAMES_ACHIEVEMENT_NAME)?.value ?? null;
     if (achievementValue === null) continue;
 
     const before = baselines.get(member.tag) ?? achievementValue;

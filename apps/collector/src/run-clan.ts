@@ -1,12 +1,18 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { ClashApiClient } from "@clashleader/clash-api";
-import { donationActivitySignals, hasDetectableActivity } from "./collect/activity";
+import type { ClashApiClient, ClashApiPlayer } from "@clashleader/clash-api";
+import {
+  donationActivitySignals,
+  hasDetectableActivity,
+  hasNewPlayerActivity,
+  playerActivityScore,
+} from "./collect/activity";
 import { diffMembership } from "./collect/diff-membership";
 import { didSeasonReset, seasonIdForDate } from "./collect/donation-season";
 import {
   getCurrentMembers,
   insertNewMember,
   markMembersLeft,
+  updateActivityScore,
   updateLastActivity,
   updateMemberProfile,
 } from "./db/clan-members";
@@ -98,6 +104,19 @@ export async function runClanCollection(
 
   const latestSnapshots = await getLatestSnapshots(supabase, clan.id);
 
+  // Perfil completo de cada jugador, pedido una sola vez por ciclo: lo usan
+  // la detección de actividad (logros) y los juegos del clan. Que falle uno
+  // (límite de peticiones, error puntual) no tira al resto; simplemente no
+  // se evalúa en este ciclo.
+  const players = new Map<string, ClashApiPlayer | null>();
+  for (const apiMember of apiClan.memberList) {
+    try {
+      players.set(apiMember.tag, await clashApi.getPlayer(apiMember.tag));
+    } catch {
+      continue;
+    }
+  }
+
   const snapshotsToInsert: MemberSnapshotInput[] = [];
   let activityDetected = 0;
 
@@ -119,7 +138,15 @@ export async function runClanCollection(
 
     const activityBaseline = resetHappened ? { donations: 0, donationsReceived: 0 } : previous;
     const signals = donationActivitySignals(activityBaseline, apiMember);
-    if (hasDetectableActivity(signals)) {
+    let playedSinceLastRun = false;
+    const player = players.get(apiMember.tag);
+    if (player) {
+      const score = playerActivityScore(player.achievements);
+      const previousScore = currentByTag.get(apiMember.tag)?.activityScore ?? null;
+      playedSinceLastRun = hasNewPlayerActivity(previousScore, score);
+      if (score !== previousScore) await updateActivityScore(supabase, clanMemberId, score);
+    }
+    if (hasDetectableActivity(signals) || playedSinceLastRun) {
       activityDetected += 1;
       await updateLastActivity(supabase, clanMemberId, now);
     }
@@ -169,10 +196,10 @@ export async function runClanCollection(
   let clanGamesMembersTracked = 0;
   try {
     clanGamesMembersTracked = await collectClanGames(
-      clashApi,
       supabase,
       clan.id,
       apiClan.memberList.map((m) => ({ tag: m.tag, name: m.name })),
+      players,
       now,
     );
   } catch (error) {

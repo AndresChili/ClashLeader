@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { donationActivitySignals, hasDetectableActivity, hasNewAttacks } from "./activity";
+import {
+  donationActivitySignals,
+  hasDetectableActivity,
+  hasNewAttacks,
+  hasNewPlayerActivity,
+  playerActivityScore,
+} from "./activity";
 
 describe("donationActivitySignals", () => {
   it("reports no change for a brand-new member with no prior snapshot", () => {
@@ -41,5 +47,31 @@ describe("hasNewAttacks", () => {
 
   it("is false when the count is unchanged", () => {
     expect(hasNewAttacks(2, 2)).toBe(false);
+  });
+});
+
+describe("playerActivityScore", () => {
+  it("sums only achievements that move through the player's own play", () => {
+    const score = playerActivityScore([
+      { name: "Gold Grab", value: 1000 },
+      { name: "Nice and Tidy", value: 50 },
+      { name: "Unbreakable", value: 999 }, // defensas: pueden subir estando desconectado
+      { name: "War Hero", value: 300 }, // se acredita al terminar la guerra
+    ]);
+    expect(score).toBe(1050);
+  });
+});
+
+describe("hasNewPlayerActivity", () => {
+  it("only sets the baseline the first time", () => {
+    expect(hasNewPlayerActivity(null, 5000)).toBe(false);
+  });
+
+  it("is true when the score went up", () => {
+    expect(hasNewPlayerActivity(5000, 5200)).toBe(true);
+  });
+
+  it("is false when nothing moved", () => {
+    expect(hasNewPlayerActivity(5000, 5000)).toBe(false);
   });
 });
