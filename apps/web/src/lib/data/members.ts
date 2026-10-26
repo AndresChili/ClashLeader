@@ -100,29 +100,63 @@ export async function getClanMemberByTag(supabase: SupabaseClient, clanId: strin
   return members.find((member) => member.playerTag === playerTag) ?? null;
 }
 
-export interface RecentExit {
-  playerTag: string;
-  name: string;
-  leftAt: string;
+export interface Movement {
+  id: number;
+  playerName: string;
+  eventType: "joined" | "left";
+  detectedAt: string;
 }
 
-/** Los miembros marcados como salidos (is_current = false) más recientes, para la sección "Movimientos" del Panel. */
-export async function getRecentExits(supabase: SupabaseClient, clanId: string, limit = 5): Promise<RecentExit[]> {
-  const { data, error } = await supabase
-    .from("clan_members")
-    .select("player_tag, name, left_at")
+export interface MovementsPage {
+  items: Movement[];
+  total: number;
+}
+
+/**
+ * Entradas y salidas del clan, de la más reciente a la más antigua, de
+ * pageSize en pageSize (page empieza en 0). Se descartan las "entradas" de
+ * la primera recogida del clan: ahí todos los que ya estaban aparecen como
+ * entrados a la vez, y no son movimientos reales. Esa primera recogida es
+ * un único insert, así que todas comparten el mismo detected_at.
+ */
+export async function getMovements(
+  supabase: SupabaseClient,
+  clanId: string,
+  page: number,
+  pageSize: number,
+): Promise<MovementsPage> {
+  const { data: first, error: firstError } = await supabase
+    .from("membership_events")
+    .select("detected_at")
     .eq("clan_id", clanId)
-    .eq("is_current", false)
-    .order("left_at", { ascending: false })
-    .limit(limit);
+    .order("detected_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
 
-  if (error) throw new Error(`Failed to load recent exits: ${error.message}`);
+  if (firstError) throw new Error(`Failed to load first membership event: ${firstError.message}`);
+  if (!first) return { items: [], total: 0 };
 
-  return data.map((row) => ({
-    playerTag: row.player_tag as string,
-    name: row.name as string,
-    leftAt: row.left_at as string,
-  }));
+  const from = page * pageSize;
+  const { data, error, count } = await supabase
+    .from("membership_events")
+    .select("id, player_name, event_type, detected_at", { count: "exact" })
+    .eq("clan_id", clanId)
+    .or(`event_type.eq.left,detected_at.gt."${first.detected_at as string}"`)
+    .order("detected_at", { ascending: false })
+    .order("id", { ascending: false })
+    .range(from, from + pageSize - 1);
+
+  if (error) throw new Error(`Failed to load membership events: ${error.message}`);
+
+  return {
+    items: data.map((row) => ({
+      id: row.id as number,
+      playerName: row.player_name as string,
+      eventType: row.event_type as Movement["eventType"],
+      detectedAt: row.detected_at as string,
+    })),
+    total: count ?? 0,
+  };
 }
 
 /** Suma de donaciones congeladas en cada reinicio de temporada anterior, sin incluir la temporada en curso (eso es member.donations). */

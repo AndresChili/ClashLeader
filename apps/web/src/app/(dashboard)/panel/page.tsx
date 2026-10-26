@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/Card";
 import { Pill } from "@/components/ui/Pill";
 import { ProgressBar } from "@/components/ProgressBar";
 import { NoClanCard } from "@/components/NoClanCard";
-import { getRecentExits } from "@/lib/data/members";
+import { getMovements } from "@/lib/data/members";
 import { getPromotionDecisions } from "@/lib/data/promotions";
 import { getViewerClan } from "@/lib/data/viewer-clan";
 import { attacksAllowedFor, formatUpdatedAgo, warPhase } from "@/lib/format-war";
@@ -13,19 +13,13 @@ import { getClanEvaluations } from "@/lib/get-clan-evaluations";
 import type { MemberEvaluation } from "@/lib/member-evaluation";
 import { getKickReasonLabel } from "@/lib/member-status";
 import { createClient } from "@/lib/supabase/server";
+import { Movements } from "./Movements";
+import { MOVEMENTS_PAGE_SIZE } from "./movements-config";
 
 export const metadata = { title: "Panel · ClashLeader" };
 
 const MAX_FLAGGED = 5;
-const MAX_MOVEMENTS = 5;
 const MAX_CANDIDATES = 6;
-
-function daysAgoLabel(at: string, now: Date): string {
-  const days = Math.max(0, Math.floor((now.getTime() - new Date(at).getTime()) / (24 * 60 * 60 * 1000)));
-  if (days === 0) return "hoy";
-  if (days === 1) return "hace 1 día";
-  return `hace ${days} días`;
-}
 
 export default async function PanelPage() {
   const supabase = await createClient();
@@ -38,14 +32,10 @@ export default async function PanelPage() {
   const now = new Date();
   const { members, evaluations, currentWar } = await getClanEvaluations(supabase, viewerClan.clanId, now);
 
-  const [recentExits, decisions] = await Promise.all([
-    getRecentExits(supabase, viewerClan.clanId, MAX_MOVEMENTS),
+  const [movements, decisions] = await Promise.all([
+    getMovements(supabase, viewerClan.clanId, 0, MOVEMENTS_PAGE_SIZE),
     getPromotionDecisions(supabase, members.map((m) => m.id)),
   ]);
-
-  const recentEntries = [...members]
-    .sort((a, b) => new Date(b.firstSeenAt).getTime() - new Date(a.firstSeenAt).getTime())
-    .slice(0, MAX_MOVEMENTS);
 
   const coleaderCount = members.filter((m) => m.inGameRole === "coLeader").length;
   const veteranCount = members.filter((m) => m.inGameRole === "admin").length;
@@ -184,26 +174,7 @@ export default async function PanelPage() {
 
       <section className="flex flex-col gap-2">
         <h2 className="text-sm text-text-secondary">Movimientos</h2>
-        <Card className="flex flex-col divide-y divide-border p-0">
-          {recentEntries.length === 0 && recentExits.length === 0 ? (
-            <p className="p-4 text-sm text-text-secondary">Sin entradas ni salidas registradas todavía.</p>
-          ) : (
-            <>
-              {recentEntries.map((m) => (
-                <div key={`in:${m.id}`} className="flex items-center justify-between gap-3 p-4">
-                  <span className="truncate text-sm">{m.name}</span>
-                  <Pill tone="good">Entró {daysAgoLabel(m.firstSeenAt, now)}</Pill>
-                </div>
-              ))}
-              {recentExits.map((m) => (
-                <div key={`out:${m.playerTag}`} className="flex items-center justify-between gap-3 p-4">
-                  <span className="truncate text-sm">{m.name}</span>
-                  <Pill tone="bad">Salió {daysAgoLabel(m.leftAt, now)}</Pill>
-                </div>
-              ))}
-            </>
-          )}
-        </Card>
+        <Movements clanId={viewerClan.clanId} initial={movements} />
       </section>
     </div>
   );
