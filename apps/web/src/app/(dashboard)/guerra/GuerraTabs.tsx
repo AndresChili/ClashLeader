@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Card } from "@/components/ui/Card";
-import { Pill } from "@/components/ui/Pill";
+import { Pill, toneClasses, type PillTone } from "@/components/ui/Pill";
 import type { WarSummary } from "@/lib/data/wars";
 import { WarScore } from "@/components/WarScore";
 import { warPhase } from "@/lib/format-war";
@@ -15,11 +15,23 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "liga", label: "Liga" },
 ];
 
-export interface PendingAttack {
+export interface RosterAttack {
   playerTag: string;
   playerName: string;
   attacksUsed: number;
   attacksAllowed: number;
+}
+
+/** Verde: ya hizo todos; amarillo: le falta alguno; rojo: no ha atacado. */
+function attackTone(p: RosterAttack): PillTone {
+  if (p.attacksUsed >= p.attacksAllowed) return "good";
+  return p.attacksUsed > 0 ? "warn" : "bad";
+}
+
+function attackLabel(p: RosterAttack): string {
+  const left = p.attacksAllowed - p.attacksUsed;
+  if (left <= 0) return "Hecho";
+  return left === 1 ? "Le queda 1" : `Le quedan ${left}`;
 }
 
 export interface LineupEntry {
@@ -32,13 +44,13 @@ export interface LineupEntry {
 
 export function GuerraTabs({
   currentWar,
-  pendingAttacks,
+  rosterAttacks,
   lineup,
   history,
   cwlGroup,
 }: {
   currentWar: WarSummary | null;
-  pendingAttacks: PendingAttack[];
+  rosterAttacks: RosterAttack[];
   lineup: LineupEntry[];
   history: WarSummary[];
   cwlGroup: { season: string; state: string; wars: WarSummary[] } | null;
@@ -63,7 +75,7 @@ export function GuerraTabs({
       </div>
 
       {tab === "en-curso" ? (
-        <EnCurso currentWar={currentWar} pendingAttacks={pendingAttacks} lineup={lineup} />
+        <EnCurso currentWar={currentWar} rosterAttacks={rosterAttacks} lineup={lineup} />
       ) : tab === "historial" ? (
         <Historial wars={history} />
       ) : (
@@ -75,11 +87,11 @@ export function GuerraTabs({
 
 function EnCurso({
   currentWar,
-  pendingAttacks,
+  rosterAttacks,
   lineup,
 }: {
   currentWar: WarSummary | null;
-  pendingAttacks: PendingAttack[];
+  rosterAttacks: RosterAttack[];
   lineup: LineupEntry[];
 }) {
   if (!currentWar) {
@@ -91,6 +103,7 @@ function EnCurso({
   }
 
   const phase = warPhase(currentWar);
+  const pendingCount = rosterAttacks.filter((p) => p.attacksUsed < p.attacksAllowed).length;
 
   return (
     <div className="flex flex-col gap-4">
@@ -108,24 +121,18 @@ function EnCurso({
       <div>
         <div className="mb-2 flex items-baseline justify-between">
           <h2 className="text-sm text-text-secondary">Ataques pendientes</h2>
-          <span className="text-sm text-text-secondary">{pendingAttacks.length}</span>
+          <span className="text-sm text-text-secondary">{pendingCount}</span>
         </div>
-        {pendingAttacks.length === 0 ? (
-          <Card>
-            <p className="text-sm text-text-secondary">Todos han usado sus ataques.</p>
-          </Card>
-        ) : (
-          <ul className="flex flex-col gap-2">
-            {pendingAttacks.map((p) => (
-              <li key={p.playerTag} className="flex items-center justify-between rounded-2xl border border-border bg-card p-3">
-                <span className="text-sm text-text">{p.playerName}</span>
-                <span className="text-sm text-text-secondary">
-                  Le quedan {p.attacksAllowed - p.attacksUsed} de {p.attacksAllowed}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
+        <ul className="flex flex-col gap-2">
+          {rosterAttacks.map((p) => (
+            <li key={p.playerTag} className={`flex items-center justify-between rounded-2xl p-3 ${toneClasses[attackTone(p)]}`}>
+              <span className="text-sm font-medium">{p.playerName}</span>
+              <span className="text-sm">
+                {attackLabel(p)} · {p.attacksUsed}/{p.attacksAllowed}
+              </span>
+            </li>
+          ))}
+        </ul>
       </div>
 
       <div>

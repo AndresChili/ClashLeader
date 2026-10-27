@@ -2,7 +2,6 @@ import Link from "next/link";
 import { ClanBadge } from "@/components/ClanBadge";
 import { Card } from "@/components/ui/Card";
 import { Pill } from "@/components/ui/Pill";
-import { ProgressBar } from "@/components/ProgressBar";
 import { NoClanCard } from "@/components/NoClanCard";
 import { getMovements } from "@/lib/data/members";
 import { getPromotionDecisions } from "@/lib/data/promotions";
@@ -110,7 +109,17 @@ export default async function PanelPage() {
               <WarScore className="font-heading text-2xl" clanStars={currentWar.clanStars} opponentStars={currentWar.opponentStars} />
               {phase?.countdown ? <span className="text-sm text-text-secondary">{phase.countdown}</span> : null}
             </div>
-            <ProgressBar label="Ataques" value={attacksUsedPct} />
+            <div className="flex flex-col gap-1.5">
+              <div className="flex items-baseline justify-between text-sm">
+                <span className="text-text-secondary">Ataques realizados</span>
+                <span className="font-medium text-text">
+                  {totalAttacksUsed}/{totalAttacksAvailable}
+                </span>
+              </div>
+              <div className="h-2 overflow-hidden rounded-full bg-border">
+                <div className="h-full rounded-full bg-accent" style={{ width: `${attacksUsedPct ?? 0}%` }} />
+              </div>
+            </div>
           </div>
         ) : (
           <p className="text-sm text-text-secondary">

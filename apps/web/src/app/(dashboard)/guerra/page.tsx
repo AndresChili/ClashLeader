@@ -4,7 +4,7 @@ import { getViewerClan } from "@/lib/data/viewer-clan";
 import { getCurrentWar, getCwlGroup, getWarHistory } from "@/lib/data/wars";
 import { attacksAllowedFor } from "@/lib/format-war";
 import { createClient } from "@/lib/supabase/server";
-import { GuerraTabs, type LineupEntry, type PendingAttack } from "./GuerraTabs";
+import { GuerraTabs, type LineupEntry, type RosterAttack } from "./GuerraTabs";
 
 export const metadata = { title: "Guerra · ClashLeader" };
 
@@ -25,7 +25,7 @@ export default async function GuerraPage() {
     getClanMembers(supabase, viewerClan.clanId),
   ]);
 
-  const pendingAttacks: PendingAttack[] = currentWar
+  const rosterAttacks: RosterAttack[] = currentWar
     ? currentWar.members
         .map((m) => ({
           playerTag: m.playerTag,
@@ -33,7 +33,8 @@ export default async function GuerraPage() {
           attacksUsed: m.attacksUsed,
           attacksAllowed: attacksAllowedFor(currentWar.warType),
         }))
-        .filter((p) => p.attacksUsed < p.attacksAllowed)
+        // Primero a quien le faltan más ataques; dentro de cada grupo, por posición en el mapa.
+        .sort((a, b) => b.attacksAllowed - b.attacksUsed - (a.attacksAllowed - a.attacksUsed))
     : [];
 
   const currentWarTags = currentWar ? new Set(currentWar.members.map((m) => m.playerTag)) : new Set<string>();
@@ -51,7 +52,7 @@ export default async function GuerraPage() {
   return (
     <div className="flex flex-col gap-4">
       <h1 className="font-heading text-2xl">Guerra</h1>
-      <GuerraTabs currentWar={currentWar} pendingAttacks={pendingAttacks} lineup={lineup} history={history} cwlGroup={cwlGroup} />
+      <GuerraTabs currentWar={currentWar} rosterAttacks={rosterAttacks} lineup={lineup} history={history} cwlGroup={cwlGroup} />
     </div>
   );
 }
