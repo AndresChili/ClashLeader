@@ -4,7 +4,7 @@ import { getLatestFinishedCapitalSeason } from "@/lib/data/capital";
 import { getClanRules } from "@/lib/data/clan-rules";
 import { getCurrentClanGamesPoints } from "@/lib/data/clan-games";
 import { getClanMembers, type MemberSummary } from "@/lib/data/members";
-import { getCurrentWar, getMemberReliability, getWarHistory, type WarSummary } from "@/lib/data/wars";
+import { getCurrentWar, getMemberReliability, getWarHistory, type MemberReliability, type WarSummary } from "@/lib/data/wars";
 import { evaluateMember, type MemberEvaluation } from "@/lib/member-evaluation";
 
 /** La parte de guerra del índice mira las últimas N guerras en las que cada miembro estuvo en la alineación. */
@@ -15,6 +15,10 @@ export interface ClanEvaluations {
   members: MemberSummary[];
   evaluations: Map<string, MemberEvaluation>;
   currentWar: WarSummary | null;
+  /** Fiabilidad en sus últimas INDEX_RECENT_WARS guerras en alineación, por clan_member_id. */
+  recentWarByMemberId: Map<string, MemberReliability>;
+  /** Quienes estuvieron en la última guerra terminada y no atacaron. */
+  missedLastWarIds: Set<string>;
 }
 
 /** Todo lo que necesitan Miembros, Ficha y Ascensos: los datos crudos más cada miembro pasado por packages/rules. */
@@ -70,5 +74,9 @@ export async function getClanEvaluations(supabase: SupabaseClient, clanId: strin
     );
   }
 
-  return { rules, members, evaluations, currentWar };
+  const missedLastWarIds = new Set(
+    members.filter((m) => lastFinishedWarRosterByMemberId.get(m.id) === 0).map((m) => m.id),
+  );
+
+  return { rules, members, evaluations, currentWar, recentWarByMemberId: recentWarsByMemberId, missedLastWarIds };
 }

@@ -7,6 +7,7 @@ import { getMovements } from "@/lib/data/members";
 import { getPromotionDecisions } from "@/lib/data/promotions";
 import { getViewerClan } from "@/lib/data/viewer-clan";
 import { attacksAllowedFor, formatUpdatedAgo, warPhase } from "@/lib/format-war";
+import { WarAttacksProgress } from "@/components/WarAttacksProgress";
 import { WarScore } from "@/components/WarScore";
 import { getClanEvaluations } from "@/lib/get-clan-evaluations";
 import type { MemberEvaluation } from "@/lib/member-evaluation";
@@ -63,7 +64,6 @@ export default async function PanelPage() {
 
   const totalAttacksUsed = currentWar ? currentWar.members.reduce((sum, m) => sum + m.attacksUsed, 0) : 0;
   const totalAttacksAvailable = currentWar ? currentWar.teamSize * attacksAllowedFor(currentWar.warType) : 0;
-  const attacksUsedPct = currentWar && totalAttacksAvailable > 0 ? Math.round((100 * totalAttacksUsed) / totalAttacksAvailable) : null;
 
   const phase = currentWar ? warPhase(currentWar, now) : null;
 
@@ -98,9 +98,9 @@ export default async function PanelPage() {
         </Link>
       </div>
 
-      <Card>
-        {currentWar ? (
-          <div className="flex flex-col gap-3">
+      {currentWar ? (
+        <Link href="/guerra">
+          <Card className="flex flex-col gap-3 transition active:scale-[0.99]">
             <div className="flex items-center justify-between">
               <span className="text-sm text-text-secondary">Guerra {currentWar.teamSize} contra {currentWar.teamSize}</span>
               {phase ? <Pill tone={phase.label === "Preparación" ? "info" : "warn"}>{phase.label}</Pill> : null}
@@ -109,19 +109,11 @@ export default async function PanelPage() {
               <WarScore className="font-heading text-2xl" clanStars={currentWar.clanStars} opponentStars={currentWar.opponentStars} />
               {phase?.countdown ? <span className="text-sm text-text-secondary">{phase.countdown}</span> : null}
             </div>
-            <div className="flex flex-col gap-1.5">
-              <div className="flex items-baseline justify-between text-sm">
-                <span className="text-text-secondary">Ataques realizados</span>
-                <span className="font-medium text-text">
-                  {totalAttacksUsed}/{totalAttacksAvailable}
-                </span>
-              </div>
-              <div className="h-2 overflow-hidden rounded-full bg-border">
-                <div className="h-full rounded-full bg-accent" style={{ width: `${attacksUsedPct ?? 0}%` }} />
-              </div>
-            </div>
-          </div>
-        ) : (
+            <WarAttacksProgress used={totalAttacksUsed} available={totalAttacksAvailable} />
+          </Card>
+        </Link>
+      ) : (
+        <Card>
           <p className="text-sm text-text-secondary">
             Sin guerra en curso.{" "}
             <Link href="/guerra" className="text-accent">
@@ -129,8 +121,8 @@ export default async function PanelPage() {
             </Link>
             .
           </p>
-        )}
-      </Card>
+        </Card>
+      )}
 
       <section className="flex flex-col gap-2">
         <h2 className="text-sm text-text-secondary">Candidatos a ascender</h2>
