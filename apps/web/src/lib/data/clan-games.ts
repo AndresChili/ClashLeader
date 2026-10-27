@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { CLAN_GAMES_PLAYER_MAX } from "@/lib/clan-games";
 
 export async function getCurrentClanGamesPoints(supabase: SupabaseClient, clanId: string): Promise<Map<string, number>> {
   const { data: season, error: seasonError } = await supabase
@@ -19,13 +20,14 @@ export async function getCurrentClanGamesPoints(supabase: SupabaseClient, clanId
 
   if (pointsError) throw new Error(`Failed to load clan games points: ${pointsError.message}`);
 
-  return new Map(points.map((row) => [row.player_tag as string, (row.points as number | null) ?? 0]));
+  return new Map(points.map((row) => [row.player_tag as string, Math.min((row.points as number | null) ?? 0, CLAN_GAMES_PLAYER_MAX)]));
 }
 
 export interface ClanGamesSeason {
   id: string;
   /** "AAAA-MM": la ventana de seguimiento es un mes UTC (ver apps/collector/src/collect/clan-games.ts). */
   seasonId: string;
+  startTime: string | null;
   isOpen: boolean;
 }
 
@@ -33,7 +35,7 @@ export interface ClanGamesSeason {
 export async function getClanGamesSeasons(supabase: SupabaseClient, clanId: string): Promise<ClanGamesSeason[]> {
   const { data, error } = await supabase
     .from("clan_games_seasons")
-    .select("id, season_id, end_time")
+    .select("id, season_id, start_time, end_time")
     .eq("clan_id", clanId)
     .order("season_id", { ascending: false });
 
@@ -42,27 +44,36 @@ export async function getClanGamesSeasons(supabase: SupabaseClient, clanId: stri
   return data.map((row) => ({
     id: row.id as string,
     seasonId: row.season_id as string,
+    startTime: row.start_time as string | null,
     isOpen: row.end_time == null,
   }));
 }
 
 export interface ClanGamesPlayerPoints {
+  seasonId: string;
   playerTag: string;
   playerName: string;
   points: number;
 }
 
-export async function getClanGamesSeasonPoints(supabase: SupabaseClient, seasonRowId: string): Promise<ClanGamesPlayerPoints[]> {
+/**
+ * Puntos de cada jugador en todas las temporadas del clan, de una vez (son
+ * unas 50 filas por mes), para cambiar de mes o ver el total sin volver al
+ * servidor. Se recortan al tope por jugador: el logro del que salen puede
+ * sumar algo más que los puntos reales de los Juegos.
+ */
+export async function getAllClanGamesPoints(supabase: SupabaseClient, clanId: string): Promise<ClanGamesPlayerPoints[]> {
   const { data, error } = await supabase
     .from("clan_games_points")
-    .select("player_tag, player_name, points")
-    .eq("clan_games_season_id", seasonRowId);
+    .select("player_tag, player_name, points, clan_games_seasons!inner(season_id, clan_id)")
+    .eq("clan_games_seasons.clan_id", clanId);
 
-  if (error) throw new Error(`Failed to load clan games season points: ${error.message}`);
+  if (error) throw new Error(`Failed to load clan games points: ${error.message}`);
 
   return data.map((row) => ({
+    seasonId: (row.clan_games_seasons as unknown as { season_id: string }).season_id,
     playerTag: row.player_tag as string,
     playerName: row.player_name as string,
-    points: (row.points as number | null) ?? 0,
+    points: Math.min((row.points as number | null) ?? 0, CLAN_GAMES_PLAYER_MAX),
   }));
 }

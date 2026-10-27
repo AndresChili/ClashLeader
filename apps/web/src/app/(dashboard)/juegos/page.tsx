@@ -1,16 +1,15 @@
 import { NoClanCard } from "@/components/NoClanCard";
 import { Card } from "@/components/ui/Card";
-import { CLAN_GAMES_TIERS, clanGamesTierProgress } from "@/lib/clan-games-tiers";
-import { getClanGamesSeasonPoints, getClanGamesSeasons } from "@/lib/data/clan-games";
-import { getClanMembers } from "@/lib/data/members";
+import { getAllClanGamesPoints, getClanGamesSeasons } from "@/lib/data/clan-games";
+import { getCurrentMemberIdentities } from "@/lib/data/members";
 import { getViewerClan } from "@/lib/data/viewer-clan";
 import { createClient } from "@/lib/supabase/server";
-import { JuegosList, type ClanGamesRow } from "./JuegosList";
+import { CLAN_GAMES_TOTAL_VIEW } from "@/lib/clan-games";
+import { JuegosView, type ClanGamesRow } from "./JuegosView";
 
 export const metadata = { title: "Juegos del Clan · ClashLeader" };
 
-export default async function JuegosPage({ searchParams }: { searchParams: Promise<{ temporada?: string }> }) {
-  const { temporada } = await searchParams;
+export default async function JuegosPage() {
   const supabase = await createClient();
   const viewerClan = await getViewerClan(supabase);
 
@@ -18,10 +17,13 @@ export default async function JuegosPage({ searchParams }: { searchParams: Promi
     return <NoClanCard />;
   }
 
-  const seasons = await getClanGamesSeasons(supabase, viewerClan.clanId);
-  const season = seasons.find((s) => s.seasonId === temporada) ?? seasons[0] ?? null;
+  const [seasons, points, members] = await Promise.all([
+    getClanGamesSeasons(supabase, viewerClan.clanId),
+    getAllClanGamesPoints(supabase, viewerClan.clanId),
+    getCurrentMemberIdentities(supabase, viewerClan.clanId),
+  ]);
 
-  if (!season) {
+  if (seasons.length === 0) {
     return (
       <div className="flex flex-col gap-4">
         <h1 className="font-heading text-2xl">Juegos del Clan</h1>
@@ -32,67 +34,47 @@ export default async function JuegosPage({ searchParams }: { searchParams: Promi
     );
   }
 
-  const [points, members] = await Promise.all([
-    getClanGamesSeasonPoints(supabase, season.id),
-    getClanMembers(supabase, viewerClan.clanId),
-  ]);
-
-  const pointsByTag = new Map(points.map((p) => [p.playerTag, p.points]));
   const currentTags = new Set(members.map((m) => m.playerTag));
 
-  // Temporada abierta: todo el clan actual (quien aún no ha jugado, con 0)
-  // más quien sumó puntos y ya se fue. Temporadas pasadas: quien estaba entonces.
-  const rows: ClanGamesRow[] = season.isOpen
-    ? [
-        ...members.map((m) => ({ playerTag: m.playerTag, playerName: m.name, points: pointsByTag.get(m.playerTag) ?? 0, inClan: true })),
-        ...points
-          .filter((p) => !currentTags.has(p.playerTag) && p.points > 0)
-          .map((p) => ({ playerTag: p.playerTag, playerName: p.playerName, points: p.points, inClan: false })),
-      ]
-    : points.map((p) => ({ playerTag: p.playerTag, playerName: p.playerName, points: p.points, inClan: currentTags.has(p.playerTag) }));
+  // Todo el clan actual (quien no ha jugado, con 0) más quien sumó puntos y ya se fue.
+  function withCurrentMembers(pointsByTag: Map<string, { name: string; points: number }>): ClanGamesRow[] {
+    return [
+      ...members.map((m) => ({ playerTag: m.playerTag, playerName: m.name, points: pointsByTag.get(m.playerTag)?.points ?? 0, inClan: true })),
+      ...[...pointsByTag]
+        .filter(([tag, p]) => !currentTags.has(tag) && p.points > 0)
+        .map(([tag, p]) => ({ playerTag: tag, playerName: p.name, points: p.points, inClan: false })),
+    ];
+  }
 
-  const totalPoints = rows.reduce((sum, r) => sum + r.points, 0);
-  const tiers = clanGamesTierProgress(totalPoints);
-  const lastTier = CLAN_GAMES_TIERS[CLAN_GAMES_TIERS.length - 1];
-  const participants = rows.filter((r) => r.points > 0).length;
+  const views: Record<string, ClanGamesRow[]> = {};
+  for (const season of seasons) {
+    const seasonPoints = points.filter((p) => p.seasonId === season.seasonId);
+    // Temporada abierta: el clan de ahora. Pasadas: quien estaba entonces.
+    views[season.seasonId] = season.isOpen
+      ? withCurrentMembers(new Map(seasonPoints.map((p) => [p.playerTag, { name: p.playerName, points: p.points }])))
+      : seasonPoints.map((p) => ({ playerTag: p.playerTag, playerName: p.playerName, points: p.points, inClan: currentTags.has(p.playerTag) }));
+  }
+
+  const totalByTag = new Map<string, { name: string; points: number }>();
+  for (const p of points) {
+    const entry = totalByTag.get(p.playerTag);
+    totalByTag.set(p.playerTag, { name: entry?.name ?? p.playerName, points: (entry?.points ?? 0) + p.points });
+  }
+  views[CLAN_GAMES_TOTAL_VIEW] = withCurrentMembers(totalByTag);
+
+  // La primera temporada empezó a contarse cuando la app se puso a seguir el
+  // clan, quizá con los Juegos ya empezados: lo de antes no se pudo ver.
+  const firstSeason = seasons[seasons.length - 1];
 
   return (
     <div className="flex flex-col gap-4">
       <h1 className="font-heading text-2xl">Juegos del Clan</h1>
-
-      <Card className="flex flex-col gap-3">
-        <div className="flex items-baseline justify-between gap-3">
-          <span className="text-sm text-text-secondary">Puntos del clan</span>
-          <span className="font-heading text-2xl">{totalPoints.toLocaleString("es-ES")}</span>
-        </div>
-        <div className="relative h-2 overflow-hidden rounded-full bg-border">
-          <div className="h-full rounded-full bg-accent" style={{ width: `${Math.min(100, (100 * totalPoints) / lastTier)}%` }} />
-          {CLAN_GAMES_TIERS.slice(0, -1).map((threshold) => (
-            <span
-              key={threshold}
-              className="absolute top-0 h-full w-0.5 bg-bg"
-              style={{ left: `${(100 * threshold) / lastTier}%` }}
-              aria-hidden
-            />
-          ))}
-        </div>
-        <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 text-sm">
-          <span className="text-text">
-            Nivel {tiers.reached} de {CLAN_GAMES_TIERS.length}
-          </span>
-          <span className="text-text-secondary">
-            {tiers.nextTarget != null
-              ? `Faltan ${(tiers.nextTarget - totalPoints).toLocaleString("es-ES")} para el nivel ${tiers.reached + 1}`
-              : "Todas las recompensas desbloqueadas"}
-          </span>
-        </div>
-        <p className="text-xs text-text-secondary">
-          {participants} de {rows.length} han sumado puntos
-          {season.isOpen && totalPoints === 0 ? " · los Juegos todavía no han empezado" : ""}
-        </p>
-      </Card>
-
-      <JuegosList rows={rows} seasons={seasons.map((s) => s.seasonId)} selectedSeason={season.seasonId} />
+      <JuegosView
+        views={views}
+        seasons={seasons.map((s) => s.seasonId)}
+        firstSeason={firstSeason.seasonId}
+        trackingStartedAt={firstSeason.startTime}
+      />
     </div>
   );
 }

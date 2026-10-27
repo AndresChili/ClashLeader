@@ -92,6 +92,29 @@ export async function getClanMembers(supabase: SupabaseClient, clanId: string): 
   });
 }
 
+export interface MemberIdentity {
+  id: string;
+  playerTag: string;
+  name: string;
+}
+
+/**
+ * Solo quién está ahora en el clan, sin snapshots ni fiabilidad de guerra:
+ * para pantallas que traen sus propios datos (Juegos, Capital) y no deben
+ * pagar las consultas pesadas de getClanMembers.
+ */
+export async function getCurrentMemberIdentities(supabase: SupabaseClient, clanId: string): Promise<MemberIdentity[]> {
+  const { data, error } = await supabase
+    .from("clan_members")
+    .select("id, player_tag, name")
+    .eq("clan_id", clanId)
+    .eq("is_current", true);
+
+  if (error) throw new Error(`Failed to load current members: ${error.message}`);
+
+  return data.map((row) => ({ id: row.id as string, playerTag: row.player_tag as string, name: row.name as string }));
+}
+
 export async function getClanMemberByTag(supabase: SupabaseClient, clanId: string, playerTag: string): Promise<MemberSummary | null> {
   // Un clan tiene como mucho 50 miembros, así que reutilizar la consulta
   // de la lista es más simple y en la práctica no más lento que una
