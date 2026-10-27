@@ -170,7 +170,7 @@ async function seedWars(supabase: SupabaseClient, clanId: string, clanMemberIdBy
     warTag: null,
     cwlGroupId: null,
   });
-  await upsertWarRoster(supabase, ongoingId, ongoing.clan, clanMemberIdByTag);
+  await upsertWarRoster(supabase, ongoingId, ongoing.clan, clanMemberIdByTag, new Map());
   await upsertWarAttacks(supabase, ongoingId, ongoing.clan);
 
   const finished: ClashApiWar = {
@@ -198,7 +198,7 @@ async function seedWars(supabase: SupabaseClient, clanId: string, clanMemberIdBy
     warTag: null,
     cwlGroupId: null,
   });
-  await upsertWarRoster(supabase, finishedId, finished.clan, clanMemberIdByTag);
+  await upsertWarRoster(supabase, finishedId, finished.clan, clanMemberIdByTag, new Map());
   await upsertWarAttacks(supabase, finishedId, finished.clan);
 }
 

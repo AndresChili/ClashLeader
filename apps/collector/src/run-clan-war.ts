@@ -5,7 +5,7 @@ import { resolveWarSides } from "./collect/war-sides";
 import { updateLastActivity } from "./db/clan-members";
 import {
   findWarStateByTag,
-  getAttacksUsedByTag,
+  getExistingWarRoster,
   upsertCwlGroup,
   upsertWar,
   upsertWarAttacks,
@@ -26,13 +26,13 @@ async function persistWar(
 
   const warId = await upsertWar(supabase, { clanId, war, ...sides, ...opts });
 
-  const previousAttacksUsed = await getAttacksUsedByTag(supabase, warId);
-  await upsertWarRoster(supabase, warId, sides.ours, clanMemberIdByTag);
+  const existingRoster = await getExistingWarRoster(supabase, warId);
+  await upsertWarRoster(supabase, warId, sides.ours, clanMemberIdByTag, existingRoster);
   await upsertWarAttacks(supabase, warId, sides.ours);
 
   for (const member of sides.ours.members) {
     const newCount = member.attacks?.length ?? 0;
-    if (!hasNewAttacks(previousAttacksUsed.get(member.tag), newCount)) continue;
+    if (!hasNewAttacks(existingRoster.get(member.tag)?.attacksUsed, newCount)) continue;
     const clanMemberId = clanMemberIdByTag.get(member.tag);
     if (clanMemberId) await updateLastActivity(supabase, clanMemberId, now);
   }

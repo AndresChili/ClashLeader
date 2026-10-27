@@ -80,13 +80,28 @@ export async function upsertWar(supabase: SupabaseClient, input: UpsertWarInput)
   return data.id as string;
 }
 
-/** Sirve para detectar "este miembro hizo un ataque nuevo desde la última consulta" (señal de actividad). */
-export async function getAttacksUsedByTag(supabase: SupabaseClient, warId: string): Promise<Map<string, number>> {
-  const { data, error } = await supabase.from("war_members").select("player_tag, attacks_used").eq("war_id", warId);
+export interface ExistingWarRosterRow {
+  attacksUsed: number;
+  clanMemberId: string | null;
+}
+
+/**
+ * Lo que ya había guardado de esta guerra. attacksUsed sirve para detectar
+ * "este miembro hizo un ataque nuevo desde la última consulta" (señal de
+ * actividad); clanMemberId, para no reasignar la fila a otro episodio de
+ * membresía (ver upsertWarRoster).
+ */
+export async function getExistingWarRoster(supabase: SupabaseClient, warId: string): Promise<Map<string, ExistingWarRosterRow>> {
+  const { data, error } = await supabase.from("war_members").select("player_tag, attacks_used, clan_member_id").eq("war_id", warId);
   if (error) {
     throw new Error(`Failed to load existing war roster for war ${warId}: ${error.message}`);
   }
-  return new Map(data.map((row) => [row.player_tag as string, row.attacks_used as number]));
+  return new Map(
+    data.map((row) => [
+      row.player_tag as string,
+      { attacksUsed: row.attacks_used as number, clanMemberId: row.clan_member_id as string | null },
+    ]),
+  );
 }
 
 export async function upsertWarRoster(
@@ -94,10 +109,16 @@ export async function upsertWarRoster(
   warId: string,
   ours: ClashApiWarClan,
   clanMemberIdByTag: Map<string, string>,
+  existingRoster: Map<string, ExistingWarRosterRow>,
 ): Promise<void> {
   const rows = ours.members.map((member) => ({
     war_id: warId,
-    clan_member_id: clanMemberIdByTag.get(member.tag) ?? null,
+    // La API sigue devolviendo la guerra terminada hasta que empieza la
+    // siguiente. Si entretanto echan al jugador y vuelve a entrar, ya es
+    // otro episodio de membresía: la fila se queda con el episodio con el
+    // que se guardó por primera vez, para que la guerra no le cuente al
+    // episodio nuevo (ni se pierda al quedar fuera del clan).
+    clan_member_id: existingRoster.get(member.tag)?.clanMemberId ?? clanMemberIdByTag.get(member.tag) ?? null,
     player_tag: member.tag,
     player_name: member.name,
     map_position: member.mapPosition,

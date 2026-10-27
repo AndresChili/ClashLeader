@@ -30,7 +30,11 @@ export async function getClanEvaluations(supabase: SupabaseClient, clanId: strin
   ]);
 
   const lastFinishedWar = lastFinishedWars[0] ?? null;
-  const lastFinishedWarRosterByTag = new Map(lastFinishedWar?.members.map((m) => [m.playerTag, m.attacksUsed]) ?? []);
+  // Por episodio de membresía, no por tag: a quien echaron y volvió a
+  // entrar no se le puede pedir cuentas de una guerra de antes de volver.
+  const lastFinishedWarRosterByMemberId = new Map(
+    lastFinishedWar?.members.flatMap((m) => (m.clanMemberId ? [[m.clanMemberId, m.attacksUsed] as const] : [])) ?? [],
+  );
   const capitalByTag = new Map(capitalSeason?.contributions.map((c) => [c.playerTag, c]) ?? []);
   // Los Juegos han empezado en cuanto alguien del clan ha sumado puntos esta temporada.
   const clanGamesStarted = [...clanGamesPoints.values()].some((points) => points > 0);
@@ -40,8 +44,8 @@ export async function getClanEvaluations(supabase: SupabaseClient, clanId: strin
   for (const member of members) {
     const lastFinishedWarRoster: LastFinishedWarRoster | null = lastFinishedWar
       ? {
-          wasRostered: lastFinishedWarRosterByTag.has(member.playerTag),
-          attacksUsed: lastFinishedWarRosterByTag.get(member.playerTag) ?? 0,
+          wasRostered: lastFinishedWarRosterByMemberId.has(member.id),
+          attacksUsed: lastFinishedWarRosterByMemberId.get(member.id) ?? 0,
         }
       : null;
 
