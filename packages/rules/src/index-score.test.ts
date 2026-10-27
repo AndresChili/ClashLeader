@@ -7,7 +7,7 @@ const allMaxed: IndexInputs = {
   daysSinceActivity: 0,
   capital: { attacksUsed: 6, attacksAvailable: 6 },
   clanGamesPoints: 10_000,
-  donations: { donated: 500, expected: 250 },
+  donations: { donated: 2500, fullScore: 2000 },
 };
 
 describe("computeIndex", () => {

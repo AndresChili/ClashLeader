@@ -26,5 +26,6 @@ export async function getClanRules(supabase: SupabaseClient, clanId: string): Pr
     indexWeightDonations: data.index_weight_donations as number,
     indexWeightCapital: data.index_weight_capital as number,
     indexWeightGames: data.index_weight_games as number,
+    indexDonationsFullScore: data.index_donations_full_score as number,
   };
 }

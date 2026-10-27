@@ -77,7 +77,7 @@ export default async function FichaPage({ params }: { params: Promise<{ tag: str
         </div>
         <p className="text-xs text-text-secondary">
           Puntuación de 0 a 100. Una parte con «—» no cuenta ahora mismo (sin guerras en alineación, sin Juegos
-          empezados, primeros días de temporada…) y no resta.
+          empezados…) y no resta.
         </p>
       </Card>
 
@@ -111,12 +111,8 @@ export default async function FichaPage({ params }: { params: Promise<{ tag: str
           <p className="font-heading text-lg">{clanGamesPoints ?? "—"}</p>
         </Card>
         <Card>
-          <p className="text-xs text-text-secondary">Oro de capital aportado</p>
+          <p className="text-xs text-text-secondary">Oro de capital saqueado</p>
           <p className="font-heading text-lg">{capitalLootSinceJoin.toLocaleString("es-ES")}</p>
-        </Card>
-        <Card>
-          <p className="text-xs text-text-secondary">Liga</p>
-          <p className="font-heading text-lg">{member.leagueName ?? "—"}</p>
         </Card>
       </div>
 

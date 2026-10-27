@@ -17,6 +17,7 @@ const rulesSchema = z.object({
   indexWeightCapital: z.coerce.number().int().min(0).max(100),
   indexWeightGames: z.coerce.number().int().min(0).max(100),
   indexWeightDonations: z.coerce.number().int().min(0).max(100),
+  indexDonationsFullScore: z.coerce.number().int().min(1, "Las donaciones para la nota máxima tienen que ser al menos 1.").max(100_000),
 }).refine(
   (r) => r.indexWeightWar + r.indexWeightActivity + r.indexWeightCapital + r.indexWeightGames + r.indexWeightDonations === 100,
   "Los pesos de la puntuación tienen que sumar 100.",
@@ -42,6 +43,7 @@ export async function updateClanRules(_prev: RulesActionState, formData: FormDat
     indexWeightCapital: formData.get("indexWeightCapital"),
     indexWeightGames: formData.get("indexWeightGames"),
     indexWeightDonations: formData.get("indexWeightDonations"),
+    indexDonationsFullScore: formData.get("indexDonationsFullScore"),
   });
 
   const values = Object.fromEntries([...formData.entries()].map(([key, value]) => [key, String(value)]));
@@ -70,6 +72,7 @@ export async function updateClanRules(_prev: RulesActionState, formData: FormDat
       index_weight_capital: parsed.data.indexWeightCapital,
       index_weight_games: parsed.data.indexWeightGames,
       index_weight_donations: parsed.data.indexWeightDonations,
+      index_donations_full_score: parsed.data.indexDonationsFullScore,
       updated_by: user.id,
     })
     .eq("clan_id", parsed.data.clanId);

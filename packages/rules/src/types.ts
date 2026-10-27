@@ -12,6 +12,8 @@ export interface ClanRules {
   indexWeightDonations: number;
   indexWeightCapital: number;
   indexWeightGames: number;
+  /** Donaciones de la temporada que dan la nota máxima en la parte de donaciones de la puntuación. */
+  indexDonationsFullScore: number;
 }
 
 export const DEFAULT_CLAN_RULES: Omit<ClanRules, "clanId"> = {
@@ -26,4 +28,5 @@ export const DEFAULT_CLAN_RULES: Omit<ClanRules, "clanId"> = {
   indexWeightDonations: 5,
   indexWeightCapital: 15,
   indexWeightGames: 10,
+  indexDonationsFullScore: 2000,
 };

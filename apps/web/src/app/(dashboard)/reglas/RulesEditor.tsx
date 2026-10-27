@@ -111,6 +111,16 @@ export function RulesEditor({ rules, canEdit }: { rules: ClanRules; canEdit: boo
               defaultValue={value(field.name, rules[field.name])}
             />
           ))}
+          <TextField
+            label="Donaciones para la nota máxima"
+            name="indexDonationsFullScore"
+            type="number"
+            min={1}
+            defaultValue={value("indexDonationsFullScore", rules.indexDonationsFullScore)}
+          />
+          <p className="text-xs text-text-secondary">
+            Quien done esto en la temporada saca la nota máxima en donaciones; con la mitad, la mitad.
+          </p>
         </Card>
 
         {state.error ? <p className="text-sm text-status-bad-text">{state.error}</p> : null}
@@ -164,9 +174,10 @@ export function RulesEditor({ rules, canEdit }: { rules: ClanRules; canEdit: boo
         {WEIGHT_FIELDS.map((field) => (
           <Row key={field.name} label={field.label} value={`${rules[field.name]} %`} />
         ))}
+        <Row label="Donaciones para la nota máxima" value={rules.indexDonationsFullScore.toLocaleString("es-ES")} />
         <p className="mt-2 text-xs text-text-secondary">
-          Una parte que no aplica en ese momento (sin guerras en alineación, Juegos sin empezar, inicio de temporada…) no
-          cuenta y su peso se reparte entre las demás.
+          Una parte que no aplica en ese momento (sin guerras en alineación, Juegos sin empezar…) no cuenta y su peso se
+          reparte entre las demás. Las donaciones cuentan siempre.
         </p>
       </Card>
 

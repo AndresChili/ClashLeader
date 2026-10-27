@@ -18,9 +18,9 @@ import type { ClanRules } from "./types";
  *   semana de asaltos terminado. No cuenta si entró después.
  * - Juegos: puntos / 100 (10 000 puntos = 100, 9400 = 94). No cuenta
  *   mientras los Juegos de esta temporada no hayan empezado.
- * - Donaciones: frente al objetivo de veterano repartido a lo largo de la
- *   temporada (a mitad de temporada se espera la mitad). No cuenta los
- *   primeros días de temporada, cuando todo el mundo está a cero.
+ * - Donaciones: donaciones de la temporada frente a las que dan la nota
+ *   máxima (indexDonationsFullScore, editable en Reglas): con 2000 de
+ *   objetivo, 2000 donadas = 100 y 1000 = 50. Siempre cuenta.
  */
 const MAX_STARS_PER_ATTACK = 3;
 const WAR_USAGE_SHARE = 0.7;
@@ -34,8 +34,8 @@ export interface IndexInputs {
   capital: { attacksUsed: number; attacksAvailable: number } | null;
   /** null = los Juegos de esta temporada no han empezado. */
   clanGamesPoints: number | null;
-  /** null = primeros días de temporada. expected = donaciones esperadas a estas alturas. */
-  donations: { donated: number; expected: number } | null;
+  /** fullScore = donaciones que dan 100. null = no cuenta. */
+  donations: { donated: number; fullScore: number } | null;
 }
 
 export interface IndexBreakdown {
@@ -107,9 +107,9 @@ export function computeIndex(
   const donations =
     inputs.donations == null
       ? null
-      : inputs.donations.expected <= 0
+      : inputs.donations.fullScore <= 0
         ? 100
-        : clampScore((inputs.donations.donated / inputs.donations.expected) * 100);
+        : clampScore((inputs.donations.donated / inputs.donations.fullScore) * 100);
 
   const parts: [number | null, number][] = [
     [war, rules.indexWeightWar],

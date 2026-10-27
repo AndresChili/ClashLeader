@@ -1,6 +1,5 @@
 import {
   computeIndex,
-  daysIntoSeason,
   evaluateKick,
   isColeaderCandidate,
   isVeteranCandidate,
@@ -8,15 +7,12 @@ import {
   type IndexResult,
   type KickEvaluation,
   type LastFinishedWarRoster,
-  seasonProgress,
 } from "@clashleader/rules";
 import type { MemberSummary } from "@/lib/data/members";
 import { daysInClan } from "@/lib/format-member";
 
 const NEAR_DAILY_ACTIVITY_WINDOW_DAYS = 2;
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
-/** Los primeros días de temporada todo el mundo está a cero donaciones: no se puntúan. */
-const DONATIONS_GRACE_DAYS = 3;
 /** Ataques de capital base cuando el jugador no aparece en el fin de semana (no atacó). */
 const DEFAULT_CAPITAL_ATTACK_LIMIT = 5;
 
@@ -91,13 +87,7 @@ export function evaluateMember(member: MemberSummary, context: MemberEvaluationC
           }
         : null,
       clanGamesPoints: context.clanGamesPoints,
-      donations:
-        daysIntoSeason(context.now) < DONATIONS_GRACE_DAYS
-          ? null
-          : {
-              donated: member.donations ?? 0,
-              expected: context.rules.veteranMinDonationsPerSeason * seasonProgress(context.now),
-            },
+      donations: { donated: member.donations ?? 0, fullScore: context.rules.indexDonationsFullScore },
     },
     context.rules,
   );

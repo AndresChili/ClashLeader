@@ -75,10 +75,22 @@ describe("evaluateMember", () => {
   });
 
   it("does not penalise a member who was never in a war lineup", () => {
-    const result = evaluateMember(member({ donations: 500 }), context({ recentWar: null }));
+    const result = evaluateMember(member({ donations: 2000 }), context({ recentWar: null }));
     expect(result.index.breakdown.war).toBeNull();
     expect(result.index.score).toBe(100);
     expect(result.index.band).toBe("Excelente");
+  });
+
+  it("scores donations against the full-score target from the rules, always", () => {
+    const half = evaluateMember(member({ donations: 1000 }), context());
+    const full = evaluateMember(member({ donations: 2000 }), context());
+    const over = evaluateMember(member({ donations: 3500 }), context());
+    expect(half.index.breakdown.donations).toBe(50);
+    expect(full.index.breakdown.donations).toBe(100);
+    expect(over.index.breakdown.donations).toBe(100);
+
+    const customTarget = evaluateMember(member({ donations: 1000 }), context({ rules: { ...rules, indexDonationsFullScore: 1000 } }));
+    expect(customTarget.index.breakdown.donations).toBe(100);
   });
 
   it("only scores capital when the member was already in the clan for that raid weekend", () => {
