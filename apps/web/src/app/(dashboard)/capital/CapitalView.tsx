@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Card } from "@/components/ui/Card";
 import { Pill, type PillTone } from "@/components/ui/Pill";
+import { useUrlState } from "@/lib/use-url-state";
 
 export type CapitalPeriod = "semana" | "mes" | "total";
 
@@ -57,9 +58,9 @@ export function CapitalView({
   weekendOngoing: boolean;
   contributionsTrackedSince: string | null;
 }) {
-  const [period, setPeriod] = useState<CapitalPeriod>("semana");
-  const [query, setQuery] = useState("");
-  const [sort, setSort] = useState<SortOrder>("saqueado");
+  const [period, setPeriod] = useUrlState<CapitalPeriod>("periodo", "semana", ["semana", "mes", "total"]);
+  const [query, setQuery] = useUrlState<string>("q", "");
+  const [sort, setSort] = useUrlState<SortOrder>("orden", "saqueado", SORTS.map((s) => s.id));
 
   const rows = periods[period];
 

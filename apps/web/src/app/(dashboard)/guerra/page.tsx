@@ -30,6 +30,8 @@ export default async function GuerraPage() {
     ? currentWar.members.map((m) => ({
         playerTag: m.playerTag,
         playerName: m.playerName,
+        mapPosition: m.mapPosition,
+        townHallLevel: m.townHallLevel,
         attacksUsed: m.attacksUsed,
         attacksAllowed: attacksAllowedFor(currentWar.warType),
       }))

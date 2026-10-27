@@ -2,15 +2,12 @@ import { NoClanCard } from "@/components/NoClanCard";
 import { getViewerClan } from "@/lib/data/viewer-clan";
 import { getClanEvaluations } from "@/lib/get-clan-evaluations";
 import { createClient } from "@/lib/supabase/server";
-import { MembersList, type MembersChip } from "./MembersList";
+import { MembersList } from "./MembersList";
 
 export const metadata = { title: "Miembros · ClashLeader" };
 
-const VALID_CHIPS: MembersChip[] = ["todos", "colideres", "veteranos"];
 
-export default async function MiembrosPage({ searchParams }: { searchParams: Promise<{ chip?: string }> }) {
-  const { chip } = await searchParams;
-  const initialChip = VALID_CHIPS.find((c) => c === chip) ?? "todos";
+export default async function MiembrosPage() {
 
   const supabase = await createClient();
   const viewerClan = await getViewerClan(supabase);
@@ -30,7 +27,7 @@ export default async function MiembrosPage({ searchParams }: { searchParams: Pro
         <span className="text-sm text-text-secondary">{members.length} de 50</span>
       </div>
 
-      <MembersList members={members} evaluations={evaluations} initialChip={initialChip} />
+      <MembersList members={members} evaluations={evaluations} />
     </div>
   );
 }

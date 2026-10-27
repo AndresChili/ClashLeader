@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Card } from "@/components/ui/Card";
 import { Pill, type PillTone } from "@/components/ui/Pill";
+import { useUrlState } from "@/lib/use-url-state";
 import { CLAN_GAMES_PLAYER_MAX, CLAN_GAMES_TOTAL_VIEW as TOTAL_VIEW, formatClanGamesSeason } from "@/lib/clan-games";
 
 export interface ClanGamesRow {
@@ -46,9 +47,9 @@ export function JuegosView({
   firstSeason: string | null;
   trackingStartedAt: string | null;
 }) {
-  const [view, setView] = useState(seasons[0]);
-  const [query, setQuery] = useState("");
-  const [sort, setSort] = useState<SortOrder>("puntos-desc");
+  const [view, setView] = useUrlState("mes", seasons[0], [...seasons, TOTAL_VIEW]);
+  const [query, setQuery] = useUrlState<string>("q", "");
+  const [sort, setSort] = useUrlState<SortOrder>("orden", "puntos-desc", SORTS.map((s) => s.id));
 
   const rows = useMemo(() => views[view] ?? [], [views, view]);
   const isTotal = view === TOTAL_VIEW;

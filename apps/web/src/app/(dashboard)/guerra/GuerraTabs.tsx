@@ -8,6 +8,7 @@ import type { WarSummary } from "@/lib/data/wars";
 import { WarAttacksProgress } from "@/components/WarAttacksProgress";
 import { WarScore } from "@/components/WarScore";
 import { warPhase } from "@/lib/format-war";
+import { useUrlState } from "@/lib/use-url-state";
 import { recommendLineup, WAR_SIZES, type LineupCandidate, type LineupPick } from "@/lib/war-lineup";
 
 type Tab = "en-curso" | "alineacion" | "historial" | "liga";
@@ -22,6 +23,8 @@ const TABS: { id: Tab; label: string }[] = [
 export interface RosterAttack {
   playerTag: string;
   playerName: string;
+  mapPosition: number;
+  townHallLevel: number | null;
   attacksUsed: number;
   attacksAllowed: number;
 }
@@ -53,7 +56,7 @@ export function GuerraTabs({
   history: WarSummary[];
   cwlGroup: { season: string; state: string; wars: WarSummary[] } | null;
 }) {
-  const [tab, setTab] = useState<Tab>("en-curso");
+  const [tab, setTab] = useUrlState<Tab>("pestana", "en-curso", TABS.map((t) => t.id));
 
   return (
     <div className="flex flex-col gap-4">
@@ -120,8 +123,12 @@ function EnCurso({ currentWar, rosterAttacks }: { currentWar: WarSummary | null;
       <ul className="flex flex-col gap-2">
         {rosterAttacks.map((p) => (
           <li key={p.playerTag} className={`tone-ring flex items-center justify-between rounded-2xl p-3 ${toneClasses[attackTone(p)]}`}>
-            <span className="text-sm font-medium">{p.playerName}</span>
-            <span className="text-sm">
+            <span className="flex min-w-0 items-center gap-2.5">
+              <span className="w-5 shrink-0 text-right text-sm opacity-70">{p.mapPosition}</span>
+              <span className="truncate text-sm font-medium">{p.playerName}</span>
+              {p.townHallLevel ? <span className="shrink-0 text-xs opacity-70">TH{p.townHallLevel}</span> : null}
+            </span>
+            <span className="shrink-0 text-sm">
               {attackLabel(p)} · {p.attacksUsed}/{p.attacksAllowed}
             </span>
           </li>
@@ -176,7 +183,9 @@ function Alineacion({
   defaultSize: number;
   currentWarTags: string[];
 }) {
-  const [size, setSize] = useState<number>(WAR_SIZES.some((n) => n === defaultSize) ? defaultSize : 15);
+  const fallbackSize = String(WAR_SIZES.some((n) => n === defaultSize) ? defaultSize : 15);
+  const [sizeParam, setSizeParam] = useUrlState("tamano", fallbackSize, WAR_SIZES.map(String));
+  const size = Number(sizeParam);
   const [showOut, setShowOut] = useState(false);
   const result = useMemo(() => recommendLineup(candidates, size, kickInactivityDays), [candidates, size, kickInactivityDays]);
   const inWar = new Set(currentWarTags);
@@ -194,7 +203,7 @@ function Alineacion({
         Participantes
         <select
           value={size}
-          onChange={(event) => setSize(Number(event.target.value))}
+          onChange={(event) => setSizeParam(event.target.value)}
           className="field rounded-xl px-3 py-2 text-sm text-text focus:border-accent focus:outline-none"
         >
           {WAR_SIZES.map((n) => (

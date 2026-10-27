@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { Button } from "@/components/ui/Button";
 
 interface BeforeInstallPromptEvent extends Event {
@@ -14,13 +14,23 @@ interface BeforeInstallPromptEvent extends Event {
 // prompt. No puede ir en un <script> inline porque el CSP del proyecto es
 // script-src 'self' y bloquea scripts inline sin nonce.
 let capturedPrompt: BeforeInstallPromptEvent | null = null;
-const readyListeners = new Set<() => void>();
+let installedHere = false;
+const listeners = new Set<() => void>();
+
+function notify() {
+  listeners.forEach((listener) => listener());
+}
 
 if (typeof window !== "undefined") {
   window.addEventListener("beforeinstallprompt", (event) => {
     event.preventDefault();
     capturedPrompt = event as BeforeInstallPromptEvent;
-    readyListeners.forEach((listener) => listener());
+    notify();
+  });
+  window.addEventListener("appinstalled", () => {
+    installedHere = true;
+    capturedPrompt = null;
+    notify();
   });
 }
 
@@ -35,30 +45,22 @@ function isIos() {
   return /iphone|ipad|ipod/i.test(window.navigator.userAgent);
 }
 
+function subscribe(onChange: () => void) {
+  listeners.add(onChange);
+  const displayMode = window.matchMedia("(display-mode: standalone)");
+  displayMode.addEventListener("change", onChange);
+  return () => {
+    listeners.delete(onChange);
+    displayMode.removeEventListener("change", onChange);
+  };
+}
+
 export function InstallPwaButton() {
-  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  // En el servidor se da por instalada para no pintar el aviso y que desaparezca al hidratar.
+  const deferredPrompt = useSyncExternalStore(subscribe, () => capturedPrompt, () => null);
+  const installed = useSyncExternalStore(subscribe, () => installedHere || isStandalone(), () => true);
   const [showManualHint, setShowManualHint] = useState(false);
   const [dismissed, setDismissed] = useState(false);
-  const [installed, setInstalled] = useState(true);
-
-  useEffect(() => {
-    setInstalled(isStandalone());
-    if (capturedPrompt) setDeferredPrompt(capturedPrompt);
-
-    const onReady = () => setDeferredPrompt(capturedPrompt);
-    const onInstalled = () => {
-      setInstalled(true);
-      setDeferredPrompt(null);
-      capturedPrompt = null;
-    };
-
-    readyListeners.add(onReady);
-    window.addEventListener("appinstalled", onInstalled);
-    return () => {
-      readyListeners.delete(onReady);
-      window.removeEventListener("appinstalled", onInstalled);
-    };
-  }, []);
 
   if (installed || dismissed) return null;
 
@@ -70,9 +72,9 @@ export function InstallPwaButton() {
     if (deferredPrompt) {
       await deferredPrompt.prompt();
       const { outcome } = await deferredPrompt.userChoice;
-      if (outcome === "accepted") setInstalled(true);
-      setDeferredPrompt(null);
+      if (outcome === "accepted") installedHere = true;
       capturedPrompt = null;
+      notify();
       return;
     }
     setShowManualHint(true);

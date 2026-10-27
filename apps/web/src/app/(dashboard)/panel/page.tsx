@@ -40,10 +40,10 @@ export default async function PanelPage() {
   const coleaderCount = members.filter((m) => m.inGameRole === "coLeader").length;
   const veteranCount = members.filter((m) => m.inGameRole === "admin").length;
 
-  const toKick = members
+  const allToKick = members
     .map((m) => ({ member: m, evaluation: evaluations.get(m.id) }))
-    .filter((f): f is { member: (typeof members)[number]; evaluation: MemberEvaluation } => Boolean(f.evaluation?.kick.shouldKick))
-    .slice(0, MAX_FLAGGED);
+    .filter((f): f is { member: (typeof members)[number]; evaluation: MemberEvaluation } => Boolean(f.evaluation?.kick.shouldKick));
+  const toKick = allToKick.slice(0, MAX_FLAGGED);
 
   const promotionCandidates = members
     .flatMap((member) => {
@@ -148,7 +148,14 @@ export default async function PanelPage() {
       </section>
 
       <section className="flex flex-col gap-2">
-        <h2 className="text-sm text-text-secondary">Para expulsar</h2>
+        <div className="flex items-baseline justify-between">
+          <h2 className="text-sm text-text-secondary">Para expulsar</h2>
+          {allToKick.length > 0 ? (
+            <Link href="/miembros?chip=expulsar" className="text-sm text-accent">
+              {allToKick.length > MAX_FLAGGED ? `Ver los ${allToKick.length}` : "Ver en Miembros"}
+            </Link>
+          ) : null}
+        </div>
         {toKick.length === 0 ? (
           <Card>
             <p className="text-sm text-text-secondary">Nadie está marcado para expulsar.</p>

@@ -5,6 +5,7 @@ export interface WarMemberRow {
   playerTag: string;
   playerName: string;
   mapPosition: number;
+  townHallLevel: number | null;
   attacksUsed: number;
 }
 
@@ -25,7 +26,7 @@ export interface WarSummary {
 }
 
 const WAR_COLUMNS =
-  "id, war_type, state, team_size, opponent_name, start_time, end_time, clan_stars, clan_destruction_pct, opponent_stars, opponent_destruction_pct, result, war_members(clan_member_id, player_tag, player_name, map_position, attacks_used)";
+  "id, war_type, state, team_size, opponent_name, start_time, end_time, clan_stars, clan_destruction_pct, opponent_stars, opponent_destruction_pct, result, war_members(clan_member_id, player_tag, player_name, map_position, town_hall_level, attacks_used)";
 
 function mapWarRow(row: Record<string, unknown>): WarSummary {
   return {
@@ -47,6 +48,7 @@ function mapWarRow(row: Record<string, unknown>): WarSummary {
         playerTag: m.player_tag as string,
         playerName: m.player_name as string,
         mapPosition: m.map_position as number,
+        townHallLevel: m.town_hall_level as number | null,
         attacksUsed: m.attacks_used as number,
       }))
       .sort((a, b) => a.mapPosition - b.mapPosition),

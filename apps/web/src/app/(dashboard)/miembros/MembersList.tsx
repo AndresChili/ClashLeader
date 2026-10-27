@@ -1,20 +1,22 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { IndexBadge } from "@/components/IndexBadge";
 import { Pill } from "@/components/ui/Pill";
 import type { MemberSummary } from "@/lib/data/members";
 import type { MemberEvaluation } from "@/lib/member-evaluation";
 import { getMemberStatus } from "@/lib/member-status";
 import { ROLE_LABELS } from "@/lib/role-labels";
+import { useUrlState } from "@/lib/use-url-state";
 
-export type MembersChip = "todos" | "colideres" | "veteranos";
+type MembersChip = "todos" | "colideres" | "veteranos" | "expulsar";
 
 const CHIPS: { id: MembersChip; label: string }[] = [
   { id: "todos", label: "Todos" },
   { id: "colideres", label: "Colíderes" },
   { id: "veteranos", label: "Veteranos" },
+  { id: "expulsar", label: "Para expulsar" },
 ];
 
 type SortOrder = "puntuacion-desc" | "puntuacion-asc" | "nombre";
@@ -28,16 +30,14 @@ const SORTS: { id: SortOrder; label: string }[] = [
 export function MembersList({
   members,
   evaluations,
-  initialChip = "todos",
 }: {
   members: MemberSummary[];
   evaluations: Map<string, MemberEvaluation>;
-  /** Chip con el que arranca la lista, para enlazar desde el Panel directamente filtrado. */
-  initialChip?: MembersChip;
 }) {
-  const [query, setQuery] = useState("");
-  const [chip, setChip] = useState<MembersChip>(initialChip);
-  const [sort, setSort] = useState<SortOrder>("puntuacion-desc");
+  // En la URL (?chip=, ?q=, ?orden=): el Panel enlaza ya filtrado y al volver de una ficha se conserva.
+  const [query, setQuery] = useUrlState<string>("q", "");
+  const [chip, setChip] = useUrlState<MembersChip>("chip", "todos", CHIPS.map((c) => c.id));
+  const [sort, setSort] = useUrlState<SortOrder>("orden", "puntuacion-desc", SORTS.map((s) => s.id));
 
   const filtered = useMemo(() => {
     const byQuery = members.filter((member) => member.name.toLowerCase().includes(query.trim().toLowerCase()));
@@ -47,7 +47,9 @@ export function MembersList({
         ? byQuery.filter((member) => member.inGameRole === "coLeader")
         : chip === "veteranos"
           ? byQuery.filter((member) => member.inGameRole === "admin")
-          : byQuery;
+          : chip === "expulsar"
+            ? byQuery.filter((member) => evaluations.get(member.id)?.kick.shouldKick)
+            : byQuery;
 
     const score = (member: MemberSummary) => evaluations.get(member.id)?.index.score ?? -1;
     return [...byChip].sort((a, b) => {

@@ -14,7 +14,8 @@ function buildCsp(nonce: string) {
     "default-src 'self'",
     `connect-src 'self' ${supabaseOrigin}`,
     "img-src 'self' data: https://lh3.googleusercontent.com https://api-assets.clashofclans.com",
-    `script-src 'self' 'nonce-${nonce}'`,
+    // En desarrollo React necesita eval() para sus herramientas de depuración; nunca en producción.
+    `script-src 'self' 'nonce-${nonce}'${process.env.NODE_ENV === "development" ? " 'unsafe-eval'" : ""}`,
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' https://fonts.gstatic.com",
     "frame-ancestors 'none'",
