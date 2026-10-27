@@ -25,7 +25,7 @@ export function ClanBadge({ url, size = 48 }: { url: string | null; size?: numbe
   return (
     <span
       aria-hidden
-      className="flex shrink-0 items-center justify-center rounded-2xl border border-border bg-card"
+      className="flex shrink-0 items-center justify-center surface rounded-2xl"
       style={{ width: size, height: size }}
     >
       <Shield size={size * 0.55} strokeWidth={1.5} className="text-text-secondary" />

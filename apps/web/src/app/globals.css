@@ -1,36 +1,39 @@
 @import "tailwindcss";
 
 :root {
-  --color-bg: #0e1318;
-  --color-card: #18202a;
-  --color-border: #263140;
-  --color-text: #e9eef3;
-  --color-text-secondary: #9ba8b5;
-  --color-accent: #6cb4ff;
-  --color-accent-foreground: #0e1318;
+  /* Azul noche con acento dorado de líder. */
+  --color-bg: #0a0e17;
+  --color-card: #121927;
+  --color-card-hi: #182237;
+  --color-border: #243049;
+  --color-text: #eef2f8;
+  --color-text-secondary: #9aa7be;
+  --color-accent: #f6b73c;
+  --color-accent-2: #ff8a3d;
+  --color-accent-foreground: #1c1305;
 
-  --color-status-good-bg: #173a36;
-  --color-status-good-text: #7fe3cc;
-  --color-status-warn-bg: #3d3216;
-  --color-status-warn-text: #f6c866;
-  --color-status-bad-bg: #47231e;
-  --color-status-bad-text: #ffa796;
-  --color-status-info-bg: #16293d;
-  --color-status-info-text: #9ccbff;
+  --color-status-good-bg: #0f3a2d;
+  --color-status-good-text: #5fe6a7;
+  --color-status-warn-bg: #3d2f0f;
+  --color-status-warn-text: #fcc94b;
+  --color-status-bad-bg: #47191d;
+  --color-status-bad-text: #ff9283;
+  --color-status-info-bg: #13284a;
+  --color-status-info-text: #8fc4ff;
 
   /* Tramos de puntuación: de frío (mejor) a cálido (peor). Expulsar usa status-bad. */
-  --color-band-excelente-bg: #133a28;
-  --color-band-excelente-text: #6ee7a8;
-  --color-band-genial-bg: #113634;
-  --color-band-genial-text: #5eead4;
-  --color-band-bien-bg: #16293d;
-  --color-band-bien-text: #93c5fd;
-  --color-band-suficiente-bg: #2a2342;
-  --color-band-suficiente-text: #c4b5fd;
-  --color-band-flojo-bg: #3d3216;
-  --color-band-flojo-text: #f6c866;
-  --color-band-muy-flojo-bg: #43291a;
-  --color-band-muy-flojo-text: #fdba74;
+  --color-band-excelente-bg: #0e3b26;
+  --color-band-excelente-text: #5df0a0;
+  --color-band-genial-bg: #0d3735;
+  --color-band-genial-text: #4fecd6;
+  --color-band-bien-bg: #13284a;
+  --color-band-bien-text: #8fc4ff;
+  --color-band-suficiente-bg: #2b2148;
+  --color-band-suficiente-text: #c6b6ff;
+  --color-band-flojo-bg: #3d2f0f;
+  --color-band-flojo-text: #fcc94b;
+  --color-band-muy-flojo-bg: #45270f;
+  --color-band-muy-flojo-text: #ffb173;
 
   --font-heading: var(--font-space-grotesk);
   --font-body: var(--font-ibm-plex-sans);
@@ -39,10 +42,12 @@
 @theme inline {
   --color-bg: var(--color-bg);
   --color-card: var(--color-card);
+  --color-card-hi: var(--color-card-hi);
   --color-border: var(--color-border);
   --color-text: var(--color-text);
   --color-text-secondary: var(--color-text-secondary);
   --color-accent: var(--color-accent);
+  --color-accent-2: var(--color-accent-2);
   --color-accent-foreground: var(--color-accent-foreground);
 
   --color-status-good-bg: var(--color-status-good-bg);
@@ -71,8 +76,65 @@
   --font-body: var(--font-body);
 }
 
+/* Tarjeta / fila con profundidad: degradado sutil, brillo arriba y sombra. */
+@utility surface {
+  background: linear-gradient(180deg, var(--color-card-hi), var(--color-card));
+  border: 1px solid var(--color-border);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.05),
+    0 12px 28px -18px rgb(0 0 0 / 0.85);
+}
+
+/* Campos de texto y selects. */
+@utility field {
+  background: rgb(6 9 16 / 0.55);
+  border: 1px solid var(--color-border);
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+
+/* Relleno de las barras de progreso. */
+@utility bar-fill {
+  background: linear-gradient(90deg, var(--color-accent), var(--color-accent-2));
+  box-shadow: 0 0 12px rgb(246 183 60 / 0.35);
+}
+
+/* Botón principal y pestaña / chip activos. */
+@utility accent-gradient {
+  background: linear-gradient(180deg, #ffcb62, var(--color-accent) 55%, #eda52a);
+  color: var(--color-accent-foreground);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.35),
+    0 6px 18px -6px rgb(246 183 60 / 0.55);
+}
+
+/* Contorno fino del color del texto, para pastillas y notas. */
+@utility tone-ring {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, currentColor 22%, transparent);
+}
+
+@utility shimmer {
+  background: linear-gradient(90deg, var(--color-card) 0%, var(--color-card-hi) 50%, var(--color-card) 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+
 body {
-  background: var(--color-bg);
+  background:
+    radial-gradient(1100px 520px at 0% -8%, rgb(246 183 60 / 0.09), transparent 60%),
+    radial-gradient(900px 480px at 105% -4%, rgb(84 130 255 / 0.12), transparent 60%),
+    var(--color-bg);
+  background-attachment: fixed;
   color: var(--color-text);
   font-family: var(--font-body);
 }
@@ -84,6 +146,46 @@ h4,
 .font-heading {
   font-family: var(--font-heading);
   font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+h1 {
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+::selection {
+  background: rgb(246 183 60 / 0.35);
+}
+
+/* Filas y tarjetas que se pulsan: respuesta al tocar y al pasar el ratón. */
+a.surface,
+button.surface {
+  transition:
+    border-color 0.2s,
+    transform 0.15s,
+    filter 0.2s;
+}
+
+a.surface:hover,
+button.surface:hover {
+  border-color: color-mix(in srgb, var(--color-accent) 35%, var(--color-border));
+}
+
+a.surface:active,
+button.surface:active {
+  transform: scale(0.99);
+}
+
+input:focus,
+select:focus {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px rgb(246 183 60 / 0.18);
+  outline: none;
+}
+
+select {
+  color-scheme: dark;
 }
 
 /* Minimum 44px touch targets everywhere, per design spec. */
@@ -92,4 +194,12 @@ a[role="button"],
 input,
 select {
   min-height: 44px;
+}
+
+/* Nombre de la app en las pantallas de entrada. */
+@utility brand-text {
+  background: linear-gradient(90deg, #ffd27a, var(--color-accent) 45%, var(--color-accent-2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }

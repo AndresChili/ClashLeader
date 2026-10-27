@@ -86,14 +86,14 @@ export function CapitalView({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex gap-2 rounded-xl bg-card p-1">
+      <div className="flex gap-2 surface rounded-xl p-1">
         {periodOptions.map((p) => (
           <button
             key={p.id}
             type="button"
             onClick={() => setPeriod(p.id)}
             className={`flex-1 rounded-lg py-2 text-sm font-medium ${
-              period === p.id ? "bg-accent text-accent-foreground" : "text-text-secondary"
+              period === p.id ? "accent-gradient" : "text-text-secondary"
             }`}
           >
             {p.label}
@@ -116,9 +116,9 @@ export function CapitalView({
               {totalAttacksUsed}/{totalAttacksAvailable}
             </span>
           </div>
-          <div className="h-2 overflow-hidden rounded-full bg-border">
+          <div className="h-2 overflow-hidden rounded-full bg-black/40 ring-1 ring-inset ring-white/5">
             <div
-              className="h-full rounded-full bg-accent"
+              className="bar-fill h-full rounded-full"
               style={{ width: `${totalAttacksAvailable > 0 ? (100 * totalAttacksUsed) / totalAttacksAvailable : 0}%` }}
             />
           </div>
@@ -150,7 +150,7 @@ export function CapitalView({
         placeholder="Buscar por nombre"
         value={query}
         onChange={(event) => setQuery(event.target.value)}
-        className="rounded-xl border border-border bg-card px-3.5 py-2.5 text-sm text-text placeholder:text-text-secondary focus:border-accent focus:outline-none"
+        className="field rounded-xl px-3.5 py-2.5 text-sm text-text placeholder:text-text-secondary focus:border-accent focus:outline-none"
       />
 
       <label className="flex items-center justify-between gap-3 text-sm text-text-secondary">
@@ -158,7 +158,7 @@ export function CapitalView({
         <select
           value={sort}
           onChange={(event) => setSort(event.target.value as SortOrder)}
-          className="rounded-xl border border-border bg-card px-3 py-2 text-sm text-text focus:border-accent focus:outline-none"
+          className="field rounded-xl px-3 py-2 text-sm text-text focus:border-accent focus:outline-none"
         >
           {SORTS.map((s) => (
             <option key={s.id} value={s.id}>
@@ -169,7 +169,7 @@ export function CapitalView({
       </label>
 
       {filtered.length === 0 ? (
-        <p className="rounded-xl border border-border bg-card p-4 text-sm text-text-secondary">Nadie coincide con esa búsqueda.</p>
+        <p className="surface rounded-xl p-4 text-sm text-text-secondary">Nadie coincide con esa búsqueda.</p>
       ) : (
         <ul className="flex flex-col gap-2">
           {filtered.map((r) => (
@@ -177,7 +177,7 @@ export function CapitalView({
               <Link
                 href={`/miembros/${encodeURIComponent(r.playerTag.replace("#", ""))}`}
                 prefetch={false}
-                className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3"
+                className="flex items-center gap-3 surface rounded-2xl p-3"
               >
                 <div className="flex min-w-0 flex-1 flex-col gap-1">
                   <p className="truncate text-sm font-medium text-text">{r.playerName}</p>

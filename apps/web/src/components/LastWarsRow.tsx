@@ -10,7 +10,7 @@ export function LastWarsRow({ stars = [] }: { stars?: (number | null)[] }) {
       {boxes.map((value, i) => (
         <div
           key={i}
-          className={`flex h-8 flex-1 items-center justify-center rounded-lg border border-border text-xs font-medium ${starClasses(value)}`}
+          className={`flex h-8 flex-1 items-center justify-center rounded-lg border border-border text-xs font-semibold ${starClasses(value)}`}
         >
           {value ?? ""}
         </div>

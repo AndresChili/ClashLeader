@@ -4,7 +4,7 @@ import { toneClasses, type PillTone } from "@/components/ui/Pill";
 export function IndexBadge({ tone, value }: { tone: PillTone; value?: number }) {
   return (
     <div
-      className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl font-heading text-base ${toneClasses[tone]}`}
+      className={`tone-ring flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl font-heading text-base font-bold ${toneClasses[tone]}`}
     >
       {value ?? "—"}
     </div>

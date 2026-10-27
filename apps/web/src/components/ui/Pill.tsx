@@ -33,7 +33,7 @@ export function Pill({
 }: HTMLAttributes<HTMLSpanElement> & { tone: PillTone }) {
   return (
     <span
-      className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${toneClasses[tone]} ${className}`}
+      className={`tone-ring inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${toneClasses[tone]} ${className}`}
       {...props}
     />
   );

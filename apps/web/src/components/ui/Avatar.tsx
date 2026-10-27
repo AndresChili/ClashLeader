@@ -40,7 +40,7 @@ export function Avatar({
   return (
     <span
       aria-hidden
-      className="flex shrink-0 items-center justify-center rounded-full border border-border bg-card font-heading text-xs text-text"
+      className="flex shrink-0 items-center justify-center surface rounded-full font-heading text-xs text-text"
       style={{ width: size, height: size }}
     >
       {initials(name)}

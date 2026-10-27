@@ -20,7 +20,7 @@ export function TextField({
         <input
           name={name}
           type={isPassword && showPassword ? "text" : type}
-          className={`w-full rounded-xl border border-border bg-card px-3.5 py-2.5 text-text placeholder:text-text-secondary focus:border-accent focus:outline-none ${isPassword ? "pr-11" : ""}`}
+          className={`w-full field rounded-xl px-3.5 py-2.5 text-text placeholder:text-text-secondary focus:border-accent focus:outline-none ${isPassword ? "pr-11" : ""}`}
           {...props}
         />
         {isPassword ? (

@@ -44,7 +44,7 @@ export function FichaActions({
             name="note"
             rows={3}
             placeholder="Escribe la nota..."
-            className="rounded-xl border border-border bg-card px-3.5 py-2.5 text-sm text-text placeholder:text-text-secondary focus:border-accent focus:outline-none"
+            className="field rounded-xl px-3.5 py-2.5 text-sm text-text placeholder:text-text-secondary focus:border-accent focus:outline-none"
           />
           {state.error ? <p className="text-xs text-status-bad-text">{state.error}</p> : null}
           <div className="flex gap-2">

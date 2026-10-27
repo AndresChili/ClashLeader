@@ -57,14 +57,14 @@ export function GuerraTabs({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex gap-1 rounded-xl bg-card p-1">
+      <div className="flex gap-1 surface rounded-xl p-1">
         {TABS.map((t) => (
           <button
             key={t.id}
             type="button"
             onClick={() => setTab(t.id)}
             className={`flex-1 rounded-lg py-2 text-sm font-medium ${
-              tab === t.id ? "bg-accent text-accent-foreground" : "text-text-secondary"
+              tab === t.id ? "accent-gradient" : "text-text-secondary"
             }`}
           >
             {t.label}
@@ -119,7 +119,7 @@ function EnCurso({ currentWar, rosterAttacks }: { currentWar: WarSummary | null;
 
       <ul className="flex flex-col gap-2">
         {rosterAttacks.map((p) => (
-          <li key={p.playerTag} className={`flex items-center justify-between rounded-2xl p-3 ${toneClasses[attackTone(p)]}`}>
+          <li key={p.playerTag} className={`tone-ring flex items-center justify-between rounded-2xl p-3 ${toneClasses[attackTone(p)]}`}>
             <span className="text-sm font-medium">{p.playerName}</span>
             <span className="text-sm">
               {attackLabel(p)} · {p.attacksUsed}/{p.attacksAllowed}
@@ -143,7 +143,7 @@ function PickRow({ pick, position, inCurrentWar }: { pick: LineupPick; position:
       <Link
         href={`/miembros/${encodeURIComponent(pick.playerTag.replace("#", ""))}`}
         prefetch={false}
-        className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3"
+        className="flex items-center gap-3 surface rounded-2xl p-3"
       >
         {position != null ? <span className="w-6 shrink-0 text-sm text-text-secondary">{position}</span> : null}
         <div className="min-w-0 flex-1">
@@ -195,7 +195,7 @@ function Alineacion({
         <select
           value={size}
           onChange={(event) => setSize(Number(event.target.value))}
-          className="rounded-xl border border-border bg-card px-3 py-2 text-sm text-text focus:border-accent focus:outline-none"
+          className="field rounded-xl px-3 py-2 text-sm text-text focus:border-accent focus:outline-none"
         >
           {WAR_SIZES.map((n) => (
             <option key={n} value={n}>
@@ -285,7 +285,7 @@ function Historial({ wars }: { wars: WarSummary[] }) {
   return (
     <ul className="flex flex-col gap-2">
       {wars.map((war) => (
-        <li key={war.id} className="flex items-center justify-between rounded-2xl border border-border bg-card p-3">
+        <li key={war.id} className="flex items-center justify-between surface rounded-2xl p-3">
           <div>
             <p className="text-sm text-text">vs. {war.opponentName ?? "—"}</p>
             <WarScore className="text-xs" clanStars={war.clanStars} opponentStars={war.opponentStars} />
@@ -312,7 +312,7 @@ function Liga({ group }: { group: { season: string; state: string; wars: WarSumm
     <div className="flex flex-col gap-2">
       <p className="text-sm text-text-secondary">Temporada {group.season}</p>
       {group.wars.map((war) => (
-        <div key={war.id} className="flex items-center justify-between rounded-2xl border border-border bg-card p-3">
+        <div key={war.id} className="flex items-center justify-between surface rounded-2xl p-3">
           <div>
             <p className="text-sm text-text">vs. {war.opponentName ?? "—"}</p>
             <WarScore className="text-xs" clanStars={war.clanStars} opponentStars={war.opponentStars} />

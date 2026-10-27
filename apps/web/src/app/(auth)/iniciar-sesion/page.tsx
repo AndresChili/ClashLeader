@@ -17,7 +17,7 @@ export default function IniciarSesionPage() {
   return (
     <main className="mx-auto flex min-h-full w-full max-w-[390px] flex-col justify-center gap-6 px-4 py-10">
       <div>
-        <h1 className="font-heading text-2xl">ClashLeader</h1>
+        <h1 className="brand-text font-heading text-3xl">ClashLeader</h1>
         <p className="mt-1 text-sm text-text-secondary">Inicia sesión para ver tu clan.</p>
       </div>
 

@@ -73,7 +73,7 @@ export function JuegosView({
         <select
           value={view}
           onChange={(event) => setView(event.target.value)}
-          className="rounded-xl border border-border bg-card px-3 py-2 text-sm text-text focus:border-accent focus:outline-none"
+          className="field rounded-xl px-3 py-2 text-sm text-text focus:border-accent focus:outline-none"
         >
           {seasons.map((s) => (
             <option key={s} value={s}>
@@ -106,7 +106,7 @@ export function JuegosView({
         placeholder="Buscar por nombre"
         value={query}
         onChange={(event) => setQuery(event.target.value)}
-        className="rounded-xl border border-border bg-card px-3.5 py-2.5 text-sm text-text placeholder:text-text-secondary focus:border-accent focus:outline-none"
+        className="field rounded-xl px-3.5 py-2.5 text-sm text-text placeholder:text-text-secondary focus:border-accent focus:outline-none"
       />
 
       <label className="flex items-center justify-between gap-3 text-sm text-text-secondary">
@@ -114,7 +114,7 @@ export function JuegosView({
         <select
           value={sort}
           onChange={(event) => setSort(event.target.value as SortOrder)}
-          className="rounded-xl border border-border bg-card px-3 py-2 text-sm text-text focus:border-accent focus:outline-none"
+          className="field rounded-xl px-3 py-2 text-sm text-text focus:border-accent focus:outline-none"
         >
           {SORTS.map((s) => (
             <option key={s.id} value={s.id}>
@@ -125,7 +125,7 @@ export function JuegosView({
       </label>
 
       {filtered.length === 0 ? (
-        <p className="rounded-xl border border-border bg-card p-4 text-sm text-text-secondary">Nadie coincide con esa búsqueda.</p>
+        <p className="surface rounded-xl p-4 text-sm text-text-secondary">Nadie coincide con esa búsqueda.</p>
       ) : (
         <ul className="flex flex-col gap-2">
           {filtered.map((r) => {
@@ -137,9 +137,9 @@ export function JuegosView({
                     {r.inClan ? null : <span className="font-normal text-text-secondary"> · ya no está</span>}
                   </p>
                   {isTotal ? null : (
-                    <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-border">
+                    <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-black/40 ring-1 ring-inset ring-white/5">
                       <div
-                        className="h-full rounded-full bg-accent"
+                        className="bar-fill h-full rounded-full"
                         style={{ width: `${Math.min(100, (100 * r.points) / CLAN_GAMES_PLAYER_MAX)}%` }}
                       />
                     </div>
@@ -158,12 +158,12 @@ export function JuegosView({
                   <Link
                     href={`/miembros/${encodeURIComponent(r.playerTag.replace("#", ""))}`}
                     prefetch={false}
-                    className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3"
+                    className="flex items-center gap-3 surface rounded-2xl p-3"
                   >
                     {content}
                   </Link>
                 ) : (
-                  <div className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3 opacity-70">{content}</div>
+                  <div className="flex items-center gap-3 surface rounded-2xl p-3 opacity-70">{content}</div>
                 )}
               </li>
             );

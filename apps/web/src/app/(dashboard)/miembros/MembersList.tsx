@@ -64,7 +64,7 @@ export function MembersList({
         placeholder="Buscar por nombre"
         value={query}
         onChange={(event) => setQuery(event.target.value)}
-        className="rounded-xl border border-border bg-card px-3.5 py-2.5 text-sm text-text placeholder:text-text-secondary focus:border-accent focus:outline-none"
+        className="field rounded-xl px-3.5 py-2.5 text-sm text-text placeholder:text-text-secondary focus:border-accent focus:outline-none"
       />
 
       <div className="flex flex-wrap gap-2">
@@ -74,7 +74,7 @@ export function MembersList({
             type="button"
             onClick={() => setChip(c.id)}
             className={`rounded-full border px-3.5 py-2 text-sm ${
-              chip === c.id ? "border-accent bg-accent text-accent-foreground" : "border-border bg-card text-text"
+              chip === c.id ? "border-transparent accent-gradient" : "surface text-text"
             }`}
           >
             {c.label}
@@ -87,7 +87,7 @@ export function MembersList({
         <select
           value={sort}
           onChange={(event) => setSort(event.target.value as SortOrder)}
-          className="rounded-xl border border-border bg-card px-3 py-2 text-sm text-text focus:border-accent focus:outline-none"
+          className="field rounded-xl px-3 py-2 text-sm text-text focus:border-accent focus:outline-none"
         >
           {SORTS.map((s) => (
             <option key={s.id} value={s.id}>
@@ -98,7 +98,7 @@ export function MembersList({
       </label>
 
       {filtered.length === 0 ? (
-        <p className="rounded-xl border border-border bg-card p-4 text-sm text-text-secondary">
+        <p className="surface rounded-xl p-4 text-sm text-text-secondary">
           Nadie coincide con esa búsqueda.
         </p>
       ) : (
@@ -111,7 +111,7 @@ export function MembersList({
                 <Link
                   href={`/miembros/${encodeURIComponent(member.playerTag.replace("#", ""))}`}
                   prefetch={false}
-                  className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3"
+                  className="flex items-center gap-3 surface rounded-2xl p-3"
                 >
                   <IndexBadge tone={status.tone} value={evaluation?.index.score} />
                   <div className="min-w-0 flex-1">
