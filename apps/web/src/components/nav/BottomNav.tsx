@@ -1,6 +1,6 @@
 "use client";
 
-import { LayoutGrid, Swords, Users, UsersRound } from "lucide-react";
+import { Castle, LayoutGrid, Swords, Trophy, Users, UsersRound } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -8,6 +8,8 @@ const TABS = [
   { href: "/panel", label: "Panel", icon: LayoutGrid },
   { href: "/miembros", label: "Miembros", icon: Users },
   { href: "/guerra", label: "Guerra", icon: Swords },
+  { href: "/capital", label: "Capital", icon: Castle },
+  { href: "/juegos", label: "Juegos", icon: Trophy },
   { href: "/equipo", label: "Equipo", icon: UsersRound },
 ] as const;
 

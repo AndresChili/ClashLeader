@@ -12,6 +12,8 @@ import {
   getCurrentMembers,
   insertNewMember,
   markMembersLeft,
+  recordCapitalContributions,
+  type CapitalContributionInput,
   updateActivityScore,
   updateLastActivity,
   updateMemberProfile,
@@ -118,6 +120,7 @@ export async function runClanCollection(
   }
 
   const snapshotsToInsert: MemberSnapshotInput[] = [];
+  const capitalContributionChanges: CapitalContributionInput[] = [];
   let activityDetected = 0;
 
   for (const apiMember of apiClan.memberList) {
@@ -153,6 +156,13 @@ export async function runClanCollection(
       await updateLastActivity(supabase, clanMemberId, now);
     }
 
+    // Total de por vida de oro aportado a la capital: solo se guarda cuando
+    // cambia (o la primera vez que vemos a este episodio, como base).
+    const capitalContributions = player?.clanCapitalContributions;
+    if (typeof capitalContributions === "number" && capitalContributions !== (currentByTag.get(apiMember.tag)?.capitalContributions ?? null)) {
+      capitalContributionChanges.push({ clanMemberId, value: capitalContributions });
+    }
+
     snapshotsToInsert.push({
       clanMemberId,
       donations: apiMember.donations,
@@ -166,6 +176,7 @@ export async function runClanCollection(
   }
 
   await insertMemberSnapshots(supabase, snapshotsToInsert);
+  await recordCapitalContributions(supabase, capitalContributionChanges);
 
   // Guerra, capital y juegos del clan pegan a endpoints distintos y pueden
   // fallar cada uno por su cuenta (registro de guerra privado, sin CWL

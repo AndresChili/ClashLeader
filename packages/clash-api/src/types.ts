@@ -125,7 +125,7 @@ export interface ClashApiCapitalRaidSeason {
 }
 
 // ---------------------------------------------------------------------------
-// Jugador (solo se usa para leer el logro "Games Champion")
+// Jugador (logros para actividad y Juegos del Clan, y oro aportado a la capital)
 // ---------------------------------------------------------------------------
 export interface ClashApiAchievement {
   name: string;
@@ -136,6 +136,8 @@ export interface ClashApiPlayer {
   tag: string;
   name: string;
   achievements: ClashApiAchievement[];
+  /** Total de por vida de oro aportado a capitales de clan (de cualquier clan). */
+  clanCapitalContributions?: number;
 }
 
 export const CLAN_GAMES_ACHIEVEMENT_NAME = "Games Champion";

@@ -88,3 +88,75 @@ export async function getCapitalLootSinceJoin(
 
   return (contributions ?? []).reduce((sum, row) => sum + (row.capital_gold_looted as number), 0);
 }
+
+export interface CapitalWeekend {
+  startTime: string;
+  endTime: string | null;
+}
+
+export async function getLatestCapitalWeekend(supabase: SupabaseClient, clanId: string): Promise<CapitalWeekend | null> {
+  const { data, error } = await supabase
+    .from("capital_seasons")
+    .select("start_time, end_time")
+    .eq("clan_id", clanId)
+    .order("start_time", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) throw new Error(`Failed to load latest capital weekend: ${error.message}`);
+  if (!data?.start_time) return null;
+
+  return { startTime: data.start_time as string, endTime: data.end_time as string | null };
+}
+
+export interface MemberCapitalStats {
+  weekends: number;
+  attacksUsed: number;
+  attacksAvailable: number;
+  goldLooted: number;
+  /** null = todavía no hay datos de oro aportado para este miembro. */
+  goldContributed: number | null;
+}
+
+/**
+ * Asaltos (member_capital_raids) y oro aportado (member_capital_contributed)
+ * de cada miembro actual desde since (null = desde que hay datos), por
+ * clan_member_id. Quien no tiene fila no estuvo en ningún fin de semana del periodo.
+ */
+export async function getMemberCapitalStats(
+  supabase: SupabaseClient,
+  clanId: string,
+  since: Date | null,
+): Promise<{ byMemberId: Map<string, MemberCapitalStats>; contributionsTrackedSince: string | null }> {
+  const params = { p_clan_id: clanId, p_since: since?.toISOString() ?? null };
+  const [raids, contributed] = await Promise.all([
+    supabase.rpc("member_capital_raids", params),
+    supabase.rpc("member_capital_contributed", params),
+  ]);
+
+  if (raids.error) throw new Error(`Failed to load member capital raids: ${raids.error.message}`);
+  if (contributed.error) throw new Error(`Failed to load member capital contributions: ${contributed.error.message}`);
+
+  const contributedRows = (contributed.data ?? []) as Record<string, unknown>[];
+  const contributedById = new Map<string, number>(contributedRows.map((row) => [row.clan_member_id as string, Number(row.contributed)]));
+  // Desde cuándo hay datos de oro aportado (el primer valor guardado de cualquiera).
+  const contributionsTrackedSince =
+    contributedRows.map((row) => row.tracked_since as string).sort((a, b) => Date.parse(a) - Date.parse(b))[0] ?? null;
+
+  const stats = new Map<string, MemberCapitalStats>();
+  for (const row of (raids.data ?? []) as Record<string, unknown>[]) {
+    const id = row.clan_member_id as string;
+    stats.set(id, {
+      weekends: row.weekends as number,
+      attacksUsed: row.attacks_used as number,
+      attacksAvailable: row.attacks_available as number,
+      goldLooted: Number(row.gold_looted),
+      goldContributed: contributedById.get(id) ?? null,
+    });
+  }
+  // Puede haber oro aportado sin ningún fin de semana de asalto en el periodo.
+  for (const [id, gold] of contributedById) {
+    if (!stats.has(id)) stats.set(id, { weekends: 0, attacksUsed: 0, attacksAvailable: 0, goldLooted: 0, goldContributed: gold });
+  }
+  return { byMemberId: stats, contributionsTrackedSince };
+}

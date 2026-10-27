@@ -1,0 +1,173 @@
+"use client";
+
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useMemo, useState } from "react";
+import { Pill, type PillTone } from "@/components/ui/Pill";
+import { CLAN_GAMES_PLAYER_MAX, formatClanGamesSeason } from "@/lib/clan-games-tiers";
+
+export interface ClanGamesRow {
+  playerTag: string;
+  playerName: string;
+  points: number;
+  /** false = ya no está en el clan. */
+  inClan: boolean;
+}
+
+type Chip = "todos" | "maximo" | "a-medias" | "sin-puntos";
+
+const CHIPS: { id: Chip; label: string }[] = [
+  { id: "todos", label: "Todos" },
+  { id: "maximo", label: "Máximo" },
+  { id: "a-medias", label: "A medias" },
+  { id: "sin-puntos", label: "Sin puntos" },
+];
+
+type SortOrder = "puntos-desc" | "puntos-asc" | "nombre";
+
+const SORTS: { id: SortOrder; label: string }[] = [
+  { id: "puntos-desc", label: "Más puntos" },
+  { id: "puntos-asc", label: "Menos puntos" },
+  { id: "nombre", label: "Nombre" },
+];
+
+/** Verde: llegó al máximo; amarillo: ha jugado algo; rojo: nada. */
+function pointsTone(points: number): PillTone {
+  if (points >= CLAN_GAMES_PLAYER_MAX) return "good";
+  return points > 0 ? "warn" : "bad";
+}
+
+export function JuegosList({
+  rows,
+  seasons,
+  selectedSeason,
+}: {
+  rows: ClanGamesRow[];
+  seasons: string[];
+  selectedSeason: string;
+}) {
+  const router = useRouter();
+  const [query, setQuery] = useState("");
+  const [chip, setChip] = useState<Chip>("todos");
+  const [sort, setSort] = useState<SortOrder>("puntos-desc");
+
+  const filtered = useMemo(() => {
+    const byQuery = rows.filter((r) => r.playerName.toLowerCase().includes(query.trim().toLowerCase()));
+    const byChip = byQuery.filter((r) =>
+      chip === "maximo"
+        ? r.points >= CLAN_GAMES_PLAYER_MAX
+        : chip === "a-medias"
+          ? r.points > 0 && r.points < CLAN_GAMES_PLAYER_MAX
+          : chip === "sin-puntos"
+            ? r.points === 0
+            : true,
+    );
+    return [...byChip].sort((a, b) => {
+      if (sort === "nombre") return a.playerName.localeCompare(b.playerName, "es", { sensitivity: "base" });
+      const diff = sort === "puntos-desc" ? b.points - a.points : a.points - b.points;
+      return diff !== 0 ? diff : a.playerName.localeCompare(b.playerName, "es", { sensitivity: "base" });
+    });
+  }, [rows, query, chip, sort]);
+
+  return (
+    <div className="flex flex-col gap-4">
+      {seasons.length > 1 ? (
+        <label className="flex items-center justify-between gap-3 text-sm text-text-secondary">
+          Temporada
+          <select
+            value={selectedSeason}
+            onChange={(event) => router.push(`/juegos?temporada=${event.target.value}`)}
+            className="rounded-xl border border-border bg-card px-3 py-2 text-sm text-text focus:border-accent focus:outline-none"
+          >
+            {seasons.map((s) => (
+              <option key={s} value={s}>
+                {formatClanGamesSeason(s)}
+              </option>
+            ))}
+          </select>
+        </label>
+      ) : (
+        <p className="text-sm text-text-secondary first-letter:uppercase">{formatClanGamesSeason(selectedSeason)}</p>
+      )}
+
+      <input
+        type="search"
+        placeholder="Buscar por nombre"
+        value={query}
+        onChange={(event) => setQuery(event.target.value)}
+        className="rounded-xl border border-border bg-card px-3.5 py-2.5 text-sm text-text placeholder:text-text-secondary focus:border-accent focus:outline-none"
+      />
+
+      <div className="flex flex-wrap gap-2">
+        {CHIPS.map((c) => (
+          <button
+            key={c.id}
+            type="button"
+            onClick={() => setChip(c.id)}
+            className={`rounded-full border px-3.5 py-2 text-sm ${
+              chip === c.id ? "border-accent bg-accent text-accent-foreground" : "border-border bg-card text-text"
+            }`}
+          >
+            {c.label}
+          </button>
+        ))}
+      </div>
+
+      <label className="flex items-center justify-between gap-3 text-sm text-text-secondary">
+        Ordenar por
+        <select
+          value={sort}
+          onChange={(event) => setSort(event.target.value as SortOrder)}
+          className="rounded-xl border border-border bg-card px-3 py-2 text-sm text-text focus:border-accent focus:outline-none"
+        >
+          {SORTS.map((s) => (
+            <option key={s.id} value={s.id}>
+              {s.label}
+            </option>
+          ))}
+        </select>
+      </label>
+
+      {filtered.length === 0 ? (
+        <p className="rounded-xl border border-border bg-card p-4 text-sm text-text-secondary">Nadie coincide con ese filtro.</p>
+      ) : (
+        <ul className="flex flex-col gap-2">
+          {filtered.map((r) => {
+            const content = (
+              <>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-text">
+                    {r.playerName}
+                    {r.inClan ? null : <span className="font-normal text-text-secondary"> · ya no está</span>}
+                  </p>
+                  <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-border">
+                    <div
+                      className="h-full rounded-full bg-accent"
+                      style={{ width: `${Math.min(100, (100 * r.points) / CLAN_GAMES_PLAYER_MAX)}%` }}
+                    />
+                  </div>
+                </div>
+                <Pill tone={pointsTone(r.points)}>{r.points.toLocaleString("es-ES")}</Pill>
+              </>
+            );
+            return (
+              <li key={r.playerTag}>
+                {r.inClan ? (
+                  <Link
+                    href={`/miembros/${encodeURIComponent(r.playerTag.replace("#", ""))}`}
+                    prefetch={false}
+                    className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3"
+                  >
+                    {content}
+                  </Link>
+                ) : (
+                  <div className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3 opacity-70">{content}</div>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
+  );
+}
