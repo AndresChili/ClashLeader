@@ -42,7 +42,8 @@ export function JuegosView({
   views: Record<string, ClanGamesRow[]>;
   /** De la más reciente a la más antigua. */
   seasons: string[];
-  firstSeason: string;
+  /** Primera temporada, si empezó a seguirse a medias; null si no hay aviso que dar. */
+  firstSeason: string | null;
   trackingStartedAt: string | null;
 }) {
   const [view, setView] = useState(seasons[0]);
@@ -92,7 +93,7 @@ export function JuegosView({
           {participants} de {rows.length} han sumado puntos
           {isTotal ? "" : ` · ${atMax} al máximo (${CLAN_GAMES_PLAYER_MAX.toLocaleString("es-ES")})`}
         </p>
-        {(isTotal || view === firstSeason) && trackingStartedAt ? (
+        {firstSeason && (isTotal || view === firstSeason) && trackingStartedAt ? (
           <p className="text-xs text-text-secondary">
             Se cuentan desde el {formatDay(trackingStartedAt)}, cuando la app empezó a seguir el clan: lo que se hizo antes no se pudo
             registrar.

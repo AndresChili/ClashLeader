@@ -4,7 +4,7 @@ import { getAllClanGamesPoints, getClanGamesSeasons } from "@/lib/data/clan-game
 import { getCurrentMemberIdentities } from "@/lib/data/members";
 import { getViewerClan } from "@/lib/data/viewer-clan";
 import { createClient } from "@/lib/supabase/server";
-import { CLAN_GAMES_TOTAL_VIEW } from "@/lib/clan-games";
+import { CLAN_GAMES_TOTAL_VIEW, formatClanGamesSeason } from "@/lib/clan-games";
 import { JuegosView, type ClanGamesRow } from "./JuegosView";
 
 export const metadata = { title: "Juegos del Clan · ClashLeader" };
@@ -17,18 +17,27 @@ export default async function JuegosPage() {
     return <NoClanCard />;
   }
 
-  const [seasons, points, members] = await Promise.all([
+  const [allSeasons, points, members] = await Promise.all([
     getClanGamesSeasons(supabase, viewerClan.clanId),
     getAllClanGamesPoints(supabase, viewerClan.clanId),
     getCurrentMemberIdentities(supabase, viewerClan.clanId),
   ]);
 
+  const seasons = allSeasons.filter((s) => !s.excluded);
+  const excludedSeasons = allSeasons.filter((s) => s.excluded);
+
   if (seasons.length === 0) {
     return (
       <div className="flex flex-col gap-4">
         <h1 className="font-heading text-2xl">Juegos del Clan</h1>
-        <Card>
-          <p className="text-sm text-text-secondary">Todavía no hay datos de Juegos del Clan registrados.</p>
+        <Card className="flex flex-col gap-2">
+          <p className="text-sm text-text">Todavía no hay Juegos del Clan que cuenten.</p>
+          {excludedSeasons.length > 0 ? (
+            <p className="text-sm text-text-secondary">
+              Los de {excludedSeasons.map((s) => formatClanGamesSeason(s.seasonId)).join(", ")} no cuentan para nadie: la app empezó a
+              seguir el clan con los Juegos ya empezados y no pudo ver los puntos de quien jugó antes. Se contarán desde los próximos Juegos.
+            </p>
+          ) : null}
         </Card>
       </div>
     );
@@ -62,9 +71,9 @@ export default async function JuegosPage() {
   }
   views[CLAN_GAMES_TOTAL_VIEW] = withCurrentMembers(totalByTag);
 
-  // La primera temporada empezó a contarse cuando la app se puso a seguir el
-  // clan, quizá con los Juegos ya empezados: lo de antes no se pudo ver.
-  const firstSeason = seasons[seasons.length - 1];
+  // Si la primera temporada registrada cuenta, empezó a seguirse cuando la
+  // app se puso a seguir el clan, quizá con los Juegos ya empezados.
+  const firstSeason = excludedSeasons.length === 0 ? seasons[seasons.length - 1] : null;
 
   return (
     <div className="flex flex-col gap-4">
@@ -72,8 +81,8 @@ export default async function JuegosPage() {
       <JuegosView
         views={views}
         seasons={seasons.map((s) => s.seasonId)}
-        firstSeason={firstSeason.seasonId}
-        trackingStartedAt={firstSeason.startTime}
+        firstSeason={firstSeason?.seasonId ?? null}
+        trackingStartedAt={firstSeason?.startTime ?? null}
       />
     </div>
   );
