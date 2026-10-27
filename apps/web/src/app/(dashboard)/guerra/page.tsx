@@ -33,8 +33,6 @@ export default async function GuerraPage() {
           attacksUsed: m.attacksUsed,
           attacksAllowed: attacksAllowedFor(currentWar.warType),
         }))
-        // Primero a quien le faltan más ataques; dentro de cada grupo, por posición en el mapa.
-        .sort((a, b) => b.attacksAllowed - b.attacksUsed - (a.attacksAllowed - a.attacksUsed))
     : [];
 
   const currentWarTags = currentWar ? new Set(currentWar.members.map((m) => m.playerTag)) : new Set<string>();
